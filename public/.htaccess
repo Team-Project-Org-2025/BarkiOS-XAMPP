@@ -1,0 +1,26 @@
+RewriteEngine On
+
+# Habilitar el motor de reescritura
+Options +FollowSymLinks -MultiViews
+
+# Redirigir todo a index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Manejar rutas limpias
+RewriteRule ^(.*)$ index.php?url=$1 [QSA,L]
+
+# Asegurar que las cabeceras de autorización se pasen correctamente
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+# Establecer las cabeceras para las respuestas JSON
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+</IfModule>
+
+# Manejar las opciones preflight para CORS
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ $1 [R=200,L]

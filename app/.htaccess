@@ -1,0 +1,15 @@
+# Activa el motor de reescritura
+
+RewriteEngine On
+
+# Define la base de la URL para las reglas (ajústalo si tu carpeta se llama diferente)
+RewriteBase /app/
+
+# Si la petición NO es un archivo existente
+RewriteCond %{REQUEST_FILENAME} !-f
+
+# Y si la petición NO es un directorio existente
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Entonces redirige toda la solicitud a index.php conservando los parámetros de consulta
+RewriteRule ^ index.php [QSA,L]
