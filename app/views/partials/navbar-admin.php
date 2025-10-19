@@ -29,8 +29,14 @@
                         Clientes
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/BarkiOS/accounts-receivable/">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                        Cuentas por Cobrar
+                    </a>
+                </li>
             </ul>
-             <div class="sidebar-footer">
+            <div class="sidebar-footer">
                 <a class="nav-link" href="/BarkiOS/login/">
                     <i class="fas fa-sign-out-alt"></i>
                     Cerrar Sesión
