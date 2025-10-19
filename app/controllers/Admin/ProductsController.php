@@ -2,6 +2,13 @@
 // filepath: c:\xampp\htdocs\BarkiOS\app\controllers\Admin\ProductsController.php
 use Barkios\models\Product;
 
+// ✅ Importa el controlador de login (para usar checkAuth)
+require_once __DIR__ . '/LoginController.php';
+
+
+// ✅ Protege todo el módulo
+checkAuth();
+
 $productModel = new Product();
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
