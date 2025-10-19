@@ -1,7 +1,7 @@
 <?php
 use Barkios\models\Supplier;
+use Barkios\controllers\admin\LoginController;
 $supplierModel = New Supplier();
-
 
 handleRequest($supplierModel);
 /**
