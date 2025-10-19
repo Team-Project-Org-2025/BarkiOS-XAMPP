@@ -59,12 +59,33 @@ function login() {
     $password = $_POST['password'] ?? '';
     $error = null;
 
+    // ===============================
+    // 🧹 Validaciones básicas
+    // ===============================
     if ($email === '' || $password === '') {
         $error = "Por favor, complete todos los campos.";
         require_once ROOT_PATH . 'app/views/admin/login.php';
         return;
     }
 
+    // ===============================
+    // 🧩 Validación por expresiones regulares
+    // ===============================
+    if (!preg_match('/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/', $email)) {
+        $error = "El correo electrónico no tiene un formato válido.";
+        require_once ROOT_PATH . 'app/views/admin/login.php';
+        return;
+    }
+
+    if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&._-])[A-Za-z\d@$!%*?&._-]{8,}$/', $password)) {
+        $error = "La contraseña debe tener al menos 8 caracteres, con mayúsculas, minúsculas, números y símbolos.";
+        require_once ROOT_PATH . 'app/views/admin/login.php';
+        return;
+    }
+
+    // ===============================
+    // 🔐 Autenticación real
+    // ===============================
     $user = $userModel->authenticate($email, $password);
 
     if ($user) {
