@@ -34,7 +34,7 @@ CREATE TABLE `clientes` (
   `telefono` varchar(20) DEFAULT NULL,
   `membresia` enum('Basica','Premium','VIP') DEFAULT 'Basica',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `clientes`
@@ -57,7 +57,7 @@ CREATE TABLE `productos` (
   `categoria` varchar(50) NOT NULL,
   `precio` decimal(10,2) NOT NULL,
   `imagen` varchar(255) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `productos`
@@ -73,12 +73,12 @@ INSERT INTO `productos` (`id`, `nombre`, `tipo`, `categoria`, `precio`, `imagen`
 --
 
 CREATE TABLE `proveedores` (
-  `id` varchar(12) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'RIF del proveedor',
-  `nombre_contacto` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `nombre_empresa` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `direccion` text COLLATE utf8mb4_unicode_ci NOT NULL,
-  `tipo_rif` char(1) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Tipo de RIF: J (Jurídico), G (Gubernamental), C (Cooperativa)'
-) ;
+  `id` varchar(12) NOT NULL COMMENT 'RIF del proveedor',
+  `nombre_contacto` varchar(100) NOT NULL,
+  `nombre_empresa` varchar(100) NOT NULL,
+  `direccion` text NOT NULL,
+  `tipo_rif` char(1) NOT NULL COMMENT 'Tipo de RIF: J (Jurídico), G (Gubernamental), C (Cooperativa)'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `proveedores`

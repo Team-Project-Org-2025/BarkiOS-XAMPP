@@ -1,8 +1,9 @@
 <?php
 // filepath: c:\xampp\htdocs\BarkiOS\app\controllers\Admin\ProductsController.php
-
+namespace Barkios\app\controllers\admin;
 use Barkios\models\Clients;
 use Barkios\models\Product;
+use Exception;
 $clienttModel = new Clients();
 
 function index() {
