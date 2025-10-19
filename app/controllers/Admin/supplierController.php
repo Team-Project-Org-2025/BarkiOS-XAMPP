@@ -1,6 +1,12 @@
 <?php
 use Barkios\models\Supplier;
-use Barkios\controllers\admin\LoginController;
+// ✅ Importa el controlador de login (para usar checkAuth)
+require_once __DIR__ . '/LoginController.php';
+
+
+// ✅ Protege todo el módulo
+checkAuth();
+
 $supplierModel = New Supplier();
 
 handleRequest($supplierModel);
