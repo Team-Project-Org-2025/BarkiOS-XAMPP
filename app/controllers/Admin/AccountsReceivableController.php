@@ -4,6 +4,12 @@
 use Barkios\models\AccountsReceivable;
 use Barkios\models\Clients;
 
+require_once __DIR__ . '/LoginController.php';
+
+
+// ✅ Protege todo el módulo
+checkAuth();
+
 $accountsReceivableModel = new AccountsReceivable();
 $clientsModel = new Clients();
 
