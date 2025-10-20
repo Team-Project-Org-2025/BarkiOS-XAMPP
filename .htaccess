@@ -1,4 +1,16 @@
+# .htaccess (CORREGIDO)
+
 RewriteEngine On
+
+# 🚨 AGREGAR ESTA LÍNEA 🚨
+# Define la base de la URL. Si tu proyecto está en http://localhost/BarkiOS/, úsala.
+RewriteBase /BarkiOS/ 
+
+# Si la petición NO es un archivo existente
 RewriteCond %{REQUEST_FILENAME} !-f
+
+# Y si la petición NO es un directorio existente
 RewriteCond %{REQUEST_FILENAME} !-d
+
+# Entonces redirige toda la solicitud a index.php
 RewriteRule ^(.+)$ index.php [QSA,L]
