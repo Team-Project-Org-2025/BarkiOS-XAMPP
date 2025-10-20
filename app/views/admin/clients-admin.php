@@ -64,13 +64,8 @@
                         id="clientCedula"
                         name="cedula" 
                         placeholder="Ingrese la cédula del cliente" 
-                        inputmode="numeric"
-                        maxlength="9"
-                        minlength="7"
-                        pattern="^\d{7,9}$"
-                        oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0,9);"
                         required>
-                    <div class="invalid-feedback">Por favor ingrese una cédula válida (7 a 9 dígitos)</div>
+                    <div class="invalid-feedback">Por favor ingrese una cédula válida (7 a 8 dígitos)</div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Nombre</label>
@@ -78,9 +73,6 @@
                         id="clientNombre"
                         name="nombre" 
                         placeholder="Ingrese nombre del cliente" 
-                        maxlength="40"
-                        pattern="^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{1,40}$"
-                        oninput="this.value = this.value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]/g, '').slice(0,40);"
                         required>
                     <div class="invalid-feedback">Por favor ingrese un nombre válido (solo letras y espacios)</div>
                 </div>
@@ -90,7 +82,6 @@
                         id="clientDireccion"
                         name="direccion"
                         placeholder="Ingrese la dirección"
-                        maxlength="100"
                         required>
                     <div class="invalid-feedback">Por favor ingrese una dirección válida</div>
                 </div>
@@ -100,9 +91,6 @@
                         id="clientTelefono"
                         name="telefono"
                         placeholder="Ingrese el teléfono"
-                        maxlength="11"
-                        pattern="^\d{11}$"
-                        oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0,11);"
                         required>
                     <div class="invalid-feedback">Por favor ingrese un número de teléfono válido</div>
                 </div>
@@ -139,57 +127,52 @@
             <form id="editClientForm">
                 <div class="modal-body">
                     <div id="editClientErrors" class="alert alert-danger d-none"></div>
+            
+                    <!-- Cédula -->
                     <div class="mb-3">
-                </div>
-                    <div class="mb-3">
-                    <label class="form-label">Cédula</label>
-                    <input type="text" class="form-control" 
-                        id="editClientCedula"
-                        name="cedula" 
-                        placeholder="Ingrese la cédula del cliente" 
-                        inputmode="numeric"
-                        maxlength="9"
-                        minlength="7"
-                        pattern="^\d{7,9}$"
-                        oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0,9);"
-                        readonly
-                        disabled>
-                    <input type="hidden" id="editClientCedulaHidden" name="cedula" value="">
-                    <div class="invalid-feedback">Por favor ingrese una cédula válida (7 a 9 dígitos)</div>
+                        <label class="form-label">Cédula</label>
+                        <input type="text" class="form-control" 
+                            id="editClientCedula"
+                            disabled
+                            placeholder="Ingrese la cédula del cliente">
+                        <input type="hidden" id="editClientCedulaHidden" name="cedula" value="">
+                        <div class="invalid-feedback">Por favor ingrese una cédula válida (7 a 9 dígitos)</div>
+                    </div>
+            
+                    <!-- Nombre -->
                     <div class="mb-3">
                         <label class="form-label">Nombre</label>
                         <input type="text" class="form-control" 
-                            name="nombre" 
                             id="editClientNombre"
-                            placeholder="Ingrese nombre del cliente" 
-                            maxlength="40"
-                            pattern="^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{1,40}$"
-                            oninput="this.value = this.value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]/g, '').slice(0,40);"
+                            name="nombre"
+                            placeholder="Ingrese nombre del cliente"
                             required>
                         <div class="invalid-feedback">Por favor ingrese un nombre válido (solo letras y espacios)</div>
                     </div>
+            
+                    <!-- Dirección -->
                     <div class="mb-3">
                         <label class="form-label">Dirección</label>
                         <input type="text" class="form-control"
                             id="editClientDireccion"
                             name="direccion"
                             placeholder="Ingrese la dirección"
-                            maxlength="100"
                             required>
                         <div class="invalid-feedback">Por favor ingrese una dirección válida</div>
                     </div>
+            
+                    <!-- Teléfono -->
                     <div class="mb-3">
                         <label class="form-label">Teléfono</label>
                         <input type="text" class="form-control"
                             id="editClientTelefono"
                             name="telefono"
                             placeholder="Ingrese el teléfono"
-                            maxlength="11"
-                            pattern="^\d{11}$"
-                            oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0,11);"
                             required>
                         <div class="invalid-feedback">Por favor ingrese un número de teléfono válido</div>
                     </div>
+            
+                    <!-- Membresía -->
                     <div class="mb-3">
                         <label class="form-label">Membresía</label>
                         <select class="form-select" id="editClientMembresia" name="membresia" required>
@@ -200,6 +183,7 @@
                         <div class="invalid-feedback">Por favor seleccione una membresía</div>
                     </div>
                 </div>
+            
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Guardar Cambios</button>
@@ -208,10 +192,9 @@
         </div>
     </div>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<!-- SweetAlert2 para alertas bonitas -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.3/dist/sweetalert2.all.min.js"></script>
 
 <script src="/BarkiOS/public/assets/js/clients-admin.js"></script>
 </body>
