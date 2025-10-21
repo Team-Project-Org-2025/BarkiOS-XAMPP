@@ -45,12 +45,15 @@ $(document).ready(function () {
         return valido;
     }
 
-    function configurarValidacion($form, isEdit = false) {
-        const reglas = {
-            'nombre': /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{3,60}$/,
-            'email': /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-            'password': isEdit ? /^.{0,30}$/ : /^.{6,30}$/
-        };
+function configurarValidacion($form, isEdit = false) {
+    const reglas = {
+        'nombre': /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{3,60}$/,
+        'email': /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+        'password': isEdit
+            ? /^(?:.{0}|(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&._-])[A-Za-z\d@$!%*?&._-]{8,30})$/
+            : /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&._-])[A-Za-z\d@$!%*?&._-]{8,30}$/
+    };
+
 
         $.each(reglas, function (campo, regex) {
             const $input = $form.find(`[name="${campo}"]`);
