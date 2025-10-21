@@ -3,182 +3,233 @@ namespace Barkios\models;
 
 use Barkios\core\Database;
 use PDO;
+use Exception;
 
 class Sale extends Database
 {
-    public function __construct()
-    {
-        parent::__construct();
-    }
+    /* =====================================================
+       OBTENER DATOS
+    ===================================================== */
 
-    /* ==========================================================
-       🔹 OBTENER TODAS LAS VENTAS
-    ========================================================== */
     public function getAll()
     {
-        try {
-            $sql = "
-                SELECT 
-                    v.venta_id,
-                    v.fecha,
-                    v.tipo_venta,
-                    v.estado_venta,
-                    c.nombre_cliente,
-                    e.nombre AS nombre_empleado,
-                    COALESCE(SUM(p.monto), 0) AS total_pagado,
-                    v.monto_total
-                FROM ventas v
-                LEFT JOIN clientes c ON v.cliente_ced = c.cliente_ced
-                LEFT JOIN empleados e ON v.empleado_ced = e.empleado_ced
-                LEFT JOIN pagos p ON v.venta_id = p.venta_id
-                GROUP BY v.venta_id
-                ORDER BY v.fecha DESC
-            ";
-            return $this->db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
-        } catch (\Throwable $e) {
-            error_log("Error al obtener ventas: " . $e->getMessage());
-            return [];
-        }
+        $sql = "
+            SELECT v.*, 
+                   c.nombre_cliente, 
+                   e.nombre AS nombre_empleado
+            FROM ventas v
+            LEFT JOIN clientes c ON v.cliente_ced = c.cliente_ced
+            LEFT JOIN empleados e ON v.empleado_ced = e.empleado_ced
+            ORDER BY v.fecha DESC
+        ";
+        $stmt = $this->db->query($sql);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /* ==========================================================
-       🔹 VALIDAR QUE UNA PRENDA ESTÉ DISPONIBLE
-    ========================================================== */
-    private function isProductAvailable($prendaId)
+    public function getById($id)
     {
-        $stmt = $this->db->prepare("SELECT estado FROM prendas WHERE prenda_id = :id");
-        $stmt->execute([':id' => $prendaId]);
-        $estado = $stmt->fetchColumn();
-        return $estado === 'DISPONIBLE';
+        $stmt = $this->db->prepare("
+            SELECT v.*, c.nombre_cliente, e.nombre AS nombre_empleado
+            FROM ventas v
+            LEFT JOIN clientes c ON v.cliente_ced = c.cliente_ced
+            LEFT JOIN empleados e ON v.empleado_ced = e.empleado_ced
+            WHERE v.venta_id = :id
+        ");
+        $stmt->execute([':id' => $id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
-    /* ==========================================================
-       🔹 AGREGAR NUEVA VENTA (Opción C)
-    ========================================================== */
+    public function getSaleWithDetails($id)
+    {
+        $venta = $this->getById($id);
+        if (!$venta) return null;
+
+        $stmt = $this->db->prepare("
+            SELECT dv.*, p.nombre AS nombre_prenda, p.tipo, p.categoria
+            FROM detalle_venta dv
+            JOIN prendas p ON p.prenda_id = dv.prenda_id
+            WHERE dv.venta_id = :id
+        ");
+        $stmt->execute([':id' => $id]);
+        $venta['detalles'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $venta['pagos'] = $this->getPaymentsBySale($id);
+        return $venta;
+    }
+
+    /* =====================================================
+       CREAR VENTA
+    ===================================================== */
+
     public function addSale($data)
     {
         try {
             $this->db->beginTransaction();
 
-            // Insertar encabezado
+            // Insertar cabecera de venta
             $stmt = $this->db->prepare("
-                INSERT INTO ventas (fecha, cliente_ced, empleado_ced, tipo_venta, estado_venta)
-                VALUES (NOW(), :cliente, :empleado, :tipo_venta, :estado)
+                INSERT INTO ventas (
+                    empleado_ced, cliente_ced, tipo_venta, estado_venta,
+                    monto_total, saldo_pendiente, observaciones
+                ) VALUES (
+                    :empleado, :cliente, :tipo, :estado, :total, :saldo, :obs
+                )
             ");
-            $estadoVenta = $data['tipo_venta'] === 'credito' ? 'pendiente' : 'completada';
+
+            $estado = $data['tipo_venta'] === 'credito' ? 'pendiente' : 'completada';
+            $saldo = $data['tipo_venta'] === 'credito' ? $data['monto_total'] : 0.00;
+
             $stmt->execute([
-                ':cliente' => $data['cliente_ced'],
                 ':empleado' => $data['empleado_ced'],
-                ':tipo_venta' => $data['tipo_venta'],
-                ':estado' => $estadoVenta
+                ':cliente' => $data['cliente_ced'],
+                ':tipo' => $data['tipo_venta'],
+                ':estado' => $estado,
+                ':total' => $data['monto_total'],
+                ':saldo' => $saldo,
+                ':obs' => $data['observaciones'] ?? null
             ]);
 
             $ventaId = $this->db->lastInsertId();
 
-            // Insertar detalle
-            $stmtDetalle = $this->db->prepare("
+            // Insertar detalle_venta
+            $stmtDet = $this->db->prepare("
                 INSERT INTO detalle_venta (venta_id, prenda_id, precio_unitario)
                 VALUES (:venta_id, :prenda_id, :precio)
             ");
+            $updPrenda = $this->db->prepare("
+                UPDATE prendas SET estado = 'VENDIDA' WHERE prenda_id = :id
+            ");
 
-            foreach ($data['productos'] as $prod) {
-                // ✅ Validar que la prenda no esté vendida
-                if (!$this->isProductAvailable($prod['prenda_id'])) {
-                    throw new \Exception("La prenda '{$prod['nombre']}' ya fue vendida y no puede agregarse a la venta.");
-                }
-
-                // Insertar detalle
-                $stmtDetalle->execute([
+            foreach ($data['productos'] as $p) {
+                $stmtDet->execute([
                     ':venta_id' => $ventaId,
-                    ':prenda_id' => $prod['prenda_id'],
-                    ':precio' => $prod['precio_unitario']
+                    ':prenda_id' => $p['prenda_id'],
+                    ':precio' => $p['precio_unitario']
                 ]);
-
-                // Actualizar estado a 'VENDIDA'
-                $this->db->prepare("
-                    UPDATE prendas SET estado = 'VENDIDA' WHERE prenda_id = :id
-                ")->execute([':id' => $prod['prenda_id']]);
+                $updPrenda->execute([':id' => $p['prenda_id']]);
             }
 
-            // Registrar pago si es contado
-            if ($data['tipo_venta'] === 'contado') {
-                $this->addPayment([
-                    'venta_id' => $ventaId,
-                    'monto' => $data['monto_total'] ?? 0,
-                    'estado_pago' => 'confirmado'
+            // Si es venta a crédito → registrar en credito + cuentas_cobrar
+            if ($data['tipo_venta'] === 'credito') {
+                $stmtCred = $this->db->prepare("
+                    INSERT INTO credito (venta_id) VALUES (:venta_id)
+                ");
+                $stmtCred->execute([':venta_id' => $ventaId]);
+                $creditoId = $this->db->lastInsertId();
+
+                $stmtCC = $this->db->prepare("
+                    INSERT INTO cuentas_cobrar (credito_id, estado)
+                    VALUES (:credito_id, 'pendiente')
+                ");
+                $stmtCC->execute([':credito_id' => $creditoId]);
+
+                $cuentaId = $this->db->lastInsertId();
+
+                // Enlazar cuenta al crédito
+                $this->db->prepare("
+                    UPDATE credito SET cuenta_cobrar_id = :cuenta WHERE credito_id = :id
+                ")->execute([
+                    ':cuenta' => $cuentaId,
+                    ':id' => $creditoId
                 ]);
             }
 
             $this->db->commit();
             return $ventaId;
-
-        } catch (\Throwable $e) {
+        } catch (Exception $e) {
             $this->db->rollBack();
-            error_log("Error al registrar venta: " . $e->getMessage());
-            return ['error' => $e->getMessage()];
+            error_log("Sale::addSale - " . $e->getMessage());
+            return false;
         }
     }
 
-    /* ==========================================================
-       🔹 ANULAR / ELIMINAR UNA VENTA
-    ========================================================== */
+    /* =====================================================
+       PAGOS
+    ===================================================== */
+
+    public function addPayment($data)
+    {
+        try {
+            $stmt = $this->db->prepare("
+                INSERT INTO pagos (venta_id, monto, observaciones)
+                VALUES (:venta_id, :monto, :obs)
+            ");
+            $stmt->execute([
+                ':venta_id' => $data['venta_id'],
+                ':monto' => $data['monto'],
+                ':obs' => $data['observaciones'] ?? null
+            ]);
+
+            // Actualizar saldo en venta
+            $this->db->prepare("
+                UPDATE ventas 
+                SET saldo_pendiente = GREATEST(saldo_pendiente - :monto, 0)
+                WHERE venta_id = :id
+            ")->execute([
+                ':monto' => $data['monto'],
+                ':id' => $data['venta_id']
+            ]);
+
+            // Si la venta ya no tiene saldo pendiente, marcar completada
+            $this->db->query("
+                UPDATE ventas
+                SET estado_venta = 'completada'
+                WHERE venta_id = {$data['venta_id']} AND saldo_pendiente <= 0
+            ");
+
+            return true;
+        } catch (Exception $e) {
+            error_log("Sale::addPayment - " . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function getPaymentsBySale($venta_id)
+    {
+        $stmt = $this->db->prepare("
+            SELECT * FROM pagos WHERE venta_id = :id ORDER BY fecha_pago DESC
+        ");
+        $stmt->execute([':id' => $venta_id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /* =====================================================
+       CANCELAR VENTA
+    ===================================================== */
+
     public function cancelSale($ventaId)
     {
         try {
             $this->db->beginTransaction();
 
-            // Recuperar las prendas asociadas
+            // Liberar prendas
             $stmt = $this->db->prepare("SELECT prenda_id FROM detalle_venta WHERE venta_id = :id");
             $stmt->execute([':id' => $ventaId]);
             $prendas = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
-            // Revertir estado de cada prenda
-            foreach ($prendas as $pid) {
-                $this->db->prepare("
-                    UPDATE prendas SET estado = 'DISPONIBLE' WHERE prenda_id = :id
-                ")->execute([':id' => $pid]);
+            if ($prendas) {
+                $upd = $this->db->prepare("UPDATE prendas SET estado = 'DISPONIBLE' WHERE prenda_id = :id");
+                foreach ($prendas as $p) $upd->execute([':id' => $p]);
             }
 
-            // Cambiar estado de la venta
+            // Marcar venta como cancelada
             $this->db->prepare("
-                UPDATE ventas SET estado_venta = 'cancelada' WHERE venta_id = :id
+                UPDATE ventas SET estado_venta = 'cancelada', saldo_pendiente = 0 WHERE venta_id = :id
             ")->execute([':id' => $ventaId]);
+
+            // Marcar cuentas asociadas como canceladas
+            $this->db->query("
+                UPDATE cuentas_cobrar 
+                SET estado = 'vencido'
+                WHERE credito_id IN (SELECT credito_id FROM credito WHERE venta_id = $ventaId)
+            ");
 
             $this->db->commit();
             return true;
-        } catch (\Throwable $e) {
+        } catch (Exception $e) {
             $this->db->rollBack();
-            error_log("Error al cancelar venta: " . $e->getMessage());
+            error_log("Sale::cancelSale - " . $e->getMessage());
             return false;
         }
-    }
-
-    /* ==========================================================
-       🔹 REGISTRAR PAGO
-    ========================================================== */
-    public function addPayment($data)
-    {
-        $stmt = $this->db->prepare("
-            INSERT INTO pagos (venta_id, fecha_pago, monto, observaciones)
-            VALUES (:venta, NOW(), :monto, 'Pago registrado automáticamente')
-        ");
-        return $stmt->execute([
-            ':venta' => $data['venta_id'],
-            ':monto' => $data['monto']
-        ]);
-    }
-
-    /* ==========================================================
-       🔹 OBTENER PRODUCTOS DISPONIBLES
-    ========================================================== */
-    public function getAvailableProducts()
-    {
-        $stmt = $this->db->query("
-            SELECT prenda_id, nombre, tipo, categoria, precio
-            FROM prendas
-            WHERE activo = 1 AND estado = 'DISPONIBLE'
-            ORDER BY nombre ASC
-        ");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
