@@ -36,7 +36,7 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="/BarkiOS/creditnote/">
+                <a class="nav-link" href="/BarkiOS/sale/">
                     <i class="fas fa-receipt"></i>
                     Notas de Crédito
                 </a>
