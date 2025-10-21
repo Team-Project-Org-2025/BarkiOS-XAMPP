@@ -30,6 +30,12 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="/BarkiOS/users">
+                        <i class="fas fa-user-shield"></i>
+                        Usuarios
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="/BarkiOS/accounts-receivable/">
                         <i class="fas fa-file-invoice-dollar"></i>
                         Cuentas por Cobrar
