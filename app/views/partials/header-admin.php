@@ -15,6 +15,6 @@
     <!-- Favicon -->
     <link rel="shortcut icon" href= "/BarkiOS/public/assets/icons/Logo - Garage Barki.webp" type="image/x-icon">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/Barkios/public/assets/css/admin-styles.css">
+    <link rel="stylesheet" href="/BarkiOS/public/assets/css/admin-styles.css">
 </head>
 <body>

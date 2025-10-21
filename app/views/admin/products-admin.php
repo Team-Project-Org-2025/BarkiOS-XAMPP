@@ -61,12 +61,7 @@
                             <input type="text" class="form-control" 
                             id="productId"
                             name="prenda_id" 
-                            placeholder="Ingrese código del producto" 
-                            inputmode="numeric"
-                            maxlength="9"
-                            minlength="9"
-                            pattern="^\d{0,9}$"
-                            oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0,9);"
+                            placeholder="Ingrese código del producto"
                             required>
                             <div class="invalid-feedback">Por favor ingrese un código válido</div>
                         </div>
@@ -75,10 +70,7 @@
                             <input type="text" class="form-control" 
                             id="productName"
                             name="nombre" 
-                            placeholder="Ingrese nombre del producto" 
-                            maxlength="40"
-                            pattern="^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{1,40}$"
-                            oninput="this.value = this.value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]/g, '').slice(0,40);"
+                            placeholder="Ingrese nombre del producto"
                             required>
                             <div class="invalid-feedback">Por favor ingrese un nombre válido (solo letras y espacios)</div>
                         </div>
@@ -114,14 +106,11 @@
                             <label class="form-label">Precio</label>
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
-                                <input type="number" step="0.01" class="form-control" 
-                                step="0.01" 
+                                <input
+                                step="0.00" 
                                 class="form-control" 
-                                id="productPrice" 
-                                name="precio" 
-                                min="0"
-                                max="999.99"
-                                oninput="if(this.value.length > 11) this.value = this.value.slice(0,11);"
+                                name="precio"
+                                id="productPrice"
                                 required>
                                 <div class="invalid-feedback">Por favor ingrese un precio válido</div>
                             </div>
@@ -158,12 +147,7 @@
                             id="editProductId"
                             name="prenda_id" 
                             placeholder="Ingrese código del producto" 
-                            inputmode="numeric"
-                            maxlength="9"
-                            minlength="9"
-                            pattern="^\d{9}$"
                             disabled>
-                        <div class="invalid-feedback">Por favor ingrese un código válido</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Nombre</label>
@@ -171,8 +155,6 @@
                             name="nombre" 
                             id="editProductName"
                             placeholder="Ingrese nombre del producto" 
-                            pattern="^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$"
-                            oninput="this.value = this.value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]/g, '');"
                             required>
                         <div class="invalid-feedback">Por favor ingrese un nombre válido (solo letras y espacios)</div>
                     </div>
@@ -221,10 +203,10 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<!-- SweetAlert2 para alertas bonitas -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.3/dist/sweetalert2.all.min.js"></script>
 <script src="/BarkiOS/public/assets/js/products-admin.js"></script>
+
 </body>
 </html>

@@ -1,6 +1,5 @@
 {
-    "name": "barkios/barkios",
-    "description": "Proyecto BarkiOs - Sistema de gestión",
+    "name": "deadt/barki-os-xampp",
     "type": "project",
     "license": "MIT",
     "autoload": {
@@ -10,8 +9,8 @@
     },
     "authors": [
         {
-            "name": "Nokx1z",
-            "email": "enyelldev@gmail.com"
+            "name": "Eltarao",
+            "email": "cristopherjesus2021@gmail.com"
         }
     ],
     "minimum-stability": "stable",

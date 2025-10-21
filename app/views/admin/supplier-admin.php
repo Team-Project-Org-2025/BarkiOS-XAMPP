@@ -60,6 +60,7 @@
                 <div class="mb-3">
                     <label class="form-label">Tipo de RIF</label>
                     <select class="form-select" name="tipo_rif" id="supplierTipoRif" required>
+                        <option value="">Seleccione un tipo de rif</option>
                         <option value="J">J</option>
                         <option value="G">G</option>
                         <option value="C">C</option>
@@ -71,11 +72,6 @@
                         name="proveedor_rif"
                         id="supplierRif"
                         placeholder="Ingrese el RIF (solo números)"
-                        maxlength="9"
-                        minlength="9"
-                        pattern="^\d{9}$"
-                        inputmode="numeric"
-                        oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0,9);"
                         required>
                     <div class="invalid-feedback">Por favor ingrese un RIF válido (9 dígitos)</div>
                 </div>
@@ -85,9 +81,6 @@
                         name="nombre_contacto"
                         id="supplierNombreContacto"
                         placeholder="Ingrese nombre del contacto"
-                        maxlength="40"
-                        pattern="^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{1,40}$"
-                        oninput="this.value = this.value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]/g, '').slice(0,40);"
                         required>
                     <div class="invalid-feedback">Por favor ingrese un nombre válido (solo letras y espacios)</div>
                 </div>
@@ -97,7 +90,6 @@
                         name="nombre_empresa"
                         id="supplierNombreEmpresa"
                         placeholder="Ingrese nombre de la empresa"
-                        maxlength="60"
                         required>
                     <div class="invalid-feedback">Por favor ingrese un nombre de empresa válido</div>
                 </div>
@@ -107,7 +99,6 @@
                         name="direccion"
                         id="supplierDireccion"
                         placeholder="Ingrese la dirección"
-                        maxlength="100"
                         required>
                     <div class="invalid-feedback">Por favor ingrese una dirección válida</div>
                 </div>
@@ -149,10 +140,6 @@
                         <input type="text" class="form-control"
                             name="proveedor_rif"
                             id="editSupplierRif"
-                            maxlength="9"
-                            minlength="9"
-                            pattern="^\d{9}$"
-                            inputmode="numeric"
                             disabled>
                     </div>
                     <div class="mb-3">
@@ -160,7 +147,6 @@
                         <input type="text" class="form-control"
                             name="nombre_contacto"
                             id="editSupplierNombreContacto"
-                            maxlength="40"
                             required>
                     </div>
                     <div class="mb-3">
@@ -168,7 +154,6 @@
                         <input type="text" class="form-control"
                             name="nombre_empresa"
                             id="editSupplierNombreEmpresa"
-                            maxlength="60"
                             required>
                     </div>
                     <div class="mb-3">
@@ -176,7 +161,6 @@
                         <input type="text" class="form-control"
                             name="direccion"
                             id="editSupplierDireccion"
-                            maxlength="100"
                             required>
                     </div>
                 </div>
@@ -189,8 +173,9 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.3/dist/sweetalert2.all.min.js"></script>
 <script src="/BarkiOS/public/assets/js/suppliers-admin.js"></script>
 </body>
 </html>

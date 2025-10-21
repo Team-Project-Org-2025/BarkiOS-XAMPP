@@ -1,13 +1,16 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const suppliersTableBody = document.getElementById('suppliersTableBody');
-    const addSupplierForm = document.getElementById('addSupplierForm');
-    const editSupplierForm = document.getElementById('editSupplierForm');
+$(document).ready(function () {
+    const $suppliersTableBody = $('#suppliersTableBody');
+    const $addSupplierForm = $('#addSupplierForm');
+    const $editSupplierForm = $('#editSupplierForm');
 
-    // Utilidad para escapar HTML
+    // --- UTILIDADES ---
     const escapeHtml = str => String(str ?? '')
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-    // showAlert ahora usa SweetAlert2 (pop-up)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+
     const showAlert = (msg, type = 'info') => {
         let icon = 'info';
         if (type === 'success') icon = 'success';
@@ -24,16 +27,78 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    function fetchSuppliers() {
-        suppliersTableBody.innerHTML = `<tr><td colspan="6" class="text-center">
-            <div class="spinner-border text-primary"></div> Cargando...</td></tr>`;
-        fetch(window.location.pathname + '?action=get_suppliers', {headers: {'X-Requested-With':'XMLHttpRequest'}})
-        .then(r => r.json()).then(data => {
-            if (!data.suppliers?.length) return suppliersTableBody.innerHTML =
-                `<td colspan="6" class="text-center">
-                    <div class="alert alert-info mb-0">No hay proveedores disponibles</div>
-                </td>`;
-            suppliersTableBody.innerHTML = data.suppliers.map(s => `
+    // --- VALIDACIÓN ---
+    function validarProveedor($form, validarRif = true) {
+        const $tipoRif = $form.find('[name="tipo_rif"]'); // select
+        const $rif = $form.find('[name="proveedor_rif"]');
+        const $nombreContacto = $form.find('[name="nombre_contacto"]');
+        const $nombreEmpresa = $form.find('[name="nombre_empresa"]');
+        const $direccion = $form.find('[name="direccion"]');
+
+        // Expresiones regulares
+        const regexRif = /^\d{9}$/; // ejemplo: J-12345678 o V123456789
+        const regexNombre = /^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s\-\_\.\,\&\"\']{2,60}$/;
+        const regexDireccion = /^.{5,150}$/; // mínimo 5 caracteres, máx 150
+
+        let valido = true;
+        $form.find('.is-invalid').removeClass('is-invalid');
+
+        if ($tipoRif.val().trim() === '') {
+            $tipoRif.addClass('is-invalid');
+            valido = false;
+        }
+
+        if (validarRif && !regexRif.test($rif.val().trim())) {
+            $rif.addClass('is-invalid');
+            valido = false;
+        }
+
+        if (!regexNombre.test($nombreContacto.val().trim())) {
+            $nombreContacto.addClass('is-invalid');
+            valido = false;
+        }
+
+        if (!regexNombre.test($nombreEmpresa.val().trim())) {
+            $nombreEmpresa.addClass('is-invalid');
+            valido = false;
+        }
+
+        if (!regexDireccion.test($direccion.val().trim())) {
+            $direccion.addClass('is-invalid');
+            valido = false;
+        }
+
+        if (!valido) {
+            showAlert('Por favor corrija los campos resaltados antes de continuar.', 'warning');
+        }
+
+        return valido;
+    }
+
+    // --- CARGAR PROVEEDORES ---
+    function AjaxSuppliers() {
+        $suppliersTableBody.html(`
+            <tr><td colspan="6" class="text-center py-3">
+                <div class="spinner-border text-primary"></div> Cargando...
+            </td></tr>
+        `);
+
+        $.ajax({
+            url: window.location.pathname + '?action=get_suppliers',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            dataType: 'json'
+        }).done(function (data) {
+            if (!data.suppliers?.length) {
+                $suppliersTableBody.html(`
+                    <td colspan="6" class="text-center" style="padding: 1.5rem 0;">
+                        <i class="fa-solid fa-circle-info me-2 text-primary"></i>
+                        No hay proveedores disponibles
+                    </td>
+                `);
+                return;
+            }
+
+            const rows = data.suppliers.map(s => `
                 <tr id="proveedor-${escapeHtml(s.proveedor_rif)}">
                     <td>${escapeHtml(s.tipo_rif)}-${escapeHtml(s.proveedor_rif)}</td>
                     <td>${escapeHtml(s.tipo_rif)}</td>
@@ -55,84 +120,143 @@ document.addEventListener('DOMContentLoaded', () => {
                             <i class="fas fa-trash"></i> Eliminar
                         </button>
                     </td>
-                </tr>`).join('');
-            document.querySelectorAll('.btn-eliminar').forEach(btn => btn.onclick = handleDelete);
-            document.querySelectorAll('.btn-editar').forEach(btn => btn.onclick = loadSupplierForEdit);
-        }).catch(() => showAlert('Error al cargar proveedores', 'danger'));
+                </tr>
+            `).join('');
+
+            $suppliersTableBody.html(rows);
+            $('.btn-eliminar').on('click', handleDelete);
+            $('.btn-editar').on('click', function () {
+                loadSupplierForEdit($(this));
+            });
+        }).fail(() => showAlert('Error al cargar proveedores', 'danger'));
     }
 
+    // --- AGREGAR ---
     function handleAdd(e) {
         e.preventDefault();
-        const fd = new URLSearchParams(new FormData(addSupplierForm));
-        fetch('supplier-admin.php?action=add_ajax', {
+        if (!validarProveedor($addSupplierForm)) return;
+
+        $.ajax({
+            url: 'supplier-admin.php?action=add_ajax',
             method: 'POST',
-            headers: {'X-Requested-With':'XMLHttpRequest','Content-Type':'application/x-www-form-urlencoded'},
-            body: fd
-        }).then(r => r.json()).then(data => {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            data: $addSupplierForm.serialize(),
+            dataType: 'json'
+        }).done(function (data) {
             if (data.success) {
-                showAlert('Proveedor agregado', 'success');
-                addSupplierForm.reset();
-                bootstrap.Modal.getInstance(document.getElementById('addSupplierModal')).hide();
-                fetchSuppliers();
+                showAlert('Proveedor agregado correctamente', 'success');
+                $addSupplierForm.trigger('reset');
+                $('#addSupplierModal').modal('hide');
+                AjaxSuppliers();
             } else showAlert(data.message, 'danger');
-        }).catch(() => showAlert('Error al agregar', 'danger'));
+        }).fail(() => showAlert('Error al agregar', 'danger'));
     }
 
-    function loadSupplierForEdit(e) {
-        // Permitir que funcione tanto si recibe un evento como un botón
-        const btn = e.currentTarget || e;
-        document.getElementById('editSupplierRif').value = btn.getAttribute('data-proveedor_rif');
-        document.getElementById('editSupplierRifHidden').value = btn.getAttribute('data-proveedor_rif');
-        document.getElementById('editSupplierTipoRif').value = btn.getAttribute('data-tipo_rif');
-        document.getElementById('editSupplierNombreContacto').value = btn.getAttribute('data-nombre_contacto');
-        document.getElementById('editSupplierNombreEmpresa').value = btn.getAttribute('data-nombre_empresa');
-        document.getElementById('editSupplierDireccion').value = btn.getAttribute('data-direccion');
-        const modal = new bootstrap.Modal(document.getElementById('editSupplierModal'));
-        modal.show();
+    // --- CARGAR DATOS EN MODAL EDITAR ---
+    function loadSupplierForEdit($btn) {
+        $('#editSupplierRif').val($btn.data('proveedor_rif'));
+        $('#editSupplierRifHidden').val($btn.data('proveedor_rif'));
+        $('#editSupplierTipoRif').val($btn.data('tipo_rif'));
+        $('#editSupplierNombreContacto').val($btn.data('nombre_contacto'));
+        $('#editSupplierNombreEmpresa').val($btn.data('nombre_empresa'));
+        $('#editSupplierDireccion').val($btn.data('direccion'));
+        $('#editSupplierModal').modal('show');
     }
 
+    // --- EDITAR ---
     function handleEdit(e) {
         e.preventDefault();
-        const fd = new URLSearchParams(new FormData(editSupplierForm));
-        fetch('supplier-admin.php?action=edit_ajax', {
+        if (!validarProveedor($editSupplierForm, false)) return;
+
+        $.ajax({
+            url: 'supplier-admin.php?action=edit_ajax',
             method: 'POST',
-            headers: {'X-Requested-With':'XMLHttpRequest','Content-Type':'application/x-www-form-urlencoded'},
-            body: fd
-        }).then(r => r.json()).then(data => {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            data: $editSupplierForm.serialize(),
+            dataType: 'json'
+        }).done(function (data) {
             if (data.success) {
-                showAlert('Proveedor actualizado', 'success');
-                bootstrap.Modal.getInstance(document.getElementById('editSupplierModal')).hide();
-                fetchSuppliers();
+                showAlert('Proveedor actualizado correctamente', 'success');
+                $('#editSupplierModal').modal('hide');
+                AjaxSuppliers();
             } else showAlert(data.message, 'danger');
-        }).catch(() => showAlert('Error al actualizar', 'danger'));
+        }).fail(() => showAlert('Error al actualizar', 'danger'));
     }
 
-    function handleDelete(e) {
-        const proveedor_rif = e.currentTarget.dataset.proveedor_rif;
-        const nombre = e.currentTarget.dataset.nombre;
+    // --- ELIMINAR ---
+    function handleDelete() {
+        const proveedor_rif = $(this).data('proveedor_rif');
+        const nombre = $(this).data('nombre');
         Swal.fire({
             title: '¿Eliminar proveedor?',
             html: `¿Deseas eliminar <strong>${escapeHtml(nombre)}</strong>?`,
-            icon: 'warning', showCancelButton: true,
-            confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar'
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
         }).then(res => {
             if (res.isConfirmed) {
-                fetch('supplier-admin.php?action=delete_ajax', {
+                $.ajax({
+                    url: 'supplier-admin.php?action=delete_ajax',
                     method: 'POST',
-                    headers: {'X-Requested-With':'XMLHttpRequest','Content-Type':'application/x-www-form-urlencoded'},
-                    body: `proveedor_rif=${encodeURIComponent(proveedor_rif)}`
-                }).then(r => r.json()).then(data => {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    data: { proveedor_rif },
+                    dataType: 'json'
+                }).done(function (data) {
                     if (data.success) {
-                        showAlert('Proveedor eliminado', 'success');
-                        fetchSuppliers();
+                        showAlert('Proveedor eliminado correctamente', 'success');
+                        AjaxSuppliers();
                     } else showAlert(data.message, 'danger');
-                }).catch(() => showAlert('Error al eliminar', 'danger'));
+                }).fail(() => showAlert('Error al eliminar', 'danger'));
             }
         });
     }
 
-    // Inicialización
-    if (addSupplierForm) addSupplierForm.onsubmit = handleAdd;
-    if (editSupplierForm) editSupplierForm.onsubmit = handleEdit;
-    fetchSuppliers();
+    // --- VALIDACIÓN EN TIEMPO REAL ---
+    function aplicarValidacionTiempoReal($form) {
+        const $tipoRif = $form.find('[name="tipo_rif"]');
+        const $rif = $form.find('[name="proveedor_rif"]');
+        const $nombreContacto = $form.find('[name="nombre_contacto"]');
+        const $nombreEmpresa = $form.find('[name="nombre_empresa"]');
+        const $direccion = $form.find('[name="direccion"]');
+
+        const regexRif = /^\d{9}$/;
+        const regexNombre = /^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s\-\_\.\,\&\"\']{2,60}$/;
+        const regexDireccion = /^.{5,150}$/;
+
+        const validarCampo = ($input, regex) => {
+            const val = $input.val().trim();
+            $input.toggleClass('is-invalid', !regex.test(val));
+            $input.toggleClass('is-valid', regex.test(val));
+        };
+
+        const validarSelect = ($select) => {
+            if ($select.val().trim() === '') {
+                $select.addClass('is-invalid').removeClass('is-valid');
+            } else {
+                $select.addClass('is-valid').removeClass('is-invalid');
+            }
+        };
+
+        $tipoRif.on('change blur', () => validarSelect($tipoRif));
+        $rif.on('input blur', () => validarCampo($rif, regexRif));
+        $nombreContacto.on('input blur', () => validarCampo($nombreContacto, regexNombre));
+        $nombreEmpresa.on('input blur', () => validarCampo($nombreEmpresa, regexNombre));
+        $direccion.on('input blur', () => validarCampo($direccion, regexDireccion));
+    }
+
+    aplicarValidacionTiempoReal($addSupplierForm);
+    aplicarValidacionTiempoReal($editSupplierForm);
+
+    // --- RESET VISUAL AL CERRAR MODALES ---
+    $('#addSupplierModal, #editSupplierModal').on('hidden.bs.modal', function () {
+        const $form = $(this).find('form');
+        $form.trigger('reset');
+        $form.find('.is-valid, .is-invalid').removeClass('is-valid is-invalid');
+    });
+
+    // --- INICIALIZACIÓN ---
+    if ($addSupplierForm.length) $addSupplierForm.on('submit', handleAdd);
+    if ($editSupplierForm.length) $editSupplierForm.on('submit', handleEdit);
+    AjaxSuppliers();
 });
