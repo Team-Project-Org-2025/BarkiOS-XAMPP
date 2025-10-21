@@ -13,6 +13,16 @@ class User extends Database {
         parent::__construct(); 
     }
 
+    // Función que asume que existe en la clase Database (necesaria para el controlador)
+    public function getLastInsertId(): ?int {
+        try {
+            return (int)$this->db->lastInsertId();
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+
     // =============================================================
     // LÓGICA DE AUTENTICACIÓN (Se mantiene la lógica de texto plano)
     // =============================================================
@@ -51,6 +61,8 @@ class User extends Database {
             $stmt = $this->db->query("SELECT id, email, nombre FROM users ORDER BY id ASC");
             return $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
         } catch (\Throwable $e) {
+             // Es importante loguear el error para depurar problemas de DB
+             error_log("Error al obtener todos los usuarios: " . $e->getMessage());
             return [];
         }
     }
@@ -63,7 +75,7 @@ class User extends Database {
             $stmt = $this->db->prepare("SELECT COUNT(*) FROM users WHERE id = :id");
             $stmt->execute([':id' => $id]);
         } elseif ($email !== null) {
-             $stmt = $this->db->prepare("SELECT COUNT(*) FROM users WHERE email = :email");
+               $stmt = $this->db->prepare("SELECT COUNT(*) FROM users WHERE email = :email");
             $stmt->execute([':email' => $email]);
         } else {
             return false;
@@ -90,6 +102,7 @@ class User extends Database {
         
         // 🚨 IMPORTANTE: Insertamos la contraseña en TEXTO PLANO 
         // para que coincida con tu lógica INSEGURA actual.
+        // Se recomienda ALTAMENTE usar password_hash() aquí.
         $stmt = $this->db->prepare("
             INSERT INTO users (nombre, email, password_hash)
             VALUES (:nombre, :email, :password_hash)
@@ -131,8 +144,7 @@ class User extends Database {
      * Elimina lógicamente un usuario por su ID.
      */
     public function delete(int $id) {
-        // Asumimos que la tabla users tiene un campo 'activo' para la eliminación lógica
-        // Si no tiene 'activo', cambia la consulta a DELETE FROM users WHERE id = :id (eliminación física)
+        // Asumimos que haces una ELIMINACIÓN FÍSICA de la base de datos
         $stmt = $this->db->prepare("DELETE FROM users WHERE id = :id"); 
         return $stmt->execute([':id' => $id]);
     }

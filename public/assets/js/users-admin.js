@@ -2,7 +2,11 @@ $(document).ready(function () {
     const $usersTableBody = $('#usersTableBody');
     const $addUserForm = $('#addUserForm');
     const $editUserForm = $('#editUserForm');
-    const baseUrl = '/BarkiOS/users'; // ✅ Controlador base
+    
+    // Mejorar la robustez del baseUrl
+    const baseUrl = (window.location.pathname.endsWith('/users') || window.location.pathname.endsWith('/users/')) 
+        ? window.location.pathname 
+        : '/BarkiOS/users';
 
     // --- Utilidades ---
     const escapeHtml = str => String(str ?? '')
@@ -87,14 +91,15 @@ $(document).ready(function () {
             <div class="spinner-border text-primary"></div> Cargando...
         </td></tr>`);
 
+        // Usamos la acción 'get_users' en la URL como parámetro GET
         $.ajax({
-            url: `${baseUrl}/get_users`, // ✅ Ruta correcta según FrontController
+            url: `${baseUrl}?action=get_users`, 
             method: 'GET',
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
             dataType: 'json'
         }).done(data => {
-            if (!data.users?.length) {
-                $usersTableBody.html(`<td colspan="4" class="text-center py-3">No hay usuarios disponibles</td>`);
+            if (!data.users || data.users.length === 0) {
+                $usersTableBody.html(`<tr><td colspan="4" class="text-center py-3">No hay usuarios disponibles</td></tr>`);
                 return;
             }
 
@@ -123,7 +128,8 @@ $(document).ready(function () {
             $('.btn-editar').on('click', e => loadUserForEdit($(e.currentTarget)));
         }).fail(xhr => {
             console.error(xhr.responseText);
-            showAlert('Error al cargar usuarios', 'danger');
+            showAlert('Error al cargar usuarios. Revisa la consola para detalles de la base de datos.', 'danger');
+            $usersTableBody.html(`<tr><td colspan="4" class="text-center py-3 text-danger">Error: No se pudo cargar la tabla.</td></tr>`);
         });
     }
 
@@ -133,7 +139,7 @@ $(document).ready(function () {
         const fd = $addUserForm.serialize();
 
         $.ajax({
-            url: `${baseUrl}/add_ajax`, // ✅ acción limpia
+            url: `${baseUrl}?action=add_ajax`, // Usamos 'action=add_ajax'
             method: 'POST',
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
             data: fd,
@@ -144,7 +150,7 @@ $(document).ready(function () {
                 $('#addUserModal').modal('hide');
                 AjaxUsers();
             } else showAlert(data.message, 'danger');
-        }).fail(() => showAlert('Error al agregar usuario', 'danger'));
+        }).fail(() => showAlert('Error al agregar usuario. Revisa las validaciones.', 'danger'));
     }
 
     // --- CARGAR DATOS EN EL MODAL DE EDICIÓN ---
@@ -165,7 +171,7 @@ $(document).ready(function () {
         data = data.filter(item => item.name !== 'password' || item.value !== '');
 
         $.ajax({
-            url: `${baseUrl}/edit_ajax`, // ✅ acción limpia
+            url: `${baseUrl}?action=edit_ajax`, // Usamos 'action=edit_ajax'
             method: 'POST',
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
             data: $.param(data),
@@ -194,7 +200,7 @@ $(document).ready(function () {
         }).then(res => {
             if (res.isConfirmed) {
                 $.ajax({
-                    url: `${baseUrl}/delete_ajax`, // ✅ acción limpia
+                    url: `${baseUrl}?action=delete_ajax`, // Usamos 'action=delete_ajax'
                     method: 'POST',
                     headers: { 'X-Requested-With': 'XMLHttpRequest' },
                     data: { id },

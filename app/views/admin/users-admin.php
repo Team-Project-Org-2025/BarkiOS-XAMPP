@@ -123,3 +123,5 @@
 
 <!-- Carga el JS del controlador de Usuarios -->
 <script src="/BarkiOS/public/assets/js/users-admin.js"></script>
+</body>
+</html>
