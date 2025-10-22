@@ -41,9 +41,15 @@
                         Cuentas por Cobrar
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/BarkiOS/accounts-payable/">
+                        <i class="fas fa-file-invoice"></i>
+                        Cuentas por Pagar
+                    </a>
+                </li>
             </ul>
             <div class="sidebar-footer">
-                                <a class="nav-link" href="/BarkiOS/login/logout">
+                <a class="nav-link" href="/BarkiOS/login/logout">
                     <i class="fas fa-sign-out-alt"></i>
                     Cerrar Sesión
                 </a>
