@@ -1,0 +1,428 @@
+═══════════════════════════════════════════════════════════════
+   MÓDULO DE COMPRAS - VERSIÓN SIMPLIFICADA
+   Sistema BarkiOS - Garage Barki
+   Para Ropa Exclusiva (1 prenda = 1 precio único)
+═══════════════════════════════════════════════════════════════
+
+⚠️  IMPORTANTE: CAMBIO DE ESTRUCTURA ⚠️
+
+Este módulo fue rediseñado para manejar compras de ropa exclusiva
+donde CADA PRENDA ES ÚNICA con su propio precio individual.
+
+Si compraste 20 pantalones, debes registrar 20 prendas individuales,
+cada una con su descripción y precio específico.
+
+
+═══════════════════════════════════════════════════════════════
+   ARCHIVOS CREADOS/ACTUALIZADOS
+═══════════════════════════════════════════════════════════════
+
+✅ BASE DE DATOS:
+   📁 database/create_compras.sql
+   - Tabla: compras (N° Factura, Tracking, Comercio, Fecha, Monto Total)
+   - Tabla: prendas_compradas (Cada prenda única con su precio)
+   - Vista: vista_compras (Para consultas)
+   - Procedimientos: sp_estadisticas_compras, sp_detalle_compra
+
+✅ MODELO (Backend):
+   📁 app/models/Purchase.php
+   - getAll(): Lista todas las compras
+   - getById(): Obtiene compra con sus prendas
+   - add(): Registra compra con prendas
+   - getCategorias(): Obtiene categorías de productos
+   - markPdfGenerated(): Marca PDF como generado
+
+✅ CONTROLADOR (Backend):
+   📁 app/controllers/Admin/PurchaseController.php
+   - add_ajax: Guardar compra
+   - get_purchases: Listar compras
+   - get_categorias: Obtener categorías
+   - search_supplier: Buscar proveedores
+   - download_pdf: Descargar PDF de compra
+
+✅ GENERADOR DE PDF:
+   📁 app/utils/PurchasePdfGenerator.php
+   - Genera PDF con formato profesional
+   - Lista todas las prendas individuales
+   - Agrupa por categoría
+   - Muestra monto total
+
+✅ VISTA (Frontend):
+   📁 app/views/admin/purchase-admin-v2.php  ⚠️ USAR ESTA
+   - Tabla simple: N° Factura, Tracking, Comercio, Fecha, PDF
+   - Modal para agregar compra
+   - Formulario dinámico para prendas
+
+✅ JAVASCRIPT:
+   📁 public/assets/js/purchase-admin-v2.js  ⚠️ USAR ESTE
+   - Agregar prendas dinámicamente
+   - Calcular total automático
+   - Descargar PDF
+
+
+═══════════════════════════════════════════════════════════════
+   INSTALACIÓN PASO A PASO
+═══════════════════════════════════════════════════════════════
+
+PASO 1: CREAR/ACTUALIZAR TABLAS EN LA BASE DE DATOS
+----------------------------------------------------
+1. Abre phpMyAdmin: http://localhost/phpmyadmin
+2. Selecciona la base de datos: barkios_db
+3. Ve a la pestaña "SQL"
+4. Copia y pega el contenido de:
+   database/create_compras.sql
+5. Haz clic en "Continuar"
+
+✅ Resultado esperado:
+   - Tabla "compras" creada
+   - Tabla "prendas_compradas" creada
+   - Vista "vista_compras" creada
+   - Procedimientos creados
+
+
+PASO 2: USAR LOS ARCHIVOS CORRECTOS
+------------------------------------
+⚠️ IMPORTANTE: Usa los archivos con "-v2"
+
+Opción A - Renombrar archivos:
+   1. Elimina: app/views/admin/purchase-admin.php
+   2. Renombra: purchase-admin-v2.php → purchase-admin.php
+   
+   3. Elimina: public/assets/js/purchase-admin.js
+   4. Renombra: purchase-admin-v2.js → purchase-admin.js
+
+Opción B - Actualizar la vista directamente:
+   Edita: app/views/admin/purchase-admin-v2.php
+   Línea 152, cambia:
+   <script src="/BarkiOS/public/assets/js/purchase-admin.js"></script>
+   Por:
+   <script src="/BarkiOS/public/assets/js/purchase-admin-v2.js"></script>
+
+
+PASO 3: CONFIGURAR RUTAS
+-------------------------
+Verifica en tu archivo de rutas (index.php o router):
+
+case '/admin/compras':
+case '/admin/purchases':
+    require_once __DIR__ . '/app/controllers/Admin/PurchaseController.php';
+    break;
+
+
+PASO 4: INSTALAR TCPDF (Librería PDF)
+--------------------------------------
+⚠️ CRÍTICO: Necesitas TCPDF para generar PDFs
+
+Si no tienes Composer instalado:
+   1. Descarga TCPDF de: https://github.com/tecnickcom/TCPDF
+   2. Extrae en: vendor/tecnickcom/tcpdf/
+   3. Asegúrate que existe: vendor/tecnickcom/tcpdf/tcpdf.php
+
+Si tienes Composer:
+   composer require tecnick.com/tcpdf
+
+
+PASO 5: CREAR DIRECTORIO TEMP
+------------------------------
+Crea el directorio para PDFs temporales:
+
+mkdir public/temp
+chmod 777 public/temp
+
+
+PASO 6: VERIFICAR INSTALACIÓN
+------------------------------
+1. Ejecuta estos comandos SQL:
+
+   -- Ver tablas
+   SHOW TABLES LIKE '%compra%';
+   
+   -- Ver estructura
+   DESCRIBE compras;
+   DESCRIBE prendas_compradas;
+   
+   -- Probar procedimiento
+   CALL sp_estadisticas_compras();
+
+2. Navega a: http://localhost/BarkiOS/admin/compras
+
+
+═══════════════════════════════════════════════════════════════
+   ESTRUCTURA DE LA BASE DE DATOS
+═══════════════════════════════════════════════════════════════
+
+TABLA: compras (Encabezado)
++----------------+---------------+--------------------------------+
+| Campo          | Tipo          | Descripción                    |
++----------------+---------------+--------------------------------+
+| compra_id      | INT(11)       | ID único                       |
+| proveedor_id   | VARCHAR(12)   | RIF del proveedor/comercio     |
+| factura_numero | VARCHAR(50)   | Número de factura (único)      |
+| fecha_compra   | DATETIME      | Fecha de la compra             |
+| tracking       | VARCHAR(100)  | Número de seguimiento          |
+| monto_total    | DECIMAL(12,2) | Total pagado                   |
+| pdf_generado   | TINYINT(1)    | Si se generó el PDF            |
+| activo         | TINYINT(1)    | 1=activo, 0=eliminado          |
++----------------+---------------+--------------------------------+
+
+TABLA: prendas_compradas (Detalle - CADA PRENDA ES ÚNICA)
++---------------------+---------------+--------------------------------+
+| Campo               | Tipo          | Descripción                    |
++---------------------+---------------+--------------------------------+
+| prenda_comprada_id  | INT(11)       | ID único                       |
+| compra_id           | INT(11)       | FK a compras                   |
+| producto_nombre     | VARCHAR(200)  | Nombre/descripción completa    |
+| categoria           | VARCHAR(100)  | Categoría (Pantalones, etc)    |
+| precio_costo        | DECIMAL(10,2) | Precio de ESTA prenda única    |
++---------------------+---------------+--------------------------------+
+
+
+═══════════════════════════════════════════════════════════════
+   CÓMO USAR EL MÓDULO
+═══════════════════════════════════════════════════════════════
+
+📝 REGISTRAR UNA COMPRA:
+
+1. Clic en "Nueva Compra"
+
+2. Seleccionar Comercio:
+   - Escribe mínimo 2 letras
+   - Selecciona de la lista
+
+3. Ingresar Datos:
+   - N° de Factura: FACT-USA-2025-001
+   - Tracking: TRACK123456 (opcional)
+
+4. Agregar Prendas (¡IMPORTANTE!):
+   
+   Ejemplo: Compraste 20 pantalones Levi's diferentes
+   
+   Clic en "Agregar Prenda" 20 veces:
+   
+   Prenda 1:
+   - Nombre: Pantalón Levi's 501 Talla 32 Azul Oscuro
+   - Categoría: Pantalones
+   - Precio: $45.00
+   
+   Prenda 2:
+   - Nombre: Pantalón Levi's 501 Talla 34 Negro
+   - Categoría: Pantalones
+   - Precio: $47.50
+   
+   Prenda 3:
+   - Nombre: Pantalón Levi's 505 Talla 32 Azul Claro
+   - Categoría: Pantalones
+   - Precio: $43.00
+   
+   ... y así hasta 20 prendas
+
+5. Verificar Resumen:
+   - Total de Prendas: 20
+   - Monto Total: $920.00 (ejemplo)
+
+6. Guardar:
+   - Clic en "Guardar Compra y Generar PDF"
+   - Se guardará en la base de datos
+   - El PDF se descargará automáticamente
+
+
+📄 EL PDF CONTENDRÁ:
+
+- Información de la compra (factura, proveedor, fecha)
+- Lista COMPLETA de todas las prendas:
+  
+  # | Prenda                                      | Categoría  | Precio
+  1 | Pantalón Levi's 501 Talla 32 Azul Oscuro  | Pantalones | $45.00
+  2 | Pantalón Levi's 501 Talla 34 Negro         | Pantalones | $47.50
+  3 | Pantalón Levi's 505 Talla 32 Azul Claro   | Pantalones | $43.00
+  ... (todas las 20 prendas)
+  
+- Monto Total al final
+
+
+📥 DESCARGAR PDF DESPUÉS:
+
+En la tabla principal, cada compra tiene un botón "Descargar PDF"
+Nombre del archivo: Factura_FACT-USA-001_2025-10-22.pdf
+
+
+═══════════════════════════════════════════════════════════════
+   DIFERENCIAS CON LA VERSIÓN ANTERIOR
+═══════════════════════════════════════════════════════════════
+
+ANTES (Versión con cantidades):
+❌ Producto: Pantalón Levi's
+❌ Cantidad: 20
+❌ Precio Unitario: $45.00
+❌ Subtotal: $900.00
+
+AHORA (Versión simplificada):
+✅ Prenda 1: Pantalón Levi's 501 Talla 32 Azul - $45.00
+✅ Prenda 2: Pantalón Levi's 501 Talla 34 Negro - $47.50
+✅ Prenda 3: Pantalón Levi's 505 Talla 32 Azul - $43.00
+✅ ... (cada prenda es única)
+
+VENTAJAS DE LA NUEVA VERSIÓN:
+✅ Cada prenda tiene su precio individual
+✅ Mejor control de inventario (cada pieza es única)
+✅ PDF detallado con cada artículo
+✅ Trazabilidad completa
+✅ Refleja la realidad: ropa exclusiva
+
+
+═══════════════════════════════════════════════════════════════
+   CATEGORÍAS DISPONIBLES
+═══════════════════════════════════════════════════════════════
+
+Por defecto:
+- Pantalones
+- Camisas
+- Vestidos
+- Zapatos
+- Accesorios
+- Chaquetas
+- Faldas
+
+El sistema también obtiene categorías de la tabla 'prendas' si existe.
+
+
+═══════════════════════════════════════════════════════════════
+   DATOS DE PRUEBA
+═══════════════════════════════════════════════════════════════
+
+-- 1. Crear proveedor de prueba
+INSERT INTO proveedores (id, nombre_empresa, nombre_contacto, direccion, tipo_rif, activo)
+VALUES ('J123456789', 'Fashion Imports NYC', 'Sarah Johnson', 'New York, NY 10001', 'J', 1);
+
+-- 2. Crear una compra de prueba
+INSERT INTO compras (proveedor_id, factura_numero, tracking, monto_total)
+VALUES ('J123456789', 'FACT-NYC-2025-001', 'TRACK-USA-123456', 2150.00);
+
+-- 3. Obtener el ID de la compra
+SET @compra_id = LAST_INSERT_ID();
+
+-- 4. Agregar prendas individuales (ejemplo: 5 prendas)
+INSERT INTO prendas_compradas (compra_id, producto_nombre, categoria, precio_costo) VALUES
+(@compra_id, 'Pantalón Levi''s 501 Original Talla 32 Azul Oscuro', 'Pantalones', 45.00),
+(@compra_id, 'Pantalón Levi''s 501 Original Talla 34 Negro', 'Pantalones', 47.50),
+(@compra_id, 'Camisa Ralph Lauren Slim Fit Blanca Talla M', 'Camisas', 65.00),
+(@compra_id, 'Camisa Tommy Hilfiger Regular Talla L Azul', 'Camisas', 58.00),
+(@compra_id, 'Vestido Calvin Klein Negro Elegante Talla S', 'Vestidos', 120.00);
+
+-- 5. Verificar
+SELECT * FROM vista_compras WHERE compra_id = @compra_id;
+SELECT * FROM prendas_compradas WHERE compra_id = @compra_id;
+
+
+═══════════════════════════════════════════════════════════════
+   TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════
+
+❌ Error: "TCPDF not found"
+   Solución: Instalar TCPDF (ver PASO 4)
+
+❌ Error: "Cannot write to temp directory"
+   Solución: 
+   mkdir public/temp
+   chmod 777 public/temp
+
+❌ No se descarga el PDF
+   Solución: Verifica que TCPDF esté instalado
+   y que el directorio temp tenga permisos
+
+❌ Error: "Debe agregar al menos una prenda"
+   Solución: Asegúrate de hacer clic en "Agregar Prenda"
+   y llenar los campos antes de guardar
+
+❌ No aparecen comercios en la búsqueda
+   Solución: Verifica que haya proveedores activos:
+   SELECT * FROM proveedores WHERE activo = 1;
+
+❌ El PDF está vacío o con errores
+   Solución: Verifica que la compra tenga prendas:
+   SELECT * FROM prendas_compradas WHERE compra_id = X;
+
+
+═══════════════════════════════════════════════════════════════
+   CONSULTAS ÚTILES SQL
+═══════════════════════════════════════════════════════════════
+
+-- Ver todas las compras
+SELECT * FROM vista_compras;
+
+-- Ver prendas de una compra específica
+SELECT * FROM prendas_compradas WHERE compra_id = 1;
+
+-- Estadísticas generales
+CALL sp_estadisticas_compras();
+
+-- Detalle completo de una compra
+CALL sp_detalle_compra(1);
+
+-- Compras por proveedor
+SELECT proveedor, COUNT(*) as total, SUM(monto_total) as total_gastado
+FROM vista_compras
+GROUP BY proveedor;
+
+-- Prendas por categoría
+SELECT categoria, COUNT(*) as cantidad, SUM(precio_costo) as total
+FROM prendas_compradas pc
+INNER JOIN compras c ON pc.compra_id = c.compra_id
+WHERE c.activo = 1
+GROUP BY categoria;
+
+
+═══════════════════════════════════════════════════════════════
+   NOTAS IMPORTANTES
+═══════════════════════════════════════════════════════════════
+
+⚠️  CADA PRENDA ES ÚNICA:
+   No uses cantidades. Si compraste 50 camisas, debes
+   agregar 50 filas individuales, cada una con su
+   descripción y precio.
+
+💡 NOMBRAMIENTO DESCRIPTIVO:
+   Sé específico en el nombre de cada prenda:
+   ✅ "Pantalón Levi's 501 Talla 32 Azul Oscuro Slim Fit"
+   ❌ "Pantalón"
+
+📄 PDF AUTOMÁTICO:
+   Al guardar una compra, el PDF se descarga automáticamente.
+   También puedes descargarlo después desde la tabla.
+
+🗂️  ORGANIZACIÓN POR CATEGORÍAS:
+   El PDF agrupa las prendas por categoría para
+   mejor visualización.
+
+
+═══════════════════════════════════════════════════════════════
+   SOPORTE Y ARCHIVOS
+═══════════════════════════════════════════════════════════════
+
+📁 Archivos principales:
+   - SQL: database/create_compras.sql
+   - Modelo: app/models/Purchase.php
+   - Controlador: app/controllers/Admin/PurchaseController.php
+   - Vista: app/views/admin/purchase-admin-v2.php ⚠️
+   - JS: public/assets/js/purchase-admin-v2.js ⚠️
+   - PDF: app/utils/PurchasePdfGenerator.php
+
+📖 Documentación:
+   - Este archivo: INSTALACION_COMPRAS_SIMPLIFICADO.txt
+   - README anterior: docs/MODULO_COMPRAS_README.md (obsoleto)
+
+
+═══════════════════════════════════════════════════════════════
+   ¡INSTALACIÓN COMPLETA!
+═══════════════════════════════════════════════════════════════
+
+Sigue los 6 pasos de instalación y estarás listo para:
+✅ Registrar compras de ropa exclusiva
+✅ Agregar prendas individuales con sus precios
+✅ Generar PDFs profesionales automáticamente
+✅ Descargar informes en cualquier momento
+✅ Llevar control exacto de cada pieza comprada
+
+Accede a: http://localhost/BarkiOS/admin/compras
+
+¡Éxito! 🎉
