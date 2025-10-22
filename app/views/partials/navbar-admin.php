@@ -1,8 +1,4 @@
 <nav class="sidebar" id="sidebar">
-    <div class="sidebar-sticky">
-        <div class="sidebar-header">
-            <h3>GARAGE<span>BARKI</span></h3>
-            <p class="mb-0">Panel de Administración</p>
         <div class="sidebar-sticky">
             <div class="sidebar-header">
                 <h3>GARAGE<span>BARKI</span></h3>
@@ -59,9 +55,11 @@
             </li>
             </ul>
             <div class="sidebar-footer">
-                <a class="nav-link" href="/BarkiOS/login/logout">
+                                <a class="nav-link" href="/BarkiOS/login/logout">
                     <i class="fas fa-sign-out-alt"></i>
                     Cerrar Sesión
                 </a>
             </div>
             </div>
+        </div>
+</nav>
