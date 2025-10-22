@@ -1,4 +1,8 @@
 <nav class="sidebar" id="sidebar">
+    <div class="sidebar-sticky">
+        <div class="sidebar-header">
+            <h3>GARAGE<span>BARKI</span></h3>
+            <p class="mb-0">Panel de Administración</p>
         <div class="sidebar-sticky">
             <div class="sidebar-header">
                 <h3>GARAGE<span>BARKI</span></h3>
@@ -47,6 +51,12 @@
                         Cuentas por Pagar
                     </a>
                 </li>
+                <li class="nav-item">
+                <a class="nav-link" href="/BarkiOS/sale/">
+                    <i class="fas fa-receipt"></i>
+                    Notas de Crédito
+                </a>
+            </li>
             </ul>
             <div class="sidebar-footer">
                 <a class="nav-link" href="/BarkiOS/login/logout">
@@ -55,5 +65,3 @@
                 </a>
             </div>
             </div>
-        </div>
-</nav>
