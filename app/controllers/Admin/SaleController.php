@@ -1,38 +1,52 @@
 <?php
-// /app/controllers/Admin/SaleController.php
 use Barkios\models\Sale;
 
-/** 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-*/
+// Proteger el módulo (requiere autenticación)
+require_once __DIR__ . '/LoginController.php';
+checkAuth();
+
 if (session_status() === PHP_SESSION_NONE) session_start();
 
-function index() {
-    $SaleModel = new Sale();
+$saleModel = new Sale();
+handleRequest($saleModel);
+
+/**
+ * Función principal de enrutamiento
+ */
+
+function handleRequest($model)
+{
     $basePath = '/BarkiOS';
 
+    // Validación de sesión
     if (!isset($_SESSION['user_id']) && !isset($_SESSION['admin_logged_in'])) {
         header("Location: {$basePath}/login");
         exit();
     }
 
     $action = $_GET['action'] ?? '';
-    $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
+    $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
               strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
 
     try {
         if ($isAjax) {
             header('Content-Type: application/json; charset=utf-8');
-            handleAjax($SaleModel, $action);
+            handleAjax($model, $action);
         } else {
-            showView();
+            if (empty($action)) {
+               return null;
+            } else {
+                throw new Exception("Acción no válida");
+            }
         }
     } catch (Exception $e) {
+        error_log("SaleController Error: " . $e->getMessage());
         if ($isAjax) {
             http_response_code(500);
-            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+            echo json_encode([
+                'success' => false, 
+                'message' => $e->getMessage()
+            ]);
         } else {
             echo "<h1>Error</h1><p>" . htmlspecialchars($e->getMessage()) . "</p>";
         }
@@ -40,156 +54,295 @@ function index() {
     }
 }
 
-if ($isAjax) {
-    header('Content-Type: application/json; charset=utf-8');
-    error_log("DEBUG: Acción -> $action");
-    handleAjax($SaleModel, $action);
-}
+/**
+ * Manejador de peticiones AJAX
+ */
+function handleAjax($model, $action)
+{
+    $method = $_SERVER['REQUEST_METHOD'];
+    
+    switch ("{$method}_{$action}") {
 
-
-
-function handleAjax($model, $action) {
-    switch ("{$_SERVER['REQUEST_METHOD']}_$action") {
         case 'GET_get_sales':
-            echo json_encode(['success' => true, 'sales' => $model->getAll()]);
+            getSales($model);
             break;
-        case 'GET_get_clients':
-            echo json_encode(['success' => true, 'clients' => $model->getAllClients()]);
-            break;
-        case 'GET_get_employees':
-            echo json_encode(['success' => true, 'employees' => $model->getAllEmployees()]);
-            break;
-        case 'GET_get_products':
-            echo json_encode(['success' => true, 'products' => $model->getAvailableProducts()]);
-            break;
+
         case 'GET_get_by_id':
-            $sale = $model->getSaleWithDetails($_GET['id'] ?? 0);
-            echo json_encode(['success' => !!$sale, 'sale' => $sale]);
+            getSaleById($model);
             break;
-        case 'POST_add_ajax':
+
+        case 'GET_get_clients':
+            getClients($model);
+            break;
+
+        case 'GET_get_employees':
+            getEmployees($model);
+            break;
+
+        case 'GET_get_products':
+            getProducts($model);
+            break;
+
+        case 'GET_get_product_by_code':
+            getProductByCode($model);
+            break;
+
+        case 'POST_add_sale':
             addSale($model);
             break;
-        case 'POST_delete_ajax':
-            $success = $model->cancelSale($_POST['venta_id'] ?? 0);
-            echo json_encode(['success' => $success, 'message' => $success ? 'Venta cancelada' : 'Error']);
-            break;
+
         case 'POST_add_payment':
             addPayment($model);
             break;
-        case 'GET_get_payments':
-            $payments = $model->getPaymentsBySale($_GET['venta_id'] ?? 0);
-            echo json_encode(['success' => true, 'payments' => $payments]);
+
+        case 'POST_cancel_sale':
+            cancelSale($model);
             break;
+
         default:
-            echo json_encode(['success' => false, 'message' => 'Acción inválida']);
+            throw new Exception("Petición no válida: {$method} {$action}");
     }
+
     exit();
 }
 
-function addSale($model) {
-    $required = ['cliente_ced', 'empleado_ced', 'tipo_venta', 'metodo_pago_principal'];
-    foreach ($required as $f) {
-        if (empty($_POST[$f])) throw new Exception("Campo $f requerido");
+/* ============================================================
+   ENDPOINTS GET
+============================================================ */
+
+function getSales($model)
+{
+    try {
+        $sales = $model->getAll();
+        echo json_encode([
+            'success' => true, 
+            'sales' => $sales,
+            'count' => count($sales)
+        ]);
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
     }
+}
 
-    if (empty($_POST['productos'])) throw new Exception("Agregue al menos un producto");
+function getSaleById($model)
+{
+    try {
+        $id = intval($_GET['id'] ?? 0);
+        if ($id <= 0) {
+            throw new Exception("ID de venta inválido");
+        }
 
-    $cliente = trim($_POST['cliente_ced']);
-    $empleado = trim($_POST['empleado_ced']);
-    
-    if (!preg_match('/^\d{7,10}$/', $cliente)) throw new Exception("Cédula de cliente inválida");
-    if (!preg_match('/^\d{7,10}$/', $empleado)) throw new Exception("Cédula de empleado inválida");
-    if (!$model->clientExists($cliente)) throw new Exception("Cliente no existe");
-    if (!$model->employeeExists($empleado)) throw new Exception("Empleado no existe");
+        $venta = $model->getSaleWithDetails($id);
+        echo json_encode([
+            'success' => !!$venta, 
+            'venta' => $venta,
+            'message' => $venta ? 'Venta encontrada' : 'Venta no encontrada'
+        ]);
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
+}
 
-    $subtotal = 0;
-    $productosValidados = [];
+function getClients($model)
+{
+    try {
+        $clients = $model->getClients();
+        echo json_encode([
+            'success' => true, 
+            'clients' => $clients
+        ]);
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
+}
 
-    foreach ($_POST['productos'] as $p) {
-        $cantidad = intval($p['cantidad'] ?? 0);
-        $precio = floatval($p['precio_unitario'] ?? 0);
-        
-        if ($cantidad <= 0 || $precio <= 0) throw new Exception("Datos de producto inválidos");
-        
-        $stock = $model->getProductStock($p['prenda_id']);
-        if ($stock < $cantidad) throw new Exception("Stock insuficiente (ID: {$p['prenda_id']})");
-        
-        $sub = $cantidad * $precio;
-        $subtotal += $sub;
-        $productosValidados[] = [
-            'prenda_id' => $p['prenda_id'],
-            'cantidad' => $cantidad,
-            'precio_unitario' => $precio,
-            'subtotal' => $sub
+function getEmployees($model)
+{
+    try {
+        $employees = $model->getEmployees();
+        echo json_encode([
+            'success' => true, 
+            'employees' => $employees
+        ]);
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
+}
+
+function getProducts($model)
+{
+    try {
+        $products = $model->getProducts();
+        echo json_encode([
+            'success' => true, 
+            'products' => $products,
+            'count' => count($products)
+        ]);
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
+}
+
+function getProductByCode($model)
+{
+    try {
+        $codigo = trim($_GET['codigo'] ?? '');
+        if (empty($codigo)) {
+            throw new Exception("Código de prenda requerido");
+        }
+
+        $product = $model->getProductByCode($codigo);
+        echo json_encode([
+            'success' => !!$product,
+            'product' => $product,
+            'message' => $product ? 'Producto encontrado' : 'Producto no encontrado'
+        ]);
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
+}
+
+/* ============================================================
+   ENDPOINTS POST
+============================================================ */
+
+function addSale($model)
+{
+    try {
+        // Validar campos requeridos
+        $required = ['cliente_ced', 'empleado_ced', 'tipo_venta', 'productos'];
+        foreach ($required as $f) {
+            if (empty($_POST[$f])) {
+                throw new Exception("Campo requerido: $f");
+            }
+        }
+
+        $cliente = trim($_POST['cliente_ced']);
+        $empleado = trim($_POST['empleado_ced']);
+        $tipo = strtolower($_POST['tipo_venta']);
+
+        // Decodificar productos
+        $productos = json_decode($_POST['productos'], true);
+        if (!$productos || !is_array($productos) || count($productos) === 0) {
+            throw new Exception("Debe agregar al menos un producto válido");
+        }
+
+        // Validar que cada producto tenga código_prenda
+        foreach ($productos as $p) {
+            if (empty($p['codigo_prenda']) || empty($p['precio_unitario'])) {
+                throw new Exception("Productos inválidos: falta código o precio");
+            }
+        }
+
+        // Preparar datos de venta
+        $ventaData = [
+            'cliente_ced' => $cliente,
+            'empleado_ced' => $empleado,
+            'tipo_venta' => $tipo,
+            'productos' => $productos,
+            'observaciones' => $_POST['observaciones'] ?? null,
+            'iva_porcentaje' => floatval($_POST['iva_porcentaje'] ?? 16.00),
+            'referencia' => $_POST['referencia'] ?? null
         ];
-    }
 
-    $descuento = ($subtotal * floatval($_POST['descuento'] ?? 0)) / 100;
-    $total = $subtotal - $descuento;
+        // Registrar venta
+        $ventaId = $model->addSale($ventaData);
 
-    if ($total <= 0) throw new Exception("Monto total debe ser mayor a cero");
+        if ($ventaId) {
+            // Obtener referencia generada
+            $venta = $model->getById($ventaId);
+            echo json_encode([
+                'success' => true, 
+                'message' => 'Venta registrada correctamente', 
+                'venta_id' => $ventaId,
+                'referencia' => $venta['referencia'] ?? null
+            ]);
+        } else {
+            throw new Exception("Error al registrar la venta");
+        }
 
-    $ventaId = $model->addSale([
-        'cliente_ced' => $cliente,
-        'empleado_ced' => $empleado,
-        'tipo_venta' => $_POST['tipo_venta'],
-        'metodo_pago' => $_POST['metodo_pago_principal'],
-        'subtotal' => $subtotal,
-        'descuento' => $descuento,
-        'monto_total' => $total,
-        'observaciones' => $_POST['observaciones'] ?? null,
-        'productos' => $productosValidados
-    ]);
-
-    if ($ventaId) {
-        echo json_encode(['success' => true, 'message' => 'Venta registrada', 'venta_id' => $ventaId]);
-    } else {
-        throw new Exception("Error al procesar la venta");
-    }
-}
-
-function addPayment($model) {
-    $required = ['venta_id', 'monto', 'metodo_pago'];
-    foreach ($required as $f) {
-        if (empty($_POST[$f])) throw new Exception("Campo $f requerido");
-    }
-
-    $monto = floatval($_POST['monto']);
-    if ($monto <= 0) throw new Exception("Monto inválido");
-
-    $metodo = $_POST['metodo_pago'];
-    if (in_array($metodo, ['transferencia', 'pago_movil', 'cheque']) && empty($_POST['referencia'])) {
-        throw new Exception("Referencia requerida para este método");
-    }
-
-    $pagoId = $model->addPayment([
-        'venta_id' => $_POST['venta_id'],
-        'monto' => $monto,
-        'metodo_pago' => $metodo,
-        'referencia' => $_POST['referencia'] ?? null,
-        'banco' => $_POST['banco'] ?? null,
-        'observaciones' => $_POST['observaciones'] ?? null
-    ]);
-
-    if ($pagoId) {
-        echo json_encode(['success' => true, 'message' => 'Pago registrado', 'pago_id' => $pagoId]);
-    } else {
-        throw new Exception("Error al registrar pago");
+    } catch (Exception $e) {
+        echo json_encode([
+            'success' => false, 
+            'message' => $e->getMessage()
+        ]);
     }
 }
 
-function showView() {
+function addPayment($model)
+{
+    try {
+        $ventaId = intval($_POST['venta_id'] ?? 0);
+        $monto = floatval($_POST['monto'] ?? 0);
+
+        if ($ventaId <= 0) {
+            throw new Exception("ID de venta inválido");
+        }
+
+        if ($monto <= 0) {
+            throw new Exception("Monto de pago inválido");
+        }
+
+        $success = $model->addPayment([
+            'venta_id' => $ventaId,
+            'monto' => $monto,
+            'observaciones' => $_POST['observaciones'] ?? null
+        ]);
+
+        echo json_encode([
+            'success' => $success,
+            'message' => $success ? 'Pago registrado correctamente' : 'Error al registrar el pago'
+        ]);
+
+    } catch (Exception $e) {
+        echo json_encode([
+            'success' => false, 
+            'message' => $e->getMessage()
+        ]);
+    }
+}
+
+function cancelSale($model)
+{
+    try {
+        $id = intval($_POST['venta_id'] ?? 0);
+        if ($id <= 0) {
+            throw new Exception("ID de venta inválido");
+        }
+
+        $success = $model->cancelSale($id);
+        echo json_encode([
+            'success' => $success,
+            'message' => $success ? 'Venta anulada correctamente' : 'Error al anular venta'
+        ]);
+
+    } catch (Exception $e) {
+        echo json_encode([
+            'success' => false, 
+            'message' => $e->getMessage()
+        ]);
+    }
+}
+
+/* ============================================================
+   MOSTRAR VISTA
+============================================================ */
+
+function index()
+{
     $paths = [
         __DIR__ . '/../../views/admin/sale-admin.php',
         dirname(__DIR__, 2) . '/views/admin/sale-admin.php'
     ];
-    
+
     foreach ($paths as $path) {
         if (file_exists($path)) {
             require $path;
             return;
         }
     }
-    
+
     throw new Exception("Vista no encontrada");
 }
+
+

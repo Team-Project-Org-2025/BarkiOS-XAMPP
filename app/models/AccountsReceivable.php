@@ -20,15 +20,17 @@ class AccountsReceivable extends Database {
     public function getAll() {
         try {
             $stmt = $this->db->query("
-                SELECT cc.*, 
-                        CONCAT(c.nombre, ' ', c.apellido) as nombre_cliente
+                SELECT cc.cuenta_cobrar_id, cc.credito_id, cc.emision, cc.vencimiento, cc.estado,
+                       c.nombre_cliente, c.cliente_ced, v.monto_total
                 FROM cuentas_cobrar cc
-                JOIN clientes c ON cc.cliente_id = c.id
-                WHERE cc.activo = 1 
-                ORDER BY cc.id ASC
+                LEFT JOIN credito cr ON cc.credito_id = cr.credito_id
+                LEFT JOIN ventas v ON cr.venta_id = v.venta_id
+                LEFT JOIN clientes c ON v.cliente_ced = c.cliente_ced
+                ORDER BY cc.cuenta_cobrar_id DESC
             ");
             return $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
         } catch (\Throwable $e) {
+            error_log("Error en getAll AccountsReceivable: " . $e->getMessage());
             return [];
         }
     }
@@ -53,46 +55,78 @@ class AccountsReceivable extends Database {
      */
     public function getById($cuentaPorCobrar) {
         $stmt = $this->db->prepare("
-            SELECT cc.*, 
-                    CONCAT(c.nombre, ' ', c.apellido) as nombre_cliente
+            SELECT cc.cuenta_cobrar_id, cc.credito_id, cc.emision, cc.vencimiento, cc.estado,
+                   c.nombre_cliente, c.cliente_ced
             FROM cuentas_cobrar cc
-            JOIN clientes c ON cc.cliente_id = c.id
-            WHERE cc.id = :id
+            LEFT JOIN credito cr ON cc.credito_id = cr.credito_id
+            LEFT JOIN ventas v ON cr.venta_id = v.venta_id
+            LEFT JOIN clientes c ON v.cliente_ced = c.cliente_ced
+            WHERE cc.cuenta_cobrar_id = :cuenta_cobrar_id
         ");
         $stmt->execute([':cuenta_cobrar_id' => $cuentaPorCobrar]);
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
     /**
-     * Agrega un nuevo cliente a la base de datos.
+     * Crea un nuevo cliente en la base de datos.
      * 
-     * @param int|string $cuentaPorCobrar Cédula del cliente.
-     * @param string $nombre Nombre del cliente.
-     * @param string $direccion Dirección del cliente.
-     * @param string $telefono Teléfono del cliente.
-     * @param string $membresia Tipo de membresía del cliente.
-     * @return bool True si se insertó correctamente, false en caso contrario.
-     * @throws Exception Si el cliente ya existe.
+     * @param array $datos Datos del cliente a crear.
+     * @return array Resultado de la operación (éxito o error).
      */
-    public function add($datos) {
-        $stmt = $this->db->prepare("
-            INSERT INTO cuentas_cobrar (
-                cliente_id, factura_numero, fecha_emision, 
-                fecha_vencimiento, monto_total, estado
-            ) VALUES (
-                :cliente_id, :factura_numero, :fecha_emision, 
-                :fecha_vencimiento, :monto_total, :estado
-            )
-        ");
-
-        return $stmt->execute([
-            ':factura_numero' => $datos['factura_numero'],
-            ':cliente_id' => $datos['cliente_id'],
-            ':fecha_emision' => $datos['fecha_emision'],
-            ':fecha_vencimiento' => $datos['fecha_vencimiento'],
-            ':monto_total' => $datos['monto_total'],
-            ':estado' => $datos['estado'] ?? 'Pendiente'
-        ]);
+    public function create($datos) {
+        try {
+            $this->db->beginTransaction();
+            
+            // 1. Crear venta
+            $stmtVenta = $this->db->prepare("
+                INSERT INTO ventas (fecha, monto_total, cliente_ced, observaciones)
+                VALUES (:fecha, :monto_total, :cliente_ced, :observaciones)
+            ");
+            $stmtVenta->execute([
+                ':fecha' => $datos['fecha_emision'],
+                ':monto_total' => $datos['monto_total'],
+                ':cliente_ced' => $datos['cliente_id'],
+                ':observaciones' => 'Factura: ' . $datos['factura_numero']
+            ]);
+            $venta_id = $this->db->lastInsertId();
+            
+            // 2. Crear crédito
+            $stmtCredito = $this->db->prepare("
+                INSERT INTO credito (venta_id, cuenta_cobrar_id)
+                VALUES (:venta_id, NULL)
+            ");
+            $stmtCredito->execute([':venta_id' => $venta_id]);
+            $credito_id = $this->db->lastInsertId();
+            
+            // 3. Crear cuenta por cobrar
+            $stmtCuenta = $this->db->prepare("
+                INSERT INTO cuentas_cobrar (credito_id, emision, vencimiento, estado)
+                VALUES (:credito_id, :emision, :vencimiento, :estado)
+            ");
+            $stmtCuenta->execute([
+                ':credito_id' => $credito_id,
+                ':emision' => $datos['fecha_emision'],
+                ':vencimiento' => $datos['fecha_vencimiento'],
+                ':estado' => $datos['estado'] ?? 'pendiente'
+            ]);
+            $cuenta_cobrar_id = $this->db->lastInsertId();
+            
+            // 4. Actualizar el crédito con el ID de cuenta por cobrar
+            $stmtUpdateCredito = $this->db->prepare("
+                UPDATE credito SET cuenta_cobrar_id = :cuenta_cobrar_id WHERE credito_id = :credito_id
+            ");
+            $stmtUpdateCredito->execute([
+                ':cuenta_cobrar_id' => $cuenta_cobrar_id,
+                ':credito_id' => $credito_id
+            ]);
+            
+            $this->db->commit();
+            return ['success' => true, 'id' => $cuenta_cobrar_id];
+        } catch (\Exception $e) {
+            $this->db->rollBack();
+            error_log("Error en create AccountsReceivable: " . $e->getMessage());
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
     }
 
     /**

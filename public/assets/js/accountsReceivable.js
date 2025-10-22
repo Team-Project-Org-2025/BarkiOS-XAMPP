@@ -27,56 +27,99 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // Búsqueda de clientes VIP
+    // Validación en tiempo real para el número de factura
+    const facturaNumeroInput = document.getElementById('facturaNumero');
+    if (facturaNumeroInput) {
+        facturaNumeroInput.addEventListener('input', function(e) {
+            // Solo permitir números
+            this.value = this.value.replace(/[^0-9]/g, '');
+            
+            // Validar longitud
+            if (this.value.length === 8) {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            } else if (this.value.length > 0) {
+                this.classList.remove('is-valid');
+                this.classList.add('is-invalid');
+            } else {
+                this.classList.remove('is-valid', 'is-invalid');
+            }
+        });
+    }
+
+    // Búsqueda de clientes VIP con debounce de 300ms
     const searchClientInput = document.getElementById('searchClient');
     const clientResults = document.getElementById('clientResults');
     const clienteIdInput = document.getElementById('clienteId');
+    let searchTimeout = null;
 
     if (searchClientInput) {
         searchClientInput.addEventListener('input', function(e) {
+            // Limpiar el timeout anterior
             clearTimeout(searchTimeout);
             const query = this.value.trim();
             
-            if (query.length < 2) {
+            // Limpiar el cliente seleccionado si el usuario modifica el texto
+            if (clienteIdInput.value) {
+                clienteIdInput.value = '';
+            }
+            
+            // Si la consulta es muy corta, ocultar resultados
+            if (query.length < 1) {
                 clientResults.style.display = 'none';
+                clientResults.innerHTML = '';
                 return;
             }
             
-            clientResults.innerHTML = '<div class="list-group-item">Buscando...</div>';
+            // Mostrar indicador de búsqueda
+            clientResults.innerHTML = '<div class="list-group-item"><i class="fas fa-spinner fa-spin me-2"></i>Buscando clientes VIP...</div>';
             clientResults.style.display = 'block';
             
+            // Implementar debounce de 300ms
             searchTimeout = setTimeout(() => {
-                fetch(`/BarkiOS/app/controllers/Admin/ClientsController.php?action=search_vip&q=${encodeURIComponent(query)}`, {
+                fetch(`/BarkiOS/clients/?action=search_vip_clients&q=${encodeURIComponent(query)}`, {
                     headers: { 'X-Requested-With': 'XMLHttpRequest' }
                 })
                 .then(r => r.json())
                 .then(data => {
-                    if (data.success && data.clients.length > 0) {
+                    if (data.success && data.clients && data.clients.length > 0) {
                         clientResults.innerHTML = data.clients.map(client => `
                             <button type="button" class="list-group-item list-group-item-action" 
-                                    data-id="${client.id}" 
-                                    data-nombre="${escapeHtml(client.nombre)} ${escapeHtml(client.apellido || '')}">
-                                ${escapeHtml(client.nombre)} ${escapeHtml(client.apellido || '')}
-                                <small class="text-muted">${escapeHtml(client.cedula || '')}</small>
+                                    data-cedula="${escapeHtml(client.cliente_ced)}" 
+                                    data-nombre="${escapeHtml(client.nombre_cliente)}">
+                                <strong>${escapeHtml(client.nombre_cliente)}</strong>
+                                <br>
+                                <small class="text-muted">
+                                    <i class="fas fa-id-card me-1"></i>Cédula: ${escapeHtml(client.cliente_ced)}
+                                    ${client.telefono ? `<i class="fas fa-phone ms-2 me-1"></i>${escapeHtml(client.telefono)}` : ''}
+                                </small>
                             </button>
                         `).join('');
 
+                        // Agregar manejadores de eventos a los resultados
                         document.querySelectorAll('#clientResults button').forEach(btn => {
                             btn.addEventListener('click', (e) => {
+                                e.preventDefault();
                                 const client = e.currentTarget;
                                 searchClientInput.value = client.dataset.nombre;
-                                clienteIdInput.value = client.dataset.id;
+                                clienteIdInput.value = client.dataset.cedula;
                                 clientResults.style.display = 'none';
+                                clientResults.innerHTML = '';
+                                
+                                // Marcar el campo como válido
+                                searchClientInput.classList.remove('is-invalid');
+                                searchClientInput.classList.add('is-valid');
                             });
                         });
                     } else {
-                        clientResults.innerHTML = '<div class="list-group-item">No se encontraron clientes VIP</div>';
+                        clientResults.innerHTML = '<div class="list-group-item text-muted"><i class="fas fa-info-circle me-2"></i>No se encontraron clientes VIP con ese nombre</div>';
                     }
                 })
-                .catch(() => {
-                    clientResults.innerHTML = '<div class="list-group-item text-danger">Error al buscar</div>';
+                .catch(error => {
+                    console.error('Error al buscar clientes VIP:', error);
+                    clientResults.innerHTML = '<div class="list-group-item text-danger"><i class="fas fa-exclamation-triangle me-2"></i>Error al realizar la búsqueda</div>';
                 });
-            }, 300);
+            }, 300); // Debounce de 300ms
         });
 
         // Ocultar resultados al hacer clic fuera
@@ -85,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 clientResults.style.display = 'none';
             }
         });
-    } // Resto del código Original
+    }
 
     // Cargar cuentas
     function fetchAccounts() {
@@ -189,10 +232,33 @@ document.addEventListener('DOMContentLoaded', () => {
     // Funciones de manejo de eventos
     async function handleAdd(e) {
         e.preventDefault();
+        
+        // Validar número de factura (exactamente 8 dígitos)
+        if (!facturaNumeroInput || !facturaNumeroInput.value || facturaNumeroInput.value.length !== 8) {
+            showAlert('El número de factura debe tener exactamente 8 dígitos', 'warning');
+            facturaNumeroInput.focus();
+            return;
+        }
+        
+        // Validar que se haya seleccionado un cliente VIP
+        if (!clienteIdInput || !clienteIdInput.value) {
+            showAlert('Por favor seleccione un cliente VIP de la lista', 'warning');
+            searchClientInput.focus();
+            return;
+        }
+        
         const formData = new FormData(addForm);
         
+        // Mostrar indicador de carga
+        const btnGuardar = document.getElementById('btnGuardar');
+        const btnSpinner = btnGuardar.querySelector('.spinner-border');
+        const btnText = btnGuardar.querySelector('.btn-text');
+        btnGuardar.disabled = true;
+        btnSpinner.classList.remove('d-none');
+        btnText.textContent = 'Guardando...';
+        
         try {
-            const response = await fetch(window.location.pathname + '?action=add', {
+            const response = await fetch(window.location.pathname + '?action=add_ajax', {
                 method: 'POST',
                 body: formData,
                 headers: {
@@ -205,6 +271,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (result.success) {
                 showAlert('Cuenta por cobrar agregada correctamente', 'success');
                 addForm.reset();
+                
+                // Limpiar validaciones visuales
+                if (facturaNumeroInput) facturaNumeroInput.classList.remove('is-valid', 'is-invalid');
+                if (searchClientInput) searchClientInput.classList.remove('is-valid', 'is-invalid');
+                if (clienteIdInput) clienteIdInput.value = '';
+                
                 const modal = bootstrap.Modal.getInstance(document.getElementById('addAccountModal'));
                 if (modal) modal.hide();
                 fetchAccounts();
@@ -214,7 +286,37 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('Error:', error);
             showAlert('Error al procesar la solicitud', 'error');
+        } finally {
+            // Restaurar botón
+            btnGuardar.disabled = false;
+            btnSpinner.classList.add('d-none');
+            btnText.textContent = 'Guardar';
         }
+    }
+
+    // Limpiar el formulario al cerrar el modal
+    const addAccountModal = document.getElementById('addAccountModal');
+    if (addAccountModal) {
+        addAccountModal.addEventListener('hidden.bs.modal', () => {
+            if (addForm) {
+                addForm.reset();
+            }
+            if (facturaNumeroInput) {
+                facturaNumeroInput.classList.remove('is-valid', 'is-invalid');
+                facturaNumeroInput.value = '';
+            }
+            if (searchClientInput) {
+                searchClientInput.classList.remove('is-valid', 'is-invalid');
+                searchClientInput.value = '';
+            }
+            if (clienteIdInput) {
+                clienteIdInput.value = '';
+            }
+            if (clientResults) {
+                clientResults.style.display = 'none';
+                clientResults.innerHTML = '';
+            }
+        });
     }
 
     // Implementar handleEdit, loadAccountForEdit y handleDelete de manera similar
