@@ -118,3 +118,25 @@ function logout() {
     header('Location: /BarkiOS/login/show');
     exit();
 }
+
+function logout_ajax() {
+    // Solo aceptamos peticiones AJAX
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST' || empty($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+        header('HTTP/1.1 400 Bad Request');
+        echo json_encode(['success' => false, 'message' => 'Petición inválida']);
+        exit();
+    }
+
+    // Destruir la sesión de forma segura
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    session_unset();
+    session_destroy();
+
+    // Respuesta JSON
+    header('Content-Type: application/json');
+    echo json_encode(['success' => true]);
+    exit();
+}
