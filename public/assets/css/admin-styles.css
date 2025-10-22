@@ -84,24 +84,49 @@ body {
   top: 0;
   bottom: 0;
   left: 0;
-  z-index: 100;
-  padding: 0;
-  box-shadow: none;
-  border-right: 1px solid var(--border-color);
-  background-color: var(--white-color);
-  transition: all 0.3s;
   width: 250px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--white-color);
+  border-right: 1px solid var(--border-color);
+  z-index: 100;
+  transition: all 0.3s;
+}
+
+.sidebar-header {
+  padding: 1rem;
+  color: var(--primary-color);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .sidebar-sticky {
-  position: sticky;
-  top: 0;
-  height: calc(100vh);
-  padding-top: 1rem;
-  overflow-x: hidden;
+  flex: 1 1 auto;
   overflow-y: auto;
+  overflow-x: hidden;
+  padding-top: 1rem;
+  min-height: 0;
 }
 
+.sidebar-footer {
+  flex-shrink: 0;
+  padding: 1rem;
+  color: var(--gray-color);
+  border-top: 1px solid var(--border-color);
+  background-color: var(--white-color);
+}
+
+/* Scrollbar personalizado (opcional) */
+.sidebar-sticky::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-sticky::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.15);
+  border-radius: 10px;
+}
+
+/* Links del menú */
 .sidebar .nav-link {
   font-weight: 500;
   color: var(--gray-color);
@@ -125,21 +150,6 @@ body {
   margin-right: 0.5rem;
   width: 30px;
   text-align: center;
-}
-
-.sidebar-header {
-  padding: 1rem;
-  color: var(--primary-color);
-  border-bottom: 1px solid var(--border-color);
-}
-
-.sidebar-footer {
-  padding: 1rem;
-  color: var(--gray-color);
-  border-top: 1px solid var(--border-color);
-  position: absolute;
-  bottom: 0;
-  width: 100%;
 }
 
 /* Main Content */
@@ -227,10 +237,9 @@ body {
   font-weight: 600;
 }
 
-/* --- Mejoras tabla moderna (alineación + hover limpio) --- */
 .table-modern tbody tr td {
   vertical-align: middle;
-  text-align: center; /* centra horizontalmente */
+  text-align: center;
   padding: 0.6rem;
 }
 
@@ -256,7 +265,7 @@ body {
   border-radius: 6px;
 }
 
-/* ✅ BADGES DE ESTATUS */
+/* Badges de Estatus */
 .badge-status {
   padding: 0.4rem 0.6rem;
   font-size: 0.75rem;
@@ -279,7 +288,7 @@ body {
   color: var(--gray-color);
 }
 
-/* Forms - Wireframe Style */
+/* Forms */
 .form-label {
   font-weight: 500;
 }
@@ -295,6 +304,7 @@ body {
   border: 1px solid var(--border-color);
 }
 
+/* Color y Talla */
 .color-option {
   display: inline-block;
   width: 25px;
@@ -352,7 +362,7 @@ body {
   }
 }
 
-/* Navbar - Wireframe Style */
+/* Navbar */
 .navbar {
   background-color: var(--white-color);
   box-shadow: none;
@@ -440,7 +450,7 @@ body {
   overflow-y: auto;
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
   border-radius: 0.25rem;
-  display: none; /* Ocultar inicialmente */
+  display: none;
 }
 
 #clientResults .list-group-item {
@@ -486,13 +496,13 @@ body {
 }
 
 @keyframes spin {
-  to { transform: translateY(-50%) rotate(360deg); }
+  to {
+    transform: translateY(-50%) rotate(360deg);
+  }
 }
 
-/* Centrar el contenido dentro del modal de vista */
-/* Centrar SOLO la tabla de productos dentro del modal */
-/* TABLA DEL DETALLE — a ancho completo */
+/* Tabla Detalle de Venta */
 #saleDetailsContent table {
-    width: 100% !important;
-    margin: 0;              /* elimina márgenes laterales */
+  width: 100% !important;
+  margin: 0;
 }
