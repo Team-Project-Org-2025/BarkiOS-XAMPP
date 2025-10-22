@@ -8,7 +8,6 @@ require_once __DIR__ . '/../services/ExchangeRateService.php';
 
 use Barkios\services\ExchangeRateService;
 
-// 2. Obtener la Tasa de Cambio
 $exchangeService = new ExchangeRateService();
 $dolarBCVRate = $exchangeService->getDollarRate();
 

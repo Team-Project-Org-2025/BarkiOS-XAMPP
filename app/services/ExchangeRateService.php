@@ -1,52 +1,58 @@
 <?php
-// app/services/ExchangeRateService.php
 namespace Barkios\services;
 
-use Exception;
-
-/**
- * Service to fetch currency exchange rates, specifically USD to VEF.
- * Uses a third-party API to obtain the market reference.
- */
 class ExchangeRateService {
 
-    // Robust endpoint to get the USD to VES rate (Example: Exchange Rate Host)
-    private const API_URL = 'https://api.exchangerate.host/latest?base=USD&symbols=VES';
+    private const API_URL = 'https://bcv-api.rafnixg.dev/rates/';
+
+    // Valor de respaldo en caso de que la API falle
+    private const FALLBACK_RATE = 210.28; // Actualízalo según la última tasa conocida
 
     /**
-     * Gets the exchange rate of the US Dollar against the Bolívar (VEF).
-     * @return float|null The exchange rate (VEF per 1 USD) or null if it fails.
+     * Obtiene la tasa de cambio oficial del Dólar (USD) a Bolívar Soberano (VES) del BCV.
+     * @return float La tasa de cambio (usando fallback si hay error)
      */
-    public function getDollarRate(): ?float {
-        // Initializes cURL
+    public function getDollarRate(): float {
         $ch = curl_init(self::API_URL);
-        
-        // cURL configuration
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); // Returns the response as a string
-        curl_setopt($ch, CURLOPT_TIMEOUT, 5); // Maximum wait time
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
+
+        // Cabeceras simulando un navegador real
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Accept: application/json',
+            'Accept: application/json,text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language: es-ES,es;q=0.9',
+            'Connection: keep-alive',
+            'Referer: https://bcv-api.rafnixg.dev/',
+            'Origin: https://bcv-api.rafnixg.dev',
         ]);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36');
 
         $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $error = curl_error($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curl_error = curl_error($ch);
         curl_close($ch);
 
-        // Connection error handling
-        if ($response === false || $httpCode !== 200) {
-            error_log("Error connecting to Exchange Rate API. HTTP Code: $httpCode. cURL Error: $error");
-            return null;
+        // Si hubo error de cURL o HTTP distinto a 200, usamos fallback
+        if ($curl_error || $http_code !== 200) {
+            error_log("ExchangeRateService: Error al obtener la tasa. cURL: $curl_error, HTTP: $http_code. Usando fallback.");
+            return self::FALLBACK_RATE;
         }
 
         $data = json_decode($response, true);
 
-        // Value extraction: Assumes the JSON response has the path ['rates']['VES']
-        if (isset($data['rates']['VES']) && is_numeric($data['rates']['VES'])) {
-            return (float)$data['rates']['VES'];
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            error_log("ExchangeRateService: JSON inválido. Error: " . json_last_error_msg() . ". Usando fallback.");
+            return self::FALLBACK_RATE;
         }
 
-        error_log("Unexpected API response or incorrect format (did not find 'rates.VES'): " . $response);
-        return null;
+        $rate = $data['dollar'] ?? null;
+
+        if (!$rate || !is_numeric($rate)) {
+            error_log("ExchangeRateService: La API devolvió 'N/D' o valor inválido. Usando fallback.");
+            return self::FALLBACK_RATE;
+        }
+
+        return (float)$rate;
     }
 }
