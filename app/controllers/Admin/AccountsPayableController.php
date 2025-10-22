@@ -4,6 +4,13 @@
 use Barkios\models\AccountsPayable;
 use Barkios\models\Supplier;
 
+
+require_once __DIR__ . '/LoginController.php';
+
+
+// ✅ Protege todo el módulo
+checkAuth();
+
 $accountsPayableModel = new AccountsPayable();
 $supplierModel = new Supplier();
 
