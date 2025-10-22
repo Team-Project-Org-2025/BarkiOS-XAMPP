@@ -3,50 +3,65 @@
         <div class="sidebar-header">
             <h3>GARAGE<span>BARKI</span></h3>
             <p class="mb-0">Panel de Administración</p>
-        </div>
-        <ul class="nav flex-column">
-            <li class="nav-item">
-                <a class="nav-link" href="/BarkiOS/home/">
-                    <i class="fas fa-tachometer-alt"></i>
-                    Inicio
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/BarkiOS/products/">
-                    <i class="fas fa-tshirt"></i>
-                    Productos
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/BarkiOS/supplier/">
-                    <i class="fas fa-shopping-cart"></i>
-                    Proveedores
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/BarkiOS/clients/">
-                    <i class="fas fa-users"></i>
-                    Clientes
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/BarkiOS/accounts-receivable/">
-                    <i class="fas fa-file-invoice-dollar"></i>
-                    Cuentas por Cobrar
-                </a>
-            </li>
-            <li class="nav-item">
+        <div class="sidebar-sticky">
+            <div class="sidebar-header">
+                <h3>GARAGE<span>BARKI</span></h3>
+                <p class="mb-0">Panel de Administración</p>
+            </div>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="/BarkiOS/home/">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Inicio
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/BarkiOS/products/">
+                        <i class="fas fa-tshirt"></i>
+                        Productos
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/BarkiOS/supplier/">
+                        <i class="fas fa-shopping-cart"></i>
+                        Proveedores
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/BarkiOS/clients/">
+                        <i class="fas fa-users"></i>
+                        Clientes
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/BarkiOS/users">
+                        <i class="fas fa-user-shield"></i>
+                        Usuarios
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/BarkiOS/accounts-receivable/">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                        Cuentas por Cobrar
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/BarkiOS/accounts-payable/">
+                        <i class="fas fa-file-invoice"></i>
+                        Cuentas por Pagar
+                    </a>
+                </li>
+                <li class="nav-item">
                 <a class="nav-link" href="/BarkiOS/sale/">
                     <i class="fas fa-receipt"></i>
                     Notas de Crédito
                 </a>
             </li>
-        </ul>
-        <div class="sidebar-footer">
-            <a class="nav-link" href="/BarkiOS/login/logout">
-                <i class="fas fa-sign-out-alt"></i>
-                Cerrar Sesión
-            </a>
-        </div>
-    </div>
-</nav>
+            </ul>
+            <div class="sidebar-footer">
+                <a class="nav-link" href="/BarkiOS/login/logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Cerrar Sesión
+                </a>
+            </div>
+            </div>
