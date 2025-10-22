@@ -41,6 +41,12 @@
                     Notas de Crédito
                 </a>
             </li>
+            <li class="nav-item">
+                    <a class="nav-link" href="/BarkiOS/users">
+                        <i class="fas fa-user-shield"></i>
+                        Usuarios
+                    </a>
+            </li>
         </ul>
         <div class="sidebar-footer">
             <a class="nav-link" href="/BarkiOS/login/logout">

@@ -227,40 +227,56 @@ body {
   font-weight: 600;
 }
 
-.product-img {
-  width: 50px;
-  height: 50px;
-  object-fit: cover;
-  border-radius: 4px;
-  background-color: var(--light-gray);
-  border: 1px solid var(--border-color);
+/* --- Mejoras tabla moderna (alineación + hover limpio) --- */
+.table-modern tbody tr td {
+  vertical-align: middle;
+  text-align: center; /* centra horizontalmente */
+  padding: 0.6rem;
 }
 
-.status-badge {
-  padding: 0.25rem 0.5rem;
-  border-radius: 50px;
+.table-modern thead th {
+  text-align: center;
+}
+
+.table-modern tbody tr:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.table-modern td .btn-group {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.table-modern td .btn {
+  margin: 0;
+  padding: 0.35rem 0.5rem;
+  line-height: 1;
+  border-radius: 6px;
+}
+
+/* ✅ BADGES DE ESTATUS */
+.badge-status {
+  padding: 0.4rem 0.6rem;
   font-size: 0.75rem;
+  border-radius: 50px;
   font-weight: 600;
 }
 
-.status-badge.pending {
-  background-color: rgba(255, 193, 7, 0.2);
-  color: #856404;
+.badge-activo {
+  background-color: rgba(40, 167, 69, 0.15);
+  color: var(--success-color);
 }
 
-.status-badge.processing {
-  background-color: rgba(23, 162, 184, 0.2);
-  color: #0c5460;
+.badge-bloqueado {
+  background-color: rgba(220, 53, 69, 0.15);
+  color: var(--danger-color);
 }
 
-.status-badge.completed {
-  background-color: rgba(40, 167, 69, 0.2);
-  color: #155724;
-}
-
-.status-badge.cancelled {
-  background-color: rgba(220, 53, 69, 0.2);
-  color: #721c24;
+.badge-inactivo {
+  background-color: rgba(108, 117, 125, 0.15);
+  color: var(--gray-color);
 }
 
 /* Forms - Wireframe Style */
@@ -471,4 +487,12 @@ body {
 
 @keyframes spin {
   to { transform: translateY(-50%) rotate(360deg); }
+}
+
+/* Centrar el contenido dentro del modal de vista */
+/* Centrar SOLO la tabla de productos dentro del modal */
+/* TABLA DEL DETALLE — a ancho completo */
+#saleDetailsContent table {
+    width: 100% !important;
+    margin: 0;              /* elimina márgenes laterales */
 }

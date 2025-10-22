@@ -1,158 +1,215 @@
 <?php $pageTitle = "Ventas | Garage Barki"; ?>
 <?php require_once __DIR__ . '/../partials/header-admin.php'; ?>
-<?= require_once __DIR__ . '/../partials/navbar-admin.php'; ?>
+<?= require_once __DIR__ . '/../partials/navbar-admin.php'; ?> 
 
-<div class="container-fluid py-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="mb-0">Gestión de Ventas</h3>
-    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSaleModal">
-      <i class="fas fa-plus"></i> Nueva Venta
-    </button>
-  </div>
 
-  <!-- Estadísticas -->
-  <div class="row mb-4">
-    <div class="col-md-3">
-      <div class="card shadow-sm">
-        <div class="card-body text-center">
-          <h6 class="text-muted">Ventas Totales</h6>
-          <h4 id="totalSales">0</h4>
+<style>
+  html, body {
+      height: 100%;
+      overflow-y: auto;
+  }
+  .main-content {
+      overflow-y: auto;
+      max-height: calc(100vh - 80px);
+      padding-bottom: 2rem;
+  }
+  .modal-dialog-scrollable .modal-body {
+      max-height: calc(100vh - 200px);
+      overflow-y: auto;
+  }
+</style>
+
+
+<div class="main-content">
+  <div class="container-fluid py-3">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-2">
+      <h3 class="mb-0"><i class="fas fa-shopping-cart me-2"></i>Gestión de Ventas</h3>
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSaleModal">
+        <i class="fas fa-plus me-1"></i> Nueva Venta
+      </button>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-lg-3">
+        <div class="card shadow-sm border-0 stat-card">
+          <div class="card-body text-center p-3">
+            <i class="fas fa-receipt fa-2x text-primary mb-2"></i>
+            <h6 class="text-muted small mb-1">Ventas</h6>
+            <h4 class="mb-0" id="totalSales">0</h4>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="card shadow-sm border-0 stat-card">
+          <div class="card-body text-center p-3">
+            <i class="fas fa-dollar-sign fa-2x text-success mb-2"></i>
+            <h6 class="text-muted small mb-1">Total</h6>
+            <h4 class="mb-0 text-success small" id="totalRevenue">$0.00</h4>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="card shadow-sm border-0 stat-card">
+          <div class="card-body text-center p-3">
+            <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+            <h6 class="text-muted small mb-1">Pendiente</h6>
+            <h4 class="mb-0 text-warning small" id="totalPending">$0.00</h4>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="card shadow-sm border-0 stat-card">
+          <div class="card-body text-center p-3">
+            <i class="fas fa-check-circle fa-2x text-info mb-2"></i>
+            <h6 class="text-muted small mb-1">Completadas</h6>
+            <h4 class="mb-0 text-info" id="completedSales">0</h4>
+          </div>
         </div>
       </div>
     </div>
-    <div class="col-md-3">
-      <div class="card shadow-sm">
-        <div class="card-body text-center">
-          <h6 class="text-muted">Monto Total</h6>
-          <h4 id="totalRevenue">$0.00</h4>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card shadow-sm">
-        <div class="card-body text-center">
-          <h6 class="text-muted">Pendiente por Cobrar</h6>
-          <h4 id="totalPending">$0.00</h4>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card shadow-sm">
-        <div class="card-body text-center">
-          <h6 class="text-muted">Completadas</h6>
-          <h4 id="completedSales">0</h4>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- Filtro de búsqueda -->
-  <div class="row mb-3">
-    <div class="col-md-6">
-      <input type="text" id="searchInput" class="form-control" placeholder="Buscar venta...">
+    <!-- Buscador -->
+    <div class="row mb-3">
+      <div class="col-12 col-md-8 col-lg-6">
+        <div class="input-group">
+          <span class="input-group-text"><i class="fas fa-search"></i></span>
+          <input type="text" id="searchInput" class="form-control" placeholder="Buscar...">
+        </div>
+      </div>
     </div>
-  </div>
 
-  <!-- Tabla de ventas -->
-  <div class="table-responsive">
-    <table class="table table-striped table-hover align-middle">
-      <thead class="table-light">
-        <tr>
-          <th>#</th>
-          <th>Cliente</th>
-          <th>Empleado</th>
-          <th>Fecha</th>
-          <th class="text-end">Monto</th>
-          <th>Tipo</th>
-          <th>Estado</th>
-          <th class="text-center">Acciones</th>
-        </tr>
-      </thead>
-      <tbody id="salesTableBody"></tbody>
-    </table>
+    <!-- Tabla -->
+    <div class="card shadow-sm border-0">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0 table-modern">
+            <thead class="table-light">
+              <tr>
+                <th class="text-center d-none d-md-table-cell">#</th>
+                <th>Ref.</th>
+                <th class="d-none d-lg-table-cell">Cliente</th>
+                <th class="d-none d-xl-table-cell">Empleado</th>
+                <th class="d-none d-md-table-cell">Fecha</th>
+                <th class="text-end">Monto</th>
+                <th class="text-center d-none d-sm-table-cell">Estado</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="salesTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- ===========================
-     MODAL: Registrar Venta
-=========================== -->
-<div class="modal fade" id="addSaleModal" tabindex="-1" aria-labelledby="addSaleLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+<!-- MODAL: Registrar Venta -->
+<div class="modal fade" id="addSaleModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-md-down">
     <div class="modal-content">
       <form id="addSaleForm" autocomplete="off">
-        <div class="modal-header">
-          <h5 class="modal-title" id="addSaleLabel">Registrar Venta</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title"><i class="fas fa-shopping-cart me-2"></i>Registrar Nueva Venta</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
 
         <div class="modal-body">
-          <div class="row mb-3">
-            <div class="col-md-4">
-              <label class="form-label">Cliente</label>
-              <select id="add_cliente" name="cliente_ced" class="form-select" required></select>
+          <!-- Información básica -->
+          <div class="row g-3 mb-3">
+            <div class="col-12 col-md-6 col-lg-4">
+              <label class="form-label fw-bold">Cliente <span class="text-danger">*</span></label>
+              <select id="add_cliente" name="cliente_ced" class="form-select" required>
+                <option value="">Seleccione...</option>
+              </select>
+              <small class="text-muted"><i class="fas fa-star text-warning"></i> Cliente VIP</small>
             </div>
-            <div class="col-md-4">
-              <label class="form-label">Empleado</label>
-              <select id="add_empleado" name="empleado_ced" class="form-select" required></select>
+            <div class="col-12 col-md-6 col-lg-4">
+              <label class="form-label fw-bold">Vendedor <span class="text-danger">*</span></label>
+              <select id="add_empleado" name="empleado_ced" class="form-select" required>
+                <option value="">Seleccione...</option>
+              </select>
             </div>
-            <div class="col-md-4">
-              <label class="form-label">Tipo de venta</label>
+            <div class="col-12 col-md-6 col-lg-4">
+              <label class="form-label fw-bold">Tipo de venta <span class="text-danger">*</span></label>
               <select name="tipo_venta" class="form-select" required>
                 <option value="contado">Contado</option>
-                <option value="credito">Crédito</option>
+                <option value="credito">Crédito (Solo VIP)</option>
               </select>
+            </div>
+          <div class="col-12 col-md-6 col-lg-4">
+            <label class="form-label fw-bold">Referencia (opcional)</label>
+            <input type="text" id="add_referencia" name="referencia" 
+              class="form-control" maxlength="30" 
+              placeholder="Ej: VEN-001" autocomplete="off">
+          </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-bold">IVA (%)</label>
+              <input type="number" id="add_iva" class="form-control" name="iva_porcentaje" 
+                     min="0" max="100" step="0.01" value="16.00">
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-bold">Observaciones</label>
+              <textarea name="observaciones" class="form-control" rows="1"></textarea>
             </div>
           </div>
 
-          <div class="row mb-3">
-            <div class="col-md-4">
-              <label class="form-label">Método de Pago Principal</label>
-              <select name="metodo_pago_principal" class="form-select" required>
-                <option value="">Seleccione...</option>
-                <option value="efectivo">Efectivo</option>
-                <option value="tarjeta_debito">Tarjeta Débito</option>
-                <option value="tarjeta_credito">Tarjeta Crédito</option>
-                <option value="transferencia">Transferencia</option>
-                <option value="pago_movil">Pago Móvil</option>
-                <option value="cheque">Cheque</option>
-              </select>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">Descuento (%)</label>
-              <input type="number" id="add_descuento" class="form-control" name="descuento" min="0" max="100" step="0.01" value="0">
-            </div>
-          </div>
+          <hr>
 
+          <!-- Sección Productos -->
           <div class="mb-3">
-            <label class="form-label">Observaciones</label>
-            <textarea name="observaciones" class="form-control" rows="2"></textarea>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="mb-0 fw-bold"><i class="fas fa-box me-2"></i>Productos</h6>
+              <span class="badge bg-info" id="productsCount">0 disponibles</span>
+            </div>
+
+            <!-- Contenedor de productos agregados -->
+            <div id="productsContainer"></div>
+            <div id="noProductsAlert" class="alert alert-info text-center py-2 mb-2">
+              <i class="fas fa-info-circle me-2"></i>No se han agregado productos
+            </div>
+
+            <!-- Botón agregar de lista -->
+            <button type="button" id="btnAddProduct" class="btn btn-sm btn-outline-primary w-100">
+              <i class="fas fa-plus me-1"></i> Agregar de lista completa
+            </button>
           </div>
 
           <hr>
 
-          <!-- Productos -->
-          <div id="productsContainer"></div>
-          <div id="noProductsAlert" class="alert alert-info text-center py-2">Sin productos agregados</div>
-          <button type="button" id="btnAddProduct" class="btn btn-outline-primary btn-sm">
-            <i class="fas fa-plus"></i> Agregar producto
-          </button>
-
-          <hr>
-
-          <!-- Totales -->
-          <div class="row text-end">
-            <div class="col-md-4 offset-md-8">
-              <div class="border rounded p-2 bg-light">
-                <div><strong>Subtotal:</strong> <span id="summary_subtotal">$0.00</span></div>
-                <div><strong>Descuento:</strong> <span id="summary_discount">$0.00</span></div>
-                <div class="fs-5"><strong>Total:</strong> <span id="summary_total">$0.00</span></div>
+          <!-- Resumen de totales -->
+          <div class="row">
+            <div class="col-12 col-lg-6 offset-lg-6">
+              <div class="card bg-light border-0">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between mb-2">
+                    <span>Subtotal:</span>
+                    <strong id="summary_subtotal">$0.00</strong>
+                  </div>
+                  <div class="d-flex justify-content-between mb-2">
+                    <span>IVA (<span id="iva_percentage">16</span>%):</span>
+                    <strong id="summary_iva">$0.00</strong>
+                  </div>
+                  <hr class="my-2">
+                  <div class="d-flex justify-content-between">
+                    <span class="fs-5 fw-bold">Total:</span>
+                    <strong class="fs-5 text-primary" id="summary_total">$0.00</strong>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         <div class="modal-footer">
-          <button type="submit" class="btn btn-success">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+          <button type="submit" class="btn btn-success" id="btnSaveSale">
             <i class="fas fa-save"></i> Guardar Venta
           </button>
         </div>
@@ -161,84 +218,27 @@
   </div>
 </div>
 
-<!-- ===========================
-     MODAL: Registrar Pago
-=========================== -->
-<div class="modal fade" id="addPaymentModal" tabindex="-1" aria-labelledby="addPaymentLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
+<!-- MODAL: Detalle de Venta -->
+<div class="modal fade" id="viewSaleModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-md-down">
     <div class="modal-content">
-      <form id="addPaymentForm">
-        <div class="modal-header">
-          <h5 class="modal-title" id="addPaymentLabel">Registrar Pago</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-
-        <div class="modal-body">
-          <input type="hidden" id="payment_venta_id" name="venta_id">
-          <p><strong>Venta:</strong> <span id="payment_sale_number"></span></p>
-          <p><strong>Saldo Pendiente:</strong> <span id="payment_saldo_pendiente">$0.00</span></p>
-
-          <div class="mb-3">
-            <label class="form-label">Monto (Bs)</label>
-            <input type="number" id="payment_monto" name="monto" class="form-control" min="0.01" step="0.01" required>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Método de Pago</label>
-            <select id="payment_metodo" name="metodo_pago" class="form-select" required>
-              <option value="efectivo">Efectivo</option>
-              <option value="tarjeta_debito">Tarjeta Débito</option>
-              <option value="tarjeta_credito">Tarjeta Crédito</option>
-              <option value="transferencia">Transferencia</option>
-              <option value="pago_movil">Pago Móvil</option>
-              <option value="cheque">Cheque</option>
-            </select>
-          </div>
-
-          <div class="mb-3" id="payment_ref_group" style="display:none;">
-            <label class="form-label">Referencia</label>
-            <input type="text" id="payment_referencia" name="referencia" class="form-control">
-          </div>
-
-          <div class="mb-3" id="payment_bank_group" style="display:none;">
-            <label class="form-label">Banco</label>
-            <input type="text" name="banco" class="form-control">
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Observaciones</label>
-            <textarea name="payment_observaciones" class="form-control" rows="2"></textarea>
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-success">
-            <i class="fas fa-money-bill"></i> Registrar Pago
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-<!-- ===========================
-     MODAL: Detalle de Venta
-=========================== -->
-<div class="modal fade" id="viewSaleModal" tabindex="-1" aria-labelledby="viewSaleLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-scrollable">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="viewSaleLabel">Detalle de Venta</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      <div class="modal-header bg-info text-white">
+        <h5 class="modal-title"><i class="fas fa-eye me-2"></i>Detalle de Venta</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body" id="saleDetailsContent">
-        <p class="text-center text-muted">Cargando...</p>
+        <div class="text-center py-4">
+          <div class="spinner-border text-primary"></div>
+          <p class="mt-2">Cargando...</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Scripts -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
