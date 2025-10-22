@@ -29,6 +29,7 @@ function handleRequest($clientModel) {
                 case 'POST_edit_ajax':   handleAddEditAjax($clientModel, 'edit'); break;
                 case 'POST_delete_ajax': handleDeleteAjax($clientModel); break;
                 case 'GET_get_clients': getClientsAjax($clientModel); break;
+                case 'GET_search_vip_clients': searchVipClientsAjax($clientModel); break;
                 default:                 echo json_encode(['success'=>false,'message'=>'Acción inválida']); exit();
             }
         } else {
@@ -116,4 +117,17 @@ function getClientsAjax($clientModel) {
     }
     $client = $clientModel->getAll();
     echo json_encode(['success'=>true, 'clients'=>$client, 'count'=>count($client)]); exit();
+}
+
+function searchVipClientsAjax($clientModel) {
+    $query = trim($_GET['q'] ?? '');
+    
+    if (strlen($query) < 1) {
+        echo json_encode(['success'=>false, 'message'=>'Consulta muy corta', 'clients'=>[]]); 
+        exit();
+    }
+    
+    $clients = $clientModel->searchVipClients($query);
+    echo json_encode(['success'=>true, 'clients'=>$clients, 'count'=>count($clients)]); 
+    exit();
 }
