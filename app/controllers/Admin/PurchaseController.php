@@ -228,19 +228,13 @@ function downloadPdf($model) {
    🔹 MOSTRAR VISTA
 ========================================================== */
 function showView() {
-    $paths = [
-        __DIR__ . '/../../views/admin/purchase-admin.php',
-        dirname(__DIR__, 2) . '/views/admin/purchase-admin.php'
-    ];
-    
-    foreach ($paths as $path) {
-        if (file_exists($path)) {
-            require $path;
-            return;
-        }
+    $viewPath = __DIR__ . '/../../views/admin/purchase-admin.php';
+
+    if (!file_exists($viewPath)) {
+        throw new Exception("Vista de compras no encontrada en: $viewPath");
     }
-    
-    throw new Exception("Vista de compras no encontrada");
+
+    require $viewPath;
 }
 
 // Ejecutar controlador

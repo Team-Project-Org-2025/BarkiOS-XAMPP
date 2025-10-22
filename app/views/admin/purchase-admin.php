@@ -219,10 +219,23 @@
     border-color: #5568d3;
     color: white;
 }
-.border-purple {
-    border-color: #667eea !important;
-}
-</style>
 
-</body>
-</html>
+/* Evitar duplicación de elementos */
+.table-responsive {
+    position: relative;
+    z-index: 1;
+}
+
+#purchasesTableBody {
+    position: relative;
+    z-index: 1;
+}
+
+/* Asegurar que no haya elementos duplicados */
+.card .card {
+    margin-bottom: 0 !important;
+}
+
+.table .table {
+    margin-bottom: 0 !important;
+}

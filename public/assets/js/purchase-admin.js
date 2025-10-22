@@ -369,8 +369,13 @@ $(document).ready(function() {
 
     // ========== INICIALIZACIÓN ==========
     loadCategorias();
-    fetchPurchases();
-    
+
+    // Verificar si ya se cargaron las compras para evitar duplicación
+    if (!$('#purchasesTableBody').hasClass('loaded')) {
+        fetchPurchases();
+        $('#purchasesTableBody').addClass('loaded');
+    }
+
     // Inicializar tooltips
     $('[data-bs-toggle="tooltip"]').tooltip();
 });
