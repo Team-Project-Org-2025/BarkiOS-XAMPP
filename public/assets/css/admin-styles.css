@@ -108,13 +108,26 @@ body {
   min-height: 0;
 }
 
-.sidebar-footer {
-  flex-shrink: 0;
-  padding: 1rem;
-  color: var(--gray-color);
-  border-top: 1px solid var(--border-color);
-  background-color: var(--white-color);
+/* === FORZAR color rojo al botón Cerrar Sesión === */
+.sidebar-footer a.nav-link {
+  color: #dc3545 !important;          /* rojo base */
+  font-weight: 600;
+  transition: all 0.3s ease;
 }
+
+.sidebar-footer a.nav-link i {
+  color: #dc3545 !important;          /* icono rojo también */
+}
+
+.sidebar-footer a.nav-link:hover {
+  color: #a71d2a !important;          /* rojo más oscuro */
+  background-color: rgba(220, 53, 69, 0.08); /* fondo leve */
+}
+
+.sidebar-footer a.nav-link:hover i {
+  color: #a71d2a !important;          /* icono rojo oscuro al hover */
+}
+
 
 /* Scrollbar personalizado (opcional) */
 .sidebar-sticky::-webkit-scrollbar {
@@ -123,7 +136,7 @@ body {
 
 .sidebar-sticky::-webkit-scrollbar-thumb {
   background-color: rgba(0, 0, 0, 0.15);
-  border-radius: 10px;
+  border-radius: 6px;
 }
 
 /* Links del menú */
@@ -500,6 +513,7 @@ body {
     transform: translateY(-50%) rotate(360deg);
   }
 }
+
 
 /* Tabla Detalle de Venta */
 #saleDetailsContent table {

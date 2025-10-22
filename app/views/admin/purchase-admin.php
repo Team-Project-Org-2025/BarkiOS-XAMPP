@@ -191,7 +191,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="/BarkiOS/public/assets/js/purchase-admin.js"></script>
-
+<script src="/BarkiOS/public/assets/js/logout.js"></script>
 <style>
 .bg-gradient-purple {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);

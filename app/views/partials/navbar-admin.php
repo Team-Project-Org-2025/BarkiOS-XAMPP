@@ -69,7 +69,8 @@
         
         <!-- FOOTER (Fijo: Logout) -->
         <div class="sidebar-footer border-top mt-auto">
-            <a class="nav-link mx-3 mb-2 rounded" href="/BarkiOS/login/logout">
+            <a class="nav-link mx-3 mb-2 rounded logout-link" 
+            href="/BarkiOS/login/logout">
                 <i class="fas fa-sign-out-alt me-2"></i>
                 Cerrar Sesión
             </a>
