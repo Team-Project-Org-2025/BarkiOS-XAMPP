@@ -1,18 +1,24 @@
-<?php $pageTitle = "Productos | Garage Barki"; ?>
-<?php require_once __DIR__ . '/../partials/header-admin.php'; ?>
+<?php 
+$pageTitle = "Productos | Garage Barki"; 
+require_once __DIR__ . '/../partials/header-admin.php'; 
+?>
+
 <!-- Barra lateral de navegación -->
 <?= require_once __DIR__ . '/../partials/navbar-admin.php'; ?> 
+
 <div class="main-content">
     <div class="container-fluid">
+        <!-- Header con Tasa BCV -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="display-6 fw-bold text-dark">Productos</h1>
+            
+            <!-- ⭐ Incluir el widget de tasa BCV -->
+            <?php include __DIR__ . '/../partials/exchange-rate-widget.php'; ?>
         </div>
+
         <button class="btn btn-primary rounded-pill px-4 me-3" data-bs-toggle="modal" data-bs-target="#addProductModal">
             <i class="fas fa-plus me-1"></i> Agregar producto
         </button>
-        
-        <!-- Mensajes de éxito/error dinámicos -->
-        <!-- <div id="alertContainer" class="mt-3"></div> -->
 
         <!-- Tabla de Productos -->
         <div class="card mt-3">
@@ -25,13 +31,13 @@
                                 <th>Nombre</th>
                                 <th>Tipo</th>
                                 <th>Categoría</th>
-                                <th>Precio</th>
+                                <th>Precio USD</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="productsTableBody">
                             <tr>
-                                <td colspan="6" class="text-center">
+                                <td colspan="7" class="text-center">
                                     <div class="spinner-border text-primary" role="status">
                                         <span class="visually-hidden">Cargando...</span>
                                     </div>
@@ -47,84 +53,86 @@
 
 <!-- Modal para Añadir Producto -->
 <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
- <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addProductModalLabel">Añadir Nuevo Producto</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form id="addProductForm">
-                    <div class="modal-body">
-                        <div id="addProductErrors" class="alert alert-danger d-none"></div>
-                        <div class="mb-3">
-                            <label class="form-label">Código</label>
-                            <input type="text" class="form-control" 
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addProductModalLabel">Añadir Nuevo Producto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="addProductForm">
+                <div class="modal-body">
+                    <div id="addProductErrors" class="alert alert-danger d-none"></div>
+                    <div class="mb-3">
+                        <label class="form-label">Código</label>
+                        <input type="text" class="form-control" 
                             id="productId"
                             name="prenda_id" 
                             placeholder="Ingrese código del producto"
                             required>
-                            <div class="invalid-feedback">Por favor ingrese un código válido</div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Nombre</label>
-                            <input type="text" class="form-control" 
+                        <div class="invalid-feedback">Por favor ingrese un código válido</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nombre</label>
+                        <input type="text" class="form-control" 
                             id="productName"
                             name="nombre" 
                             placeholder="Ingrese nombre del producto"
                             required>
-                            <div class="invalid-feedback">Por favor ingrese un nombre válido (solo letras y espacios)</div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Categoría</label>
-                            <select class="form-select" id="productCategory" name="categoria" required>
-                                <option value="">Seleccione una categoría</option>
-                                <option value="Formal">Formal</option>
-                                <option value="Casual">Casual</option>
-                                <option value="Deportivo">Deportivo</option>
-                                <option value="Invierno">Invierno</option>
-                                <option value="Verano">Verano</option>
-                                <option value="Fiesta">Fiesta</option>
-                            </select>
-                            <div class="invalid-feedback">Por favor seleccione una categoría</div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Tipo de prenda</label>
-                            <select class="form-select" id="productType" name="tipo" required>
-                                <option value="">Seleccione un tipo</option>
-                                <option value="Vestido">Vestido</option>
-                                <option value="Blusa">Blusa</option>
-                                <option value="Pantalon">Pantalone</option>
-                                <option value="Camisa">Camisa</option>
-                                <option value="Falda">Falda</option>
-                                <option value="Shorts">Short</option>
-                                <option value="Enterizo">Enterizo</option>
-                                <option value="Chaqueta">Chaqueta</option>
-                            </select>
-                            <div class="invalid-feedback">Por favor seleccione un tipo de prenda</div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Precio</label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input
-                                step="0.00" 
+                        <div class="invalid-feedback">Por favor ingrese un nombre válido</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Categoría</label>
+                        <select class="form-select" id="productCategory" name="categoria" required>
+                            <option value="">Seleccione una categoría</option>
+                            <option value="Formal">Formal</option>
+                            <option value="Casual">Casual</option>
+                            <option value="Deportivo">Deportivo</option>
+                            <option value="Invierno">Invierno</option>
+                            <option value="Verano">Verano</option>
+                            <option value="Fiesta">Fiesta</option>
+                        </select>
+                        <div class="invalid-feedback">Por favor seleccione una categoría</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tipo de prenda</label>
+                        <select class="form-select" id="productType" name="tipo" required>
+                            <option value="">Seleccione un tipo</option>
+                            <option value="Vestido">Vestido</option>
+                            <option value="Blusa">Blusa</option>
+                            <option value="Pantalon">Pantalón</option>
+                            <option value="Camisa">Camisa</option>
+                            <option value="Falda">Falda</option>
+                            <option value="Shorts">Short</option>
+                            <option value="Enterizo">Enterizo</option>
+                            <option value="Chaqueta">Chaqueta</option>
+                        </select>
+                        <div class="invalid-feedback">Por favor seleccione un tipo de prenda</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Precio (USD)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number"
+                                step="0.01" 
                                 class="form-control" 
                                 name="precio"
                                 id="productPrice"
+                                oninput="calculateBolivares(this.value, 'addPriceBs')"
                                 required>
-                                <div class="invalid-feedback">Por favor ingrese un precio válido</div>
-                            </div>
                         </div>
+                        <small class="text-muted">
+                            Equivalente: <span id="addPriceBs" class="fw-bold">Bs. 0.00</span>
+                        </small>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary" id="addProductBtn">
-                            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-                            <span class="btn-text">Guardar</span>
-                        </button>
-                    </div>
-                </form>
-            </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="addProductBtn">
+                        <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                        <span class="btn-text">Guardar</span>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -146,7 +154,6 @@
                         <input type="text" class="form-control" 
                             id="editProductId"
                             name="prenda_id" 
-                            placeholder="Ingrese código del producto" 
                             disabled>
                     </div>
                     <div class="mb-3">
@@ -154,14 +161,11 @@
                         <input type="text" class="form-control" 
                             name="nombre" 
                             id="editProductName"
-                            placeholder="Ingrese nombre del producto" 
                             required>
-                        <div class="invalid-feedback">Por favor ingrese un nombre válido (solo letras y espacios)</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Categoría</label>
                         <select class="form-select" name="categoria" id="editProductCategory" required>
-                            <!-- Opciones para Categoría -->
                             <option value="">Seleccione una categoría</option>
                             <option value="Formal">Formal</option>
                             <option value="Casual">Casual</option>
@@ -170,17 +174,23 @@
                             <option value="Invierno">Invierno</option>
                             <option value="Verano">Verano</option>
                         </select>
-                        <div class="invalid-feedback">Por favor seleccione una categoría</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Tipo de prenda</label>
                         <select class="form-select" name="tipo" id="editProductType" required>
                             <option value="">Seleccione un tipo</option>
+                            <option value="Vestido">Vestido</option>
+                            <option value="Blusa">Blusa</option>
+                            <option value="Pantalon">Pantalón</option>
+                            <option value="Camisa">Camisa</option>
+                            <option value="Falda">Falda</option>
+                            <option value="Shorts">Short</option>
+                            <option value="Enterizo">Enterizo</option>
+                            <option value="Chaqueta">Chaqueta</option>
                         </select>
-                        <div class="invalid-feedback">Por favor seleccione un tipo de prenda</div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Precio</label>
+                        <label class="form-label">Precio (USD)</label>
                         <div class="input-group">
                             <span class="input-group-text">$</span>
                             <input type="number" 
@@ -189,9 +199,12 @@
                                 name="precio" 
                                 id="editProductPrice" 
                                 min="0"
+                                oninput="calculateBolivares(this.value, 'editPriceBs')"
                                 required>
-                            <div class="invalid-feedback">Por favor ingrese un precio válido</div>
                         </div>
+                        <small class="text-muted">
+                            Equivalente: <span id="editPriceBs" class="fw-bold">Bs. 0.00</span>
+                        </small>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -202,6 +215,18 @@
         </div>
     </div>
 </div>
+
+<!-- ⚠️ IMPORTANTE: Cargar el widget JS ANTES del products-admin.js -->
+<?php 
+// Asegurarse de que las funciones JS estén disponibles
+if (!function_exists('getDolarRate')) {
+    require_once __DIR__ . '/../../core/AdminContext.php';
+}
+?>
+<script>
+    // Definir la variable ANTES de cargar products-admin.js
+    const DOLAR_BCV_RATE = <?php echo getDolarRate(); ?>;
+</script>
 
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>

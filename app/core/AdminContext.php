@@ -1,15 +1,65 @@
 <?php
 // app/core/AdminContext.php
-// Este archivo se encarga de cargar datos globales necesarios para todo el panel de administración.
+// Contexto global para el panel de administración
 
-// 1. Incluir el servicio de la API
-// Asumimos que la ruta es correcta desde app/core/ hasta app/services/
 require_once __DIR__ . '/../services/ExchangeRateService.php';
 
 use Barkios\services\ExchangeRateService;
 
+// Instancia del servicio
 $exchangeService = new ExchangeRateService();
+
+// Obtener la tasa del dólar (con caché automático)
 $dolarBCVRate = $exchangeService->getDollarRate();
 
-// La variable $dolarBCVRate ahora está disponible para cualquier archivo que incluya AdminContext.php
-// También se podría usar $GLOBALS['dolarBCVRate'] = $dolarBCVRate; si se necesitara un alcance más amplio.
+// Funciones helper para usar en las vistas
+if (!function_exists('getDolarRate')) {
+    /**
+     * Obtiene la tasa del dólar BCV
+     * @return float
+     */
+    function getDolarRate(): float {
+        global $dolarBCVRate;
+        return $dolarBCVRate;
+    }
+}
+
+if (!function_exists('formatCurrency')) {
+    /**
+     * Formatea un monto en bolívares
+     * @param float $amount
+     * @param string $currency (Bs. por defecto)
+     * @return string
+     */
+    function formatCurrency(float $amount, string $currency = 'Bs.'): string {
+        return $currency . ' ' . number_format($amount, 2, ',', '.');
+    }
+}
+
+if (!function_exists('convertToBolivares')) {
+    /**
+     * Convierte dólares a bolívares
+     * @param float $dollars
+     * @return float
+     */
+    function convertToBolivares(float $dollars): float {
+        global $dolarBCVRate;
+        return $dollars * $dolarBCVRate;
+    }
+}
+
+if (!function_exists('convertToDollars')) {
+    /**
+     * Convierte bolívares a dólares
+     * @param float $bolivares
+     * @return float
+     */
+    function convertToDollars(float $bolivares): float {
+        global $dolarBCVRate;
+        return $bolivares / $dolarBCVRate;
+    }
+}
+
+// Variables disponibles globalmente
+$GLOBALS['dolarBCVRate'] = $dolarBCVRate;
+$GLOBALS['exchangeService'] = $exchangeService;
