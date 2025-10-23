@@ -234,6 +234,22 @@ function addSale($model)
             }
         }
 
+        // Si es venta a crédito, obtener la fecha de vencimiento
+        $fechaVencimiento = null;
+        if ($tipo === 'credito') {
+            // Validar que la fecha de vencimiento esté presente
+            if (empty($_POST['fecha_vencimiento'])) {
+                throw new Exception("Debe seleccionar una fecha de vencimiento para ventas a crédito");
+            }
+            $fechaVencimiento = $_POST['fecha_vencimiento'];
+            
+            // Validar que la fecha de vencimiento sea posterior a la fecha actual
+            $fechaHoy = date('Y-m-d');
+            if ($fechaVencimiento <= $fechaHoy) {
+                throw new Exception("La fecha de vencimiento debe ser posterior a hoy");
+            }
+        }
+
         // Preparar datos de venta
         $ventaData = [
             'cliente_ced' => $cliente,
@@ -242,7 +258,8 @@ function addSale($model)
             'productos' => $productos,
             'observaciones' => $_POST['observaciones'] ?? null,
             'iva_porcentaje' => floatval($_POST['iva_porcentaje'] ?? 16.00),
-            'referencia' => $_POST['referencia'] ?? null
+            'referencia' => $_POST['referencia'] ?? null,
+            'fecha_vencimiento' => $fechaVencimiento // Agregar la fecha de vencimiento
         ];
 
         // Registrar venta
@@ -268,6 +285,7 @@ function addSale($model)
         ]);
     }
 }
+
 
 function addPayment($model)
 {

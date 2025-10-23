@@ -138,6 +138,17 @@
                 <option value="credito">Crédito (Solo VIP)</option>
               </select>
             </div>
+            <div class="col-12 col-md-6 col-lg-4" id="fechaVencimientoGroup" style="display: none;">
+                <label class="form-label fw-bold">
+                      Fecha de Vencimiento <span class="text-danger">*</span>
+                </label>
+                <input type="date" 
+                        id="add_fecha_vencimiento" 
+                        name="fecha_vencimiento" 
+                        class="form-control"
+                        min="<?= date('Y-m-d', strtotime('+1 day')) ?>">
+                <small class="text-muted">Fecha límite de pago del crédito</small>
+            </div>
           <div class="col-12 col-md-6 col-lg-4">
             <label class="form-label fw-bold">Referencia (opcional)</label>
             <input type="text" id="add_referencia" name="referencia" 
@@ -243,7 +254,6 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="/BarkiOS/public/assets/js/sales-admin.js"></script>
-<script src="/BarkiOS/public/assets/js/logout.js"></script>
 
 </body>
 </html>
