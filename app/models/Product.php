@@ -43,11 +43,11 @@ class Product extends Database {
         if ($this->productExists($id)) throw new Exception("Ya existe un producto con este ID");
 
         $stmt = $this->db->prepare("
-            INSERT INTO prendas (prenda_id, nombre, tipo, categoria, precio, activo, estado)
-            VALUES (:prenda_id, :nombre, :tipo, :categoria, :precio, 1, 'DISPONIBLE')
+            INSERT INTO prendas (codigo_prenda, nombre, tipo, categoria, precio, activo, estado)
+            VALUES (:codigo_prenda, :nombre, :tipo, :categoria, :precio, 1, 'DISPONIBLE')
         ");
         return $stmt->execute([
-            ':prenda_id' => $id,
+            ':codigo_prenda' => $id,
             ':nombre' => $nombre,
             ':tipo' => $tipo,
             ':categoria' => $categoria,
