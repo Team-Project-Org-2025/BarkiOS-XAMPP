@@ -1,5 +1,5 @@
 // ============================================================
-// MÓDULO DE CUENTAS POR COBRAR - GARAGE BARKI
+// MÓDULO DE CUENTAS POR COBRAR - GARAGE BARKI (ACTUALIZADO)
 // ============================================================
 
 $(document).ready(function() {
@@ -160,21 +160,17 @@ $(document).ready(function() {
                                 title="Ver detalles">
                             <i class="fas fa-eye"></i>
                         </button>
-                        ${acc.estado_visual !== 'Pagado' && acc.estado_visual !== 'Vencido' ? `
+                        ${acc.estado_visual !== 'Pagado' ? `
                             <button class="btn btn-sm btn-outline-success" 
                                     onclick="openPaymentModal(${acc.id})" 
                                     title="Registrar pago">
                                 <i class="fas fa-money-bill-wave"></i>
                             </button>
-                        ` : ''}
-                        ${acc.estado_visual === 'Vencido' || acc.estado_visual === 'Por vencer' ? `
                             <button class="btn btn-sm btn-outline-warning" 
                                     onclick="openExtendDateModal(${acc.id})" 
                                     title="Extender fecha">
                                 <i class="fas fa-calendar-plus"></i>
                             </button>
-                        ` : ''}
-                        ${acc.estado_visual !== 'Pagado' ? `
                             <button class="btn btn-sm btn-outline-danger" 
                                     onclick="deleteAccount(${acc.id})" 
                                     title="Eliminar">
@@ -374,7 +370,7 @@ $(document).ready(function() {
         );
     });
 
-    // --- EXTENDER FECHA ---
+    // --- EXTENDER FECHA (AHORA SIEMPRE DISPONIBLE) ---
     window.openExtendDateModal = function(id) {
         const account = accounts.find(a => a.id === id);
         if (!account) {
@@ -385,6 +381,12 @@ $(document).ready(function() {
         $('#extend_cuenta_id').val(account.id);
         $('#extend_cliente').text(account.cliente);
         $('#extend_fecha_actual').text(fmtDate(account.fecha_vencimiento));
+        
+        // Establecer fecha mínima (mañana)
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const minDate = tomorrow.toISOString().split('T')[0];
+        $('input[name="nueva_fecha"]').attr('min', minDate);
         
         $('#extendDateForm')[0].reset();
         $('#extend_cuenta_id').val(account.id);
@@ -516,6 +518,20 @@ $(document).ready(function() {
             $(this).removeClass('is-valid').addClass('is-invalid');
         } else {
             $(this).removeClass('is-invalid').addClass('is-valid');
+        }
+    });
+
+    // Validar fecha de vencimiento
+    $('input[name="nueva_fecha"]').on('change', function() {
+        const selectedDate = new Date($(this).val());
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (selectedDate <= today) {
+            $(this).addClass('is-invalid').removeClass('is-valid');
+            toast('error', 'La fecha de vencimiento debe ser posterior a hoy');
+        } else {
+            $(this).addClass('is-valid').removeClass('is-invalid');
         }
     });
 
