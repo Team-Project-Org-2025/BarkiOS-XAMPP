@@ -1,8 +1,10 @@
+<?php require_once __DIR__ . '/../../core/AdminContext.php'; ?>
 <?php $pageTitle = "Usuarios | Garage Barki"; ?>
 <?php require_once __DIR__ . '/../partials/header-admin.php'; ?>
 <?= require_once __DIR__ . '/../partials/navbar-admin.php'; ?> 
 
 <div class="main-content">
+  
   <div class="container-fluid py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h1 class="display-6 fw-bold text-dark mb-0">
@@ -12,6 +14,15 @@
         <i class="fas fa-plus me-2"></i> Nuevo Usuario
       </button>
     </div>
+    <div class="alert alert-info d-flex align-items-center justify-content-between shadow-sm rounded-pill px-4 py-2 mt-3" role="alert">
+  <div class="d-flex align-items-center">
+    <i class="fas fa-dollar-sign text-success me-2 fs-4"></i>
+    <strong>Tasa BCV (USD):</strong>
+  </div>
+  <span class="fw-semibold text-dark">
+    <?= isset($dolarBCVRate) && is_numeric($dolarBCVRate) ? number_format($dolarBCVRate, 2, ',', '.') . ' VES' : 'No disponible'; ?>
+  </span>
+</div>
 
     <!-- Tarjeta de tabla -->
     <div class="card border-0 shadow-sm">
