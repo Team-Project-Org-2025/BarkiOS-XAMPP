@@ -4,6 +4,12 @@
 use Barkios\models\AccountsReceivable;
 use Barkios\models\Clients;
 
+require_once __DIR__ . '/LoginController.php';
+
+
+// ✅ Protege todo el módulo
+checkAuth();
+
 $accountsReceivableModel = new AccountsReceivable();
 $clientsModel = new Clients();
 
@@ -121,7 +127,7 @@ function handleDelete($accountsReceivableModel) {
 }
 
 function handleAddEditAjax($accountsReceivableModel, $clientsModel, $mode) {
-    $fields = ['cliente_ced', 'monto', 'fecha_vencimiento', 'descripcion'];
+    $fields = ['factura_numero', 'cliente_ced', 'fecha_emision', 'fecha_vencimiento', 'monto_total'];
     
     // Validar campos requeridos
     $missingFields = [];
@@ -139,8 +145,17 @@ function handleAddEditAjax($accountsReceivableModel, $clientsModel, $mode) {
         exit();
     }
 
+    // Validar número de factura (exactamente 8 dígitos)
+    if (!preg_match('/^[0-9]{8}$/', $_POST['factura_numero'])) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'El número de factura debe tener exactamente 8 dígitos numéricos'
+        ]);
+        exit();
+    }
+
     // Validar monto
-    if (!is_numeric($_POST['monto']) || $_POST['monto'] <= 0) {
+    if (!is_numeric($_POST['monto_total']) || $_POST['monto_total'] <= 0) {
         echo json_encode([
             'success' => false,
             'message' => 'El monto debe ser un número mayor a cero'
@@ -150,29 +165,40 @@ function handleAddEditAjax($accountsReceivableModel, $clientsModel, $mode) {
 
     // Validar fecha de vencimiento
     $fechaVencimiento = new DateTime($_POST['fecha_vencimiento']);
-    $hoy = new DateTime();
-    if ($fechaVencimiento < $hoy) {
+    $fechaEmision = new DateTime($_POST['fecha_emision']);
+    if ($fechaVencimiento < $fechaEmision) {
         echo json_encode([
             'success' => false,
-            'message' => 'La fecha de vencimiento no puede ser anterior a la fecha actual'
+            'message' => 'La fecha de vencimiento no puede ser anterior a la fecha de emisión'
         ]);
         exit();
     }
 
-    // Validar que el cliente exista
-    if (!$clientsModel->getById($_POST['cliente_ced'])) {
+    // Validar que el cliente exista y sea VIP
+    $cliente = $clientsModel->getById($_POST['cliente_ced']);
+    if (!$cliente) {
         echo json_encode([
             'success' => false,
             'message' => 'El cliente seleccionado no existe'
         ]);
         exit();
     }
+    
+    if ($cliente['tipo'] !== 'vip') {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Solo se pueden registrar cuentas por cobrar para clientes VIP'
+        ]);
+        exit();
+    }
 
     $data = [
-        'cliente_ced' => $_POST['cliente_ced'],
-        'monto' => floatval($_POST['monto']),
+        'factura_numero' => trim($_POST['factura_numero']),
+        'cliente_id' => $_POST['cliente_ced'],
+        'fecha_emision' => $_POST['fecha_emision'],
         'fecha_vencimiento' => $_POST['fecha_vencimiento'],
-        'descripcion' => $_POST['descripcion']
+        'monto_total' => floatval($_POST['monto_total']),
+        'estado' => $_POST['estado'] ?? 'Pendiente'
     ];
 
     if ($mode === 'edit') {
@@ -234,22 +260,24 @@ function handleDeleteAjax($accountsReceivableModel) {
 function getAccountsAjax($accountsReceivableModel) {
     $accounts = $accountsReceivableModel->getAll();
     
-    // Formatear datos para DataTables
+    // Formatear datos para el frontend
     $data = [];
     foreach ($accounts as $account) {
         $data[] = [
-            'id' => $account['id'],
-            'cliente_nombre' => $account['cliente_nombre'],
-            'monto' => number_format($account['monto'], 2, ',', '.'),
-            'fecha_emision' => date('d/m/Y', strtotime($account['fecha_emision'])),
-            'fecha_vencimiento' => date('d/m/Y', strtotime($account['fecha_vencimiento'])),
-            'estado' => ucfirst($account['estado']),
-            'descripcion' => $account['descripcion']
+            'id' => $account['cuenta_cobrar_id'] ?? 'N/A',
+            'factura_numero' => $account['cuenta_cobrar_id'] ?? 'N/A',
+            'nombre_cliente' => $account['nombre_cliente'] ?? 'Sin cliente',
+            'fecha_emision' => $account['emision'] ? date('Y-m-d', strtotime($account['emision'])) : 'N/A',
+            'monto_total' => $account['monto_total'] ?? 0,
+            'fecha_vencimiento' => $account['vencimiento'] ? date('Y-m-d', strtotime($account['vencimiento'])) : 'N/A',
+            'estado' => ucfirst($account['estado'] ?? 'pendiente')
         ];
     }
     
     echo json_encode([
-        'data' => $data
+        'success' => true,
+        'accounts' => $data,
+        'count' => count($data)
     ]);
     exit();
 }
