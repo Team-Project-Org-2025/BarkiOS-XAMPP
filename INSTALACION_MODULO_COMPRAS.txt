@@ -1,0 +1,431 @@
+═══════════════════════════════════════════════════════════════
+   INSTALACIÓN DEL MÓDULO DE COMPRAS
+   Garage Barki - Sistema BarkiOS
+═══════════════════════════════════════════════════════════════
+
+✅ ARCHIVOS CREADOS:
+
+1. MODELO (Backend)
+   📁 app/models/Purchase.php
+   - Gestiona operaciones CRUD de compras
+   - Integración con proveedores y cuentas por pagar
+   - Métodos: getAll(), add(), update(), delete(), etc.
+
+2. CONTROLADOR (Backend)
+   📁 app/controllers/Admin/PurchaseController.php
+   - Maneja peticiones AJAX
+   - Validaciones completas de datos
+   - Búsqueda de proveedores
+   - Gestión de estados
+
+3. VISTA (Frontend)
+   📁 app/views/admin/purchase-admin.php
+   - Interfaz completa de usuario
+   - Modal de agregar compra con múltiples productos
+   - Tabla interactiva con búsqueda
+   - Dashboard de estadísticas
+
+4. JAVASCRIPT
+   📁 public/assets/js/purchase-admin.js
+   - Búsqueda en tiempo real de proveedores
+   - Gestión dinámica de productos
+   - Cálculo automático de totales
+   - Validación de formularios
+
+5. BASE DE DATOS
+   📁 database/create_compras.sql
+   - Tabla 'compras' (encabezado)
+   - Tabla 'detalle_compra' (productos)
+   - Vista 'vista_compras' (reportes)
+   - Triggers automáticos
+   - Procedimientos almacenados
+
+6. DOCUMENTACIÓN
+   📁 docs/MODULO_COMPRAS_README.md
+   - Guía completa del módulo
+   - Endpoints documentados
+   - Troubleshooting
+
+
+═══════════════════════════════════════════════════════════════
+   PASOS DE INSTALACIÓN
+═══════════════════════════════════════════════════════════════
+
+PASO 1: CREAR TABLAS EN LA BASE DE DATOS
+----------------------------------------
+1. Abre phpMyAdmin (http://localhost/phpmyadmin)
+2. Selecciona la base de datos: barkios_db
+3. Ve a la pestaña "SQL"
+4. Copia y pega el contenido de:
+   database/create_compras.sql
+5. Haz clic en "Continuar"
+
+✅ Resultado esperado:
+   - Tabla "compras" creada
+   - Tabla "detalle_compra" creada
+   - Vista "vista_compras" creada
+   - Triggers creados
+   - Procedimientos "sp_estadisticas_compras" y "sp_detalle_compra"
+
+
+PASO 2: VERIFICAR INSTALACIÓN
+------------------------------
+Ejecuta estos comandos SQL:
+
+-- Ver tablas creadas
+SHOW TABLES LIKE '%compra%';
+
+-- Ver estructura de compras
+DESCRIBE compras;
+
+-- Ver estructura de detalle
+DESCRIBE detalle_compra;
+
+-- Probar procedimiento de estadísticas
+CALL sp_estadisticas_compras();
+
+-- Ver vista de reportes
+SELECT * FROM vista_compras;
+
+
+PASO 3: CONFIGURAR RUTAS (SI ES NECESARIO)
+-------------------------------------------
+Verifica que en tu archivo de rutas exista:
+
+// En index.php o router
+case '/admin/compras':
+case '/admin/purchases':
+    require_once __DIR__ . '/app/controllers/Admin/PurchaseController.php';
+    break;
+
+
+PASO 4: PROBAR EL MÓDULO
+-------------------------
+1. Inicia XAMPP (Apache + MySQL)
+2. Navega a: http://localhost/BarkiOS/admin/compras
+3. Deberías ver la interfaz de Compras
+
+
+═══════════════════════════════════════════════════════════════
+   DATOS DE PRUEBA (OPCIONAL)
+═══════════════════════════════════════════════════════════════
+
+Si necesitas datos de prueba:
+
+-- 1. Crear proveedor de prueba (si no existe)
+INSERT INTO proveedores (id, nombre_empresa, nombre_contacto, direccion, tipo_rif, activo)
+VALUES ('J987654321', 'Fashion Imports USA', 'John Smith', 'Miami, Florida 33101', 'J', 1);
+
+-- 2. Crear compra de prueba
+INSERT INTO compras 
+  (proveedor_id, factura_numero, tracking, tipo_compra, metodo_pago, 
+   subtotal, descuento, monto_total, estado_compra)
+VALUES 
+  ('J987654321', 'FACT-USA-2025-001', 'TRACK123456', 'credito', 'transferencia',
+   5000.00, 100.00, 4900.00, 'en_transito');
+
+-- 3. Obtener el ID de la compra creada
+SET @compra_id = LAST_INSERT_ID();
+
+-- 4. Agregar productos de prueba
+INSERT INTO detalle_compra (compra_id, producto_nombre, producto_descripcion, cantidad, precio_unitario)
+VALUES 
+  (@compra_id, 'Jeans Levi''s 501', 'Talla 32, Color Azul', 10, 45.00),
+  (@compra_id, 'Camisa Ralph Lauren', 'Talla M, Color Blanco', 15, 55.00),
+  (@compra_id, 'Zapatos Nike Air Max', 'Talla 42, Color Negro', 8, 120.00);
+
+-- 5. Verificar
+SELECT * FROM vista_compras WHERE compra_id = @compra_id;
+
+
+═══════════════════════════════════════════════════════════════
+   CARACTERÍSTICAS DEL MÓDULO
+═══════════════════════════════════════════════════════════════
+
+✅ REGISTRO DE COMPRAS:
+   - N° de Factura único
+   - Búsqueda de proveedores en tiempo real
+   - Múltiples productos por compra
+   - Tracking de envío
+   - Tipo: Contado o Crédito
+   - Métodos de pago múltiples
+   - Cálculo automático de totales
+
+✅ GESTIÓN DE PRODUCTOS:
+   - Agregar/eliminar productos dinámicamente
+   - Nombre y descripción
+   - Cantidad y precio unitario
+   - Subtotal calculado automáticamente
+
+✅ ESTADOS DE COMPRA:
+   🔵 En Espera     - Compra registrada
+   🔵 En Tránsito   - Mercancía en camino
+   🟡 Recibida      - Mercancía llegó
+   🟢 Inventario    - Productos en sistema
+   🔴 Cancelada     - Compra anulada
+
+✅ DASHBOARD DE ESTADÍSTICAS:
+   - Total de compras
+   - Compras en tránsito
+   - Compras recibidas
+   - Monto total invertido
+
+✅ TABLA INTERACTIVA:
+   - Búsqueda por factura, proveedor o tracking
+   - Ver detalles completos
+   - Actualizar estado
+   - Cancelar compra
+
+
+═══════════════════════════════════════════════════════════════
+   ESTRUCTURA DE LA BASE DE DATOS
+═══════════════════════════════════════════════════════════════
+
+TABLA: compras
++------------------+---------------+-------------------------------+
+| Campo            | Tipo          | Descripción                   |
++------------------+---------------+-------------------------------+
+| compra_id        | INT(11)       | ID único (auto-increment)     |
+| proveedor_id     | VARCHAR(12)   | RIF del proveedor             |
+| factura_numero   | VARCHAR(50)   | Número de factura (único)     |
+| fecha_compra     | DATETIME      | Fecha/hora de registro        |
+| tracking         | VARCHAR(100)  | Número de seguimiento         |
+| tipo_compra      | ENUM          | contado / credito             |
+| metodo_pago      | ENUM          | efectivo, transferencia, etc. |
+| subtotal         | DECIMAL(12,2) | Suma de productos             |
+| descuento        | DECIMAL(12,2) | Descuento aplicado            |
+| monto_total      | DECIMAL(12,2) | Total a pagar                 |
+| estado_compra    | ENUM          | en_espera, en_transito, etc.  |
+| observaciones    | TEXT          | Notas adicionales             |
+| activo           | TINYINT(1)    | 1=activo, 0=cancelado         |
+| created_at       | TIMESTAMP     | Fecha de creación             |
+| updated_at       | TIMESTAMP     | Última actualización          |
++------------------+---------------+-------------------------------+
+
+FOREIGN KEY: proveedor_id → proveedores(id)
+
+TABLA: detalle_compra
++------------------------+---------------+---------------------------+
+| Campo                  | Tipo          | Descripción               |
++------------------------+---------------+---------------------------+
+| detalle_id             | INT(11)       | ID único                  |
+| compra_id              | INT(11)       | FK a compras              |
+| producto_nombre        | VARCHAR(200)  | Nombre del producto       |
+| producto_descripcion   | TEXT          | Descripción               |
+| cantidad               | INT(11)       | Cantidad comprada         |
+| precio_unitario        | DECIMAL(10,2) | Precio por unidad         |
+| subtotal               | DECIMAL(12,2) | Cantidad × Precio         |
++------------------------+---------------+---------------------------+
+
+FOREIGN KEY: compra_id → compras(compra_id) ON DELETE CASCADE
+
+
+═══════════════════════════════════════════════════════════════
+   INTEGRACIÓN CON CUENTAS POR PAGAR
+═══════════════════════════════════════════════════════════════
+
+Cuando se registra una compra A CRÉDITO, el sistema:
+
+1. ✅ Crea automáticamente una cuenta por pagar
+2. ✅ Usa el mismo número de factura
+3. ✅ Registra el monto total
+4. ✅ Establece vencimiento a 30 días
+5. ✅ Estado: Pendiente
+
+Esto permite llevar control de:
+- Cuánto se debe a cada proveedor
+- Fechas de vencimiento
+- Pagos realizados
+- Saldos pendientes
+
+
+═══════════════════════════════════════════════════════════════
+   USO DEL MÓDULO
+═══════════════════════════════════════════════════════════════
+
+AGREGAR COMPRA:
+1. Clic en botón "Nueva Compra"
+2. Buscar y seleccionar proveedor (mínimo 2 letras)
+3. Ingresar N° de factura
+4. Agregar tracking (opcional)
+5. Seleccionar tipo y método de pago
+6. Clic en "Agregar Producto"
+   - Nombre del producto
+   - Descripción (opcional)
+   - Cantidad
+   - Precio unitario
+7. Repetir paso 6 para más productos
+8. Aplicar descuento si aplica
+9. Verificar resumen total
+10. Agregar observaciones (opcional)
+11. Clic en "Guardar Compra"
+
+VER DETALLES:
+- Clic en el ícono de ojo (👁) en la tabla
+- Se abre modal con información completa
+- Lista de productos con subtotales
+
+ACTUALIZAR ESTADO:
+- Clic en el ícono de actualizar (🔄) en la tabla
+- Seleccionar nuevo estado
+- Confirmar cambio
+
+CANCELAR COMPRA:
+- Clic en el ícono de eliminar (🗑) en la tabla
+- Confirmar cancelación
+- La compra se marca como "Cancelada"
+
+
+═══════════════════════════════════════════════════════════════
+   REPORTES Y CONSULTAS
+═══════════════════════════════════════════════════════════════
+
+VISTA GENERAL DE COMPRAS:
+SELECT * FROM vista_compras 
+ORDER BY fecha_compra DESC;
+
+COMPRAS POR PROVEEDOR:
+SELECT proveedor, COUNT(*) as total_compras, SUM(monto_total) as total_monto
+FROM vista_compras
+GROUP BY proveedor
+ORDER BY total_monto DESC;
+
+COMPRAS EN TRÁNSITO:
+SELECT * FROM vista_compras 
+WHERE estado_compra = 'en_transito'
+ORDER BY fecha_compra DESC;
+
+ESTADÍSTICAS GENERALES:
+CALL sp_estadisticas_compras();
+
+DETALLE DE UNA COMPRA:
+CALL sp_detalle_compra(1);  -- Cambia 1 por el ID deseado
+
+
+═══════════════════════════════════════════════════════════════
+   TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════
+
+❌ Error: "Proveedor no existe"
+   Solución: Verifica que el proveedor esté activo
+   
+   SELECT * FROM proveedores WHERE activo = 1;
+
+❌ Error: "Factura duplicada"
+   Solución: El número de factura debe ser único
+   
+   SELECT * FROM compras 
+   WHERE factura_numero = 'TU_FACTURA' AND activo = 1;
+
+❌ No aparecen proveedores en la búsqueda
+   Solución: Verifica que existan proveedores activos
+   
+   SELECT COUNT(*) FROM proveedores WHERE activo = 1;
+
+❌ Error al calcular totales
+   Solución: Verifica que todos los productos tengan:
+   - Cantidad > 0
+   - Precio > 0
+
+❌ Error 404 en la ruta
+   Solución: Verifica la configuración de rutas en
+   tu archivo router/index.php
+
+❌ No se crea cuenta por pagar automáticamente
+   Solución: Instala primero el módulo de Cuentas por Pagar
+   ejecutando: database/create_cuentas_pagar.sql
+
+
+═══════════════════════════════════════════════════════════════
+   WORKFLOW RECOMENDADO
+═══════════════════════════════════════════════════════════════
+
+PASO 1: REGISTRAR COMPRA
+   Estado: En Espera
+   ↓
+PASO 2: CONFIRMAR ENVÍO
+   Actualizar a: En Tránsito
+   Agregar/verificar tracking
+   ↓
+PASO 3: RECIBIR MERCANCÍA
+   Actualizar a: Recibida
+   Verificar productos físicamente
+   ↓
+PASO 4: INGRESAR A INVENTARIO
+   Actualizar a: Inventario
+   Registrar en sistema de inventario
+   Productos disponibles para venta
+
+
+═══════════════════════════════════════════════════════════════
+   COMPARACIÓN: COMPRAS VS VENTAS
+═══════════════════════════════════════════════════════════════
+
+VENTAS:                          COMPRAS:
+- Cliente VIP                    - Proveedor internacional
+- Empleado (vendedor)            - No aplica
+- Productos del inventario       - Nuevos productos comprados
+- Genera ingreso                 - Genera egreso
+- Estado: Pendiente/Completada   - Estado: En espera/Tránsito/etc.
+- Disminuye inventario           - Aumenta inventario
+- Relacionado con Cuentas        - Relacionado con Cuentas
+  por Cobrar (crédito clientes)    por Pagar (crédito proveedores)
+
+
+═══════════════════════════════════════════════════════════════
+   PRÓXIMAS MEJORAS SUGERIDAS
+═══════════════════════════════════════════════════════════════
+
+□ Integración automática con módulo de Inventario
+□ Catálogo de productos frecuentes
+□ Importación masiva desde Excel/CSV
+□ Reportes en PDF
+□ Gráficas de compras por período
+□ Comparación de precios entre proveedores
+□ Alertas de productos en tránsito
+□ Historial de cambios de estado
+□ Dashboard con métricas avanzadas
+□ Exportación a Excel
+
+
+═══════════════════════════════════════════════════════════════
+   SOPORTE Y DOCUMENTACIÓN
+═══════════════════════════════════════════════════════════════
+
+📖 Documentación completa:
+   docs/MODULO_COMPRAS_README.md
+
+📁 Archivos principales:
+   - Modelo: app/models/Purchase.php
+   - Controlador: app/controllers/Admin/PurchaseController.php
+   - Vista: app/views/admin/purchase-admin.php
+   - JavaScript: public/assets/js/purchase-admin.js
+
+🗄️ Scripts SQL:
+   - database/create_compras.sql
+
+🔗 Módulos relacionados:
+   - Proveedores (requerido)
+   - Cuentas por Pagar (opcional pero recomendado)
+   - Inventario (integración futura)
+
+
+═══════════════════════════════════════════════════════════════
+   ¡INSTALACIÓN COMPLETA!
+═══════════════════════════════════════════════════════════════
+
+Si seguiste todos los pasos, el módulo de Compras está listo.
+
+🌐 Accede a: http://localhost/BarkiOS/admin/compras
+
+✨ Características:
+   ✅ Registro completo de compras
+   ✅ Múltiples productos por compra
+   ✅ Búsqueda de proveedores en tiempo real
+   ✅ Tracking de envíos
+   ✅ Gestión de estados
+   ✅ Dashboard de estadísticas
+   ✅ Integración con Cuentas por Pagar
+   ✅ Reportes y consultas SQL
+
+¡Éxito! 🎉
