@@ -110,13 +110,13 @@ body {
 
 /* === FORZAR color rojo al botón Cerrar Sesión === */
 .sidebar-footer a.nav-link {
-  color: #dc3545 !important;          /* rojo base */
+  color: #2c3e50 !important;          /* rojo base */
   font-weight: 600;
   transition: all 0.3s ease;
 }
 
 .sidebar-footer a.nav-link i {
-  color: #dc3545 !important;          /* icono rojo también */
+  color: #2c3e50 !important;          /* icono rojo también */
 }
 
 .sidebar-footer a.nav-link:hover {
