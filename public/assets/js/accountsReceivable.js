@@ -1,333 +1,573 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const tableBody = document.getElementById('accountTableBody');
-    const addForm = document.getElementById('addAccountForm');
-    const editForm = document.getElementById('editAccountForm');
+// ============================================================
+// MÓDULO DE CUENTAS POR COBRAR - GARAGE BARKI (ACTUALIZADO)
+// ============================================================
 
-    // Utilidades
-    const escapeHtml = str => String(str ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+$(document).ready(function() {
     
-    const showAlert = (msg, type = 'info') => {
-        let icon = 'info';
-        if (type === 'success') icon = 'success';
-        else if (type === 'danger' || type === 'error') icon = 'error';
-        else if (type === 'warning') icon = 'warning';
+    // --- ESTADO GLOBAL ---
+    const $tableBody = $('#accountsTableBody');
+    let accounts = [];
+
+    // --- UTILIDADES ---
+    const esc = (text) => {
+        const div = document.createElement('div');
+        div.textContent = String(text ?? '');
+        return div.innerHTML;
+    };
+
+    const toast = (type, msg) => {
         Swal.fire({
-            text: msg,
-            icon: icon,
-            timer: 3000,
+            toast: true,
+            position: 'top-end',
+            icon: type,
+            title: msg,
             showConfirmButton: false,
-            timerProgressBar: true,
-            position: 'top',
-            toast: true
+            timer: 3000,
+            timerProgressBar: true
         });
     };
 
-    // Validación en tiempo real para el número de factura
-    const facturaNumeroInput = document.getElementById('facturaNumero');
-    if (facturaNumeroInput) {
-        facturaNumeroInput.addEventListener('input', function(e) {
-            // Solo permitir números
-            this.value = this.value.replace(/[^0-9]/g, '');
-            
-            // Validar longitud
-            if (this.value.length === 8) {
-                this.classList.remove('is-invalid');
-                this.classList.add('is-valid');
-            } else if (this.value.length > 0) {
-                this.classList.remove('is-valid');
-                this.classList.add('is-invalid');
-            } else {
-                this.classList.remove('is-valid', 'is-invalid');
-            }
-        });
-    }
-
-    // Búsqueda de clientes VIP con debounce de 300ms
-    const searchClientInput = document.getElementById('searchClient');
-    const clientResults = document.getElementById('clientResults');
-    const clienteIdInput = document.getElementById('clienteId');
-    let searchTimeout = null;
-
-    if (searchClientInput) {
-        searchClientInput.addEventListener('input', function(e) {
-            // Limpiar el timeout anterior
-            clearTimeout(searchTimeout);
-            const query = this.value.trim();
-            
-            // Limpiar el cliente seleccionado si el usuario modifica el texto
-            if (clienteIdInput.value) {
-                clienteIdInput.value = '';
-            }
-            
-            // Si la consulta es muy corta, ocultar resultados
-            if (query.length < 1) {
-                clientResults.style.display = 'none';
-                clientResults.innerHTML = '';
-                return;
-            }
-            
-            // Mostrar indicador de búsqueda
-            clientResults.innerHTML = '<div class="list-group-item"><i class="fas fa-spinner fa-spin me-2"></i>Buscando clientes VIP...</div>';
-            clientResults.style.display = 'block';
-            
-            // Implementar debounce de 300ms
-            searchTimeout = setTimeout(() => {
-                fetch(`/BarkiOS/clients/?action=search_vip_clients&q=${encodeURIComponent(query)}`, {
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                })
-                .then(r => r.json())
-                .then(data => {
-                    if (data.success && data.clients && data.clients.length > 0) {
-                        clientResults.innerHTML = data.clients.map(client => `
-                            <button type="button" class="list-group-item list-group-item-action" 
-                                    data-cedula="${escapeHtml(client.cliente_ced)}" 
-                                    data-nombre="${escapeHtml(client.nombre_cliente)}">
-                                <strong>${escapeHtml(client.nombre_cliente)}</strong>
-                                <br>
-                                <small class="text-muted">
-                                    <i class="fas fa-id-card me-1"></i>Cédula: ${escapeHtml(client.cliente_ced)}
-                                    ${client.telefono ? `<i class="fas fa-phone ms-2 me-1"></i>${escapeHtml(client.telefono)}` : ''}
-                                </small>
-                            </button>
-                        `).join('');
-
-                        // Agregar manejadores de eventos a los resultados
-                        document.querySelectorAll('#clientResults button').forEach(btn => {
-                            btn.addEventListener('click', (e) => {
-                                e.preventDefault();
-                                const client = e.currentTarget;
-                                searchClientInput.value = client.dataset.nombre;
-                                clienteIdInput.value = client.dataset.cedula;
-                                clientResults.style.display = 'none';
-                                clientResults.innerHTML = '';
-                                
-                                // Marcar el campo como válido
-                                searchClientInput.classList.remove('is-invalid');
-                                searchClientInput.classList.add('is-valid');
-                            });
-                        });
-                    } else {
-                        clientResults.innerHTML = '<div class="list-group-item text-muted"><i class="fas fa-info-circle me-2"></i>No se encontraron clientes VIP con ese nombre</div>';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error al buscar clientes VIP:', error);
-                    clientResults.innerHTML = '<div class="list-group-item text-danger"><i class="fas fa-exclamation-triangle me-2"></i>Error al realizar la búsqueda</div>';
-                });
-            }, 300); // Debounce de 300ms
-        });
-
-        // Ocultar resultados al hacer clic fuera
-        document.addEventListener('click', (e) => {
-            if (!searchClientInput.contains(e.target) && !clientResults.contains(e.target)) {
-                clientResults.style.display = 'none';
-            }
-        });
-    }
-
-    // Cargar cuentas
-    function fetchAccounts() {
-        tableBody.innerHTML = `<tr><td colspan="7" class="text-center">
-            <div class="spinner-border text-primary"></div> Cargando...</td></tr>`;
-        
-        fetch(window.location.pathname + '?action=get_accounts', {
-            headers: {'X-Requested-With':'XMLHttpRequest'}
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (!data.accounts || !data.accounts.length) {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="7" class="text-center">
-                            <div class="alert alert-info mb-0">No hay cuentas por cobrar registradas</div>
-                        </td>
-                    </tr>`;
-                return;
-            }
-
-            tableBody.innerHTML = data.accounts.map(account => `
-                <tr id="account-${escapeHtml(account.id)}">
-                    <td>${escapeHtml(account.factura_numero)}</td>
-                    <td>${escapeHtml(account.nombre_cliente || 'N/A')}</td>
-                    <td>${formatDate(account.fecha_emision)}</td>
-                    <td class="text-end">${formatCurrency(account.monto_total)}</td>
-                    <td>${formatDate(account.fecha_vencimiento)}</td>
-                    <td><span class="badge bg-${getStatusBadgeClass(account.estado)}">${escapeHtml(account.estado)}</span></td>
-                    <td class="text-center">
-                        <button class="btn btn-sm btn-outline-primary btn-edit"
-                            data-id="${escapeHtml(account.id)}">
-                            <i class="fas fa-edit"></i> Editar
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger btn-delete"
-                            data-id="${escapeHtml(account.id)}">
-                            <i class="fas fa-trash"></i> Eliminar
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-
-            // Agregar manejadores de eventos
-            document.querySelectorAll('.btn-edit').forEach(btn => {
-                btn.addEventListener('click', () => loadAccountForEdit(btn.dataset.id));
-            });
-            
-            document.querySelectorAll('.btn-delete').forEach(btn => {
-                btn.addEventListener('click', () => handleDelete(btn.dataset.id));
-            });
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            tableBody.innerHTML = `
-                <tr>
-                    <td colspan="7" class="text-center text-danger">
-                        Error al cargar las cuentas por cobrar
-                    </td>
-                </tr>`;
-        });
-    }
-
-    // Funciones de utilidad
-    function formatDate(dateString) {
-        if (!dateString) return 'N/A';
-        const options = { year: 'numeric', month: 'short', day: 'numeric' };
-        return new Date(dateString).toLocaleDateString('es-ES', options);
-    }
-
-    function formatCurrency(amount) {
+    const fmt = (n) => {
         return new Intl.NumberFormat('es-VE', {
             style: 'currency',
-            currency: 'VES'
-        }).format(amount || 0);
-    }
+            currency: 'USD',
+            minimumFractionDigits: 2
+        }).format(Number(n) || 0);
+    };
 
-    function getStatusBadgeClass(status) {
-        const statusClasses = {
-            'Pendiente': 'warning',
-            'Pagado': 'success',
-            'Vencido': 'danger',
-            'Parcial': 'info'
-        };
-        return statusClasses[status] || 'secondary';
-    }
+    const fmtDate = (dateStr) => {
+        if (!dateStr) return 'N/A';
+        const date = new Date(dateStr);
+        if (isNaN(date)) return String(dateStr);
+        return date.toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    };
 
-    // Inicialización
-    if (tableBody) {
-        fetchAccounts();
-    }
-
-    // Agregar manejadores de eventos para los formularios
-    if (addForm) {
-        addForm.addEventListener('submit', handleAdd);
-    }
-
-    if (editForm) {
-        editForm.addEventListener('submit', handleEdit);
-    }
-
-    // Funciones de manejo de eventos
-    async function handleAdd(e) {
-        e.preventDefault();
-        
-        // Validar número de factura (exactamente 8 dígitos)
-        if (!facturaNumeroInput || !facturaNumeroInput.value || facturaNumeroInput.value.length !== 8) {
-            showAlert('El número de factura debe tener exactamente 8 dígitos', 'warning');
-            facturaNumeroInput.focus();
-            return;
-        }
-        
-        // Validar que se haya seleccionado un cliente VIP
-        if (!clienteIdInput || !clienteIdInput.value) {
-            showAlert('Por favor seleccione un cliente VIP de la lista', 'warning');
-            searchClientInput.focus();
-            return;
-        }
-        
-        const formData = new FormData(addForm);
-        
-        // Mostrar indicador de carga
-        const btnGuardar = document.getElementById('btnGuardar');
-        const btnSpinner = btnGuardar.querySelector('.spinner-border');
-        const btnText = btnGuardar.querySelector('.btn-text');
-        btnGuardar.disabled = true;
-        btnSpinner.classList.remove('d-none');
-        btnText.textContent = 'Guardando...';
-        
-        try {
-            const response = await fetch(window.location.pathname + '?action=add_ajax', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
+    // Helper AJAX
+    function ajax(method, url, data, success, error) {
+        const isFormData = (data instanceof FormData);
+        $.ajax({
+            url: url,
+            method: method,
+            data: data,
+            dataType: 'json',
+            processData: !isFormData,
+            contentType: isFormData ? false : 'application/x-www-form-urlencoded; charset=UTF-8',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            success: success,
+            error: function(xhr) {
+                let msg = 'Error en la petición';
+                try {
+                    const json = xhr.responseJSON || JSON.parse(xhr.responseText);
+                    if (json && json.message) msg = json.message;
+                } catch (e) {
+                    msg = xhr.statusText || msg;
                 }
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                showAlert('Cuenta por cobrar agregada correctamente', 'success');
-                addForm.reset();
-                
-                // Limpiar validaciones visuales
-                if (facturaNumeroInput) facturaNumeroInput.classList.remove('is-valid', 'is-invalid');
-                if (searchClientInput) searchClientInput.classList.remove('is-valid', 'is-invalid');
-                if (clienteIdInput) clienteIdInput.value = '';
-                
-                const modal = bootstrap.Modal.getInstance(document.getElementById('addAccountModal'));
-                if (modal) modal.hide();
-                fetchAccounts();
-            } else {
-                showAlert(result.message || 'Error al agregar la cuenta', 'error');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            showAlert('Error al procesar la solicitud', 'error');
-        } finally {
-            // Restaurar botón
-            btnGuardar.disabled = false;
-            btnSpinner.classList.add('d-none');
-            btnText.textContent = 'Guardar';
-        }
-    }
-
-    // Limpiar el formulario al cerrar el modal
-    const addAccountModal = document.getElementById('addAccountModal');
-    if (addAccountModal) {
-        addAccountModal.addEventListener('hidden.bs.modal', () => {
-            if (addForm) {
-                addForm.reset();
-            }
-            if (facturaNumeroInput) {
-                facturaNumeroInput.classList.remove('is-valid', 'is-invalid');
-                facturaNumeroInput.value = '';
-            }
-            if (searchClientInput) {
-                searchClientInput.classList.remove('is-valid', 'is-invalid');
-                searchClientInput.value = '';
-            }
-            if (clienteIdInput) {
-                clienteIdInput.value = '';
-            }
-            if (clientResults) {
-                clientResults.style.display = 'none';
-                clientResults.innerHTML = '';
+                if (error) error(msg);
+                else toast('error', msg);
             }
         });
     }
 
-    // Implementar handleEdit, loadAccountForEdit y handleDelete de manera similar
-    // ...
+    // --- CARGA DE CUENTAS ---
+    function loadAccounts() {
+        $tableBody.html(`
+            <tr>
+                <td colspan="7" class="text-center py-4">
+                    <div class="spinner-border text-primary"></div>
+                </td>
+            </tr>
+        `);
 
-});
+        ajax('GET', window.location.pathname + '?action=get_accounts', null, function(r) {
+            if (r && r.success) {
+                accounts = r.accounts || [];
+                renderAccounts();
+            } else {
+                $tableBody.html(`
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <div class="alert alert-info mb-0">
+                                No hay cuentas por cobrar registradas
+                            </div>
+                        </td>
+                    </tr>
+                `);
+            }
+        }, function(msg) {
+            $tableBody.html(`
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-danger">
+                        Error al cargar cuentas: ${esc(msg)}
+                    </td>
+                </tr>
+            `);
+        });
+    }
 
-// Inicialización de tooltips de Bootstrap
-document.addEventListener('DOMContentLoaded', function() {
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
+    // --- RENDERIZADO ---
+    function renderAccounts() {
+        if (accounts.length === 0) {
+            $tableBody.html(`
+                <tr>
+                    <td colspan="7" class="text-center py-4">
+                        <div class="alert alert-info mb-0">
+                            No hay cuentas por cobrar registradas
+                        </div>
+                    </td>
+                </tr>
+            `);
+            return;
+        }
+
+        let rows = '';
+        accounts.forEach((acc) => {
+            const badgeClass = getBadgeClass(acc.estado_visual);
+            
+            // Calcular días restantes con mejor formato
+            let diasInfo = '';
+            if (acc.dias_restantes > 0) {
+                diasInfo = `<small class="text-muted d-block">Vence en ${acc.dias_restantes} día${acc.dias_restantes !== 1 ? 's' : ''}</small>`;
+            } else if (acc.dias_restantes === 0) {
+                diasInfo = `<small class="text-warning d-block"><strong>¡Vence hoy!</strong></small>`;
+            } else {
+                diasInfo = `<small class="text-danger d-block">Vencida hace ${Math.abs(acc.dias_restantes)} día${Math.abs(acc.dias_restantes) !== 1 ? 's' : ''}</small>`;
+            }
+            
+            rows += `
+                <tr>
+                    <td>
+                        <code>${esc(acc.referencia)}</code>
+                    </td>
+                    <td>${esc(acc.cliente)}</td>
+                    <td>${fmtDate(acc.fecha_emision)}</td>
+                    <td><strong>${fmt(acc.saldo_pendiente)}</strong></td>
+                    <td>
+                        ${fmtDate(acc.fecha_vencimiento)}
+                        ${diasInfo}
+                    </td>
+                    <td>
+                        <span class="badge ${badgeClass}">
+                            ${esc(acc.estado_visual)}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-info" 
+                                onclick="viewAccountDetails(${acc.id})" 
+                                title="Ver detalles">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        ${acc.estado_visual !== 'Pagado' ? `
+                            <button class="btn btn-sm btn-outline-success" 
+                                    onclick="openPaymentModal(${acc.id})" 
+                                    title="Registrar pago">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-warning" 
+                                    onclick="openExtendDateModal(${acc.id})" 
+                                    title="Extender fecha">
+                                <i class="fas fa-calendar-plus"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" 
+                                    onclick="deleteAccount(${acc.id})" 
+                                    title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        ` : ''}
+                    </td>
+                </tr>
+            `;
+        });
+
+        $tableBody.html(rows);
+    }
+
+    function getBadgeClass(estado) {
+        const badges = {
+            'Vigente': 'badge-vigente',
+            'Por vencer': 'badge-por-vencer',
+            'Vencido': 'badge-vencido',
+            'Pagado': 'badge-pagado'
+        };
+        return badges[estado] || 'bg-secondary';
+    }
+
+    // --- VER DETALLES ---
+    window.viewAccountDetails = function(id) {
+        if (!id) return;
+
+        $('#accountDetailsContent').html(`
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary"></div>
+                <p class="mt-2">Cargando detalles...</p>
+            </div>
+        `);
+        $('#viewAccountModal').modal('show');
+
+        ajax('GET', window.location.pathname + `?action=get_account_details&id=${id}`, null, function(r) {
+            if (r && r.success && r.account) {
+                renderAccountDetails(r.account);
+            } else {
+                $('#accountDetailsContent').html(`
+                    <p class="text-center text-muted">No se encontraron detalles</p>
+                `);
+            }
+        }, function(msg) {
+            $('#accountDetailsContent').html(`
+                <p class="text-center text-danger">${esc(msg)}</p>
+            `);
+        });
+    };
+
+    function renderAccountDetails(acc) {
+        const diasRestantes = acc.dias_restantes > 0 
+            ? `Faltan ${acc.dias_restantes} días`
+            : `Vencida hace ${Math.abs(acc.dias_restantes)} días`;
+
+        let html = `
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <h5>Cuenta #${esc(acc.cuenta_cobrar_id)}</h5>
+                    <p class="mb-1">
+                        <strong>Referencia Venta:</strong> 
+                        <code>${esc(acc.referencia)}</code>
+                    </p>
+                    <p class="mb-1">
+                        <strong>Estado:</strong> 
+                        <span class="badge ${getBadgeClass(acc.estado_visual || acc.estado)}">
+                            ${esc(acc.estado)}
+                        </span>
+                    </p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <p class="mb-1"><strong>Cliente:</strong> ${esc(acc.nombre_cliente)}</p>
+                    <p class="mb-1"><strong>Cédula:</strong> ${esc(acc.cliente_ced)}</p>
+                    ${acc.telefono ? `<p class="mb-1"><strong>Teléfono:</strong> ${esc(acc.telefono)}</p>` : ''}
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <p class="mb-1"><strong>Fecha Emisión:</strong> ${fmtDate(acc.emision)}</p>
+                    <p class="mb-1"><strong>Fecha Vencimiento:</strong> ${fmtDate(acc.vencimiento)}</p>
+                    <p class="mb-1"><small class="text-muted">${diasRestantes}</small></p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <p class="mb-1"><strong>Monto Total:</strong> ${fmt(acc.monto_total)}</p>
+                    <p class="mb-1"><strong>Saldo Pendiente:</strong> 
+                        <span class="text-danger fs-5">${fmt(acc.saldo_pendiente)}</span>
+                    </p>
+                    ${acc.total_pagado > 0 ? `
+                        <p class="mb-1 text-success"><strong>Total Pagado:</strong> ${fmt(acc.total_pagado)}</p>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+
+        // Historial de pagos
+        if (acc.pagos && acc.pagos.length > 0) {
+            html += `
+                <hr>
+                <h6 class="mb-3"><i class="fas fa-history me-2"></i>Historial de Pagos</h6>
+                <table class="table table-sm table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Tipo</th>
+                            <th class="text-end">Monto</th>
+                            <th>Observaciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            acc.pagos.forEach(p => {
+                html += `
+                    <tr>
+                        <td>${fmtDate(p.fecha_pago)}</td>
+                        <td>
+                            <span class="badge bg-secondary">${esc(p.tipo_pago)}</span>
+                            ${p.referencia_bancaria ? `<br><small>${esc(p.referencia_bancaria)}</small>` : ''}
+                        </td>
+                        <td class="text-end"><strong>${fmt(p.monto)}</strong></td>
+                        <td><small class="text-muted">${esc(p.observaciones || '-')}</small></td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                </table>
+            `;
+        } else {
+            html += `
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    No se han registrado pagos aún
+                </div>
+            `;
+        }
+
+        $('#accountDetailsContent').html(html);
+    }
+
+    // --- REGISTRAR PAGO ---
+    window.openPaymentModal = function(id) {
+        const account = accounts.find(a => a.id === id);
+        if (!account) {
+            toast('error', 'Cuenta no encontrada');
+            return;
+        }
+
+        $('#payment_cuenta_id').val(account.id);
+        $('#payment_cliente').text(account.cliente);
+        $('#payment_saldo').text(fmt(account.saldo_pendiente));
+        
+        $('input[name="monto"]').attr('max', account.saldo_pendiente);
+        
+        $('#registerPaymentForm')[0].reset();
+        $('#payment_cuenta_id').val(account.id);
+        $('#registerPaymentModal').modal('show');
+    };
+
+    $('#registerPaymentForm').on('submit', function(e) {
+        e.preventDefault();
+
+        const formData = $(this).serialize();
+        const monto = parseFloat($('input[name="monto"]').val());
+        const saldoMax = parseFloat($('input[name="monto"]').attr('max'));
+
+        if (monto > saldoMax) {
+            toast('error', `El monto no puede ser mayor al saldo pendiente (${fmt(saldoMax)})`);
+            return;
+        }
+
+        const $btn = $(this).find('button[type="submit"]');
+        const btnText = $btn.html();
+        $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Procesando...');
+
+        ajax('POST', window.location.pathname + '?action=register_payment', formData, 
+            function(r) {
+                $btn.prop('disabled', false).html(btnText);
+                
+                if (r && r.success) {
+                    toast('success', r.message || 'Pago registrado correctamente');
+                    $('#registerPaymentModal').modal('hide');
+                    loadAccounts();
+                } else {
+                    toast('error', r?.message || 'Error al registrar el pago');
+                }
+            },
+            function(msg) {
+                $btn.prop('disabled', false).html(btnText);
+                toast('error', msg);
+            }
+        );
     });
+
+    // --- EXTENDER FECHA (AHORA SIEMPRE DISPONIBLE) ---
+    window.openExtendDateModal = function(id) {
+        const account = accounts.find(a => a.id === id);
+        if (!account) {
+            toast('error', 'Cuenta no encontrada');
+            return;
+        }
+
+        $('#extend_cuenta_id').val(account.id);
+        $('#extend_cliente').text(account.cliente);
+        $('#extend_fecha_actual').text(fmtDate(account.fecha_vencimiento));
+        
+        // Establecer fecha mínima (mañana)
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const minDate = tomorrow.toISOString().split('T')[0];
+        $('input[name="nueva_fecha"]').attr('min', minDate);
+        
+        $('#extendDateForm')[0].reset();
+        $('#extend_cuenta_id').val(account.id);
+        $('#extendDateModal').modal('show');
+    };
+
+    $('#extendDateForm').on('submit', function(e) {
+        e.preventDefault();
+
+        const formData = $(this).serialize();
+        const $btn = $(this).find('button[type="submit"]');
+        const btnText = $btn.html();
+        $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Actualizando...');
+
+        ajax('POST', window.location.pathname + '?action=update_due_date', formData, 
+            function(r) {
+                $btn.prop('disabled', false).html(btnText);
+                
+                if (r && r.success) {
+                    toast('success', r.message || 'Fecha actualizada correctamente');
+                    $('#extendDateModal').modal('hide');
+                    loadAccounts();
+                } else {
+                    toast('error', r?.message || 'Error al actualizar la fecha');
+                }
+            },
+            function(msg) {
+                $btn.prop('disabled', false).html(btnText);
+                toast('error', msg);
+            }
+        );
+    });
+
+    // --- ELIMINAR CUENTA ---
+    window.deleteAccount = function(id) {
+        const account = accounts.find(a => a.id === id);
+        if (!account) {
+            toast('error', 'Cuenta no encontrada');
+            return;
+        }
+
+        Swal.fire({
+            title: '¿Eliminar cuenta por cobrar?',
+            html: `
+                <p>Esta acción eliminará la cuenta de <strong>${esc(account.cliente)}</strong></p>
+                <p class="text-danger"><strong>ADVERTENCIA:</strong> Se anulará la venta asociada.</p>
+            `,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                ajax('POST', window.location.pathname + '?action=delete', 
+                    { cuenta_id: id, confirmar: 'si' }, 
+                    function(r) {
+                        if (r && r.success) {
+                            toast('success', r.message || 'Cuenta eliminada correctamente');
+                            loadAccounts();
+                        } else {
+                            toast('error', r?.message || 'Error al eliminar la cuenta');
+                        }
+                    }
+                );
+            }
+        });
+    };
+
+    // --- PROCESAR VENCIDOS ---
+    window.processExpiredAccounts = function() {
+        Swal.fire({
+            title: '¿Procesar cuentas vencidas?',
+            html: `
+                <p>Esta acción procesará todas las cuentas vencidas:</p>
+                <ul class="text-start">
+                    <li>Marcará cuentas vencidas</li>
+                    <li>Anulará ventas asociadas</li>
+                    <li>Liberará prendas para venta</li>
+                </ul>
+            `,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#ffc107',
+            confirmButtonText: 'Sí, procesar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Procesando...',
+                    html: 'Verificando cuentas vencidas',
+                    allowOutsideClick: false,
+                    didOpen: () => { Swal.showLoading(); }
+                });
+
+                ajax('POST', window.location.pathname + '?action=process_expired', {}, 
+                    function(r) {
+                        Swal.close();
+                        if (r && r.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Proceso completado',
+                                html: `<p>${esc(r.message)}</p>`,
+                                confirmButtonText: 'Aceptar'
+                            });
+                            loadAccounts();
+                        } else {
+                            toast('error', r?.message || 'Error al procesar cuentas vencidas');
+                        }
+                    },
+                    function(msg) {
+                        Swal.close();
+                        toast('error', msg);
+                    }
+                );
+            }
+        });
+    };
+
+    // --- VALIDACIÓN EN TIEMPO REAL ---
+    $('input[name="monto"]').on('input', function() {
+        const val = parseFloat($(this).val());
+        const max = parseFloat($(this).attr('max'));
+        
+        if (isNaN(val) || val <= 0) {
+            $(this).removeClass('is-valid').addClass('is-invalid');
+        } else if (val > max) {
+            $(this).removeClass('is-valid').addClass('is-invalid');
+        } else {
+            $(this).removeClass('is-invalid').addClass('is-valid');
+        }
+    });
+
+    // Validar fecha de vencimiento
+    $('input[name="nueva_fecha"]').on('change', function() {
+        const selectedDate = new Date($(this).val());
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (selectedDate <= today) {
+            $(this).addClass('is-invalid').removeClass('is-valid');
+            toast('error', 'La fecha de vencimiento debe ser posterior a hoy');
+        } else {
+            $(this).addClass('is-valid').removeClass('is-invalid');
+        }
+    });
+
+    // Mostrar/ocultar campos bancarios según tipo de pago
+    $('select[name="tipo_pago"]').on('change', function() {
+        const tipo = $(this).val();
+        const $refBancaria = $('#refBancariaGroup');
+        const $banco = $('#bancoGroup');
+        
+        if (tipo === 'EFECTIVO') {
+            $refBancaria.hide();
+            $banco.hide();
+            $('input[name="referencia_bancaria"]').prop('required', false);
+            $('input[name="banco"]').prop('required', false);
+        } else {
+            $refBancaria.show();
+            $banco.show();
+            $('input[name="referencia_bancaria"]').prop('required', false);
+            $('input[name="banco"]').prop('required', false);
+        }
+    });
+
+    // Disparar evento al cargar
+    $('select[name="tipo_pago"]').trigger('change');
+
+    // --- LIMPIAR MODALES AL CERRAR ---
+    $('.modal').on('hidden.bs.modal', function() {
+        $(this).find('form').each(function() {
+            if (this.reset) this.reset();
+            $(this).find('.is-valid, .is-invalid').removeClass('is-valid is-invalid');
+        });
+    });
+
+    // --- INICIALIZACIÓN ---
+    loadAccounts();
+
+    // Actualizar cada 2 minutos
+    setInterval(loadAccounts, 2 * 60 * 1000);
 });
