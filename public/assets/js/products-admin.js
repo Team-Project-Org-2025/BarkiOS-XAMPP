@@ -195,6 +195,17 @@ $(document).ready(function() {
     }).fail(() => showAlert('Error al agregar', 'danger'));
 }
 
+    function loadProductForEdit($btn) {
+        $('#editProductId').val($btn.data('id'));
+        $('#editProductIdHidden').val($btn.data('id'));
+        $('#editProductName').val($btn.data('nombre'));
+        $('#editProductCategory').val($btn.data('categoria'));
+        actualizarTipos($catEdit, $tipoEdit);
+        $('#editProductType').val($btn.data('tipo'));
+        $('#editProductPrice').val($btn.data('precio'));
+        $('#editProductModal').modal('show');
+    }
+
 function handleEdit(e) {
     e.preventDefault();
     if (!validarProducto($editProductForm, false)) return;
