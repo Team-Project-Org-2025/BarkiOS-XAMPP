@@ -50,6 +50,16 @@ $(document).ready(function () {
         }).format(num);
     };
 
+    const fmtBs = (n) => {
+      const num = Number(n) || 0;
+      return new Intl.NumberFormat("es-VE", {
+        style: "currency",
+        currency: "VES",
+        minimumFractionDigits: 2
+      }).format(num);
+    };
+
+
     const fmtDate = (d) => {
         if (!d) return '';
         const dt = new Date(d);
@@ -411,6 +421,10 @@ $(document).ready(function () {
         $('#summary_subtotal').text(fmt(subtotal));
         $('#summary_iva').text(fmt(ivaAmount));
         $('#summary_total').text(fmt(total));
+        // Calcular y mostrar total en Bs
+        const totalBs = total * DOLAR_BCV_RATE;
+        $('#summary_total_bs').text(fmtBs(totalBs));
+        
         $('#iva_percentage').text(ivaPct.toFixed(2));
     }
 
@@ -602,6 +616,7 @@ $(document).ready(function () {
         const total = parseFloat(s.monto_total ?? s.total ?? 0);
         const pagado = parseFloat(s.total_pagado ?? s.pagado ?? 0);
         const saldo = parseFloat(s.saldo_pendiente ?? s.saldo ?? 0);
+        const totalBs = total * DOLAR_BCV_RATE;
 
         html += `
             <div class="row">
@@ -611,7 +626,9 @@ $(document).ready(function () {
                         <tr><td>IVA (${s.iva_porcentaje ?? 16}%):</td><td class="text-end">${fmt(iva)}</td></tr>
                         <tr class="fw-bold"><td>Total:</td><td class="text-end">${fmt(total)}</td></tr>
                         ${pagado > 0 ? `<tr class="text-success"><td>Pagado:</td><td class="text-end">${fmt(pagado)}</td></tr>` : ''}
-                        ${saldo > 0 ? `<tr class="text-danger"><td>Saldo:</td><td class="text-end">${fmt(saldo)}</td></tr>` : ''}
+                        ${saldo > 0 ? `<tr class="text-danger"><td >Saldo:</td><td class="text-end">${fmt(saldo)}</td></tr>` : ''}
+                        <tr><td>Tasa usada:</td><td class="text-end">${DOLAR_BCV_RATE.toFixed(2)} Bs</td></tr>
+                        <tr class="fw-bold"><td>Total (Bs):</td><td class="text-end">${fmtBs(totalBs)}</td></tr>
                     </table>
                 </div>
             </div>
