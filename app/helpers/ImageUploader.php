@@ -12,8 +12,17 @@ class ImageUploader {
     private $maxFileSize = 5242880; // 5MB
     private $errors = [];
     
-    public function __construct(string $uploadDir = 'public/uploads/products/') {
-        $this->uploadDir = rtrim($uploadDir, '/') . '/';
+    public function __construct(string $uploadDir = null) {
+        // Determinar la ruta base del proyecto
+        $basePath = dirname(__DIR__, 2); // Sube 2 niveles desde helpers hasta BarkiOS
+        
+        if ($uploadDir === null) {
+            $this->uploadDir = $basePath . '/public/uploads/products/';
+        } else {
+            $this->uploadDir = $uploadDir;
+        }
+        
+        $this->uploadDir = rtrim(str_replace('\\', '/', $this->uploadDir), '/') . '/';
         
         // Crear directorio si no existe
         if (!is_dir($this->uploadDir)) {
