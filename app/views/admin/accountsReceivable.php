@@ -234,6 +234,10 @@ html, body {
 <!-- SweetAlert2 para alertas bonitas -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="/BarkiOS/public/assets/js/accountsReceivable.js"></script>
+<<<<<<<<< Temporary merge branch 1
 <script src="/BarkiOS/public/assets/js/logout.js"></script>
+=========
+
+>>>>>>>>> Temporary merge branch 2
 </body>
 </html>

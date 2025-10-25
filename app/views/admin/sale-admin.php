@@ -138,6 +138,17 @@
                 <option value="credito">Crédito (Solo VIP)</option>
               </select>
             </div>
+            <div class="col-12 col-md-6 col-lg-4" id="fechaVencimientoGroup" style="display: none;">
+                <label class="form-label fw-bold">
+                      Fecha de Vencimiento <span class="text-danger">*</span>
+                </label>
+                <input type="date" 
+                        id="add_fecha_vencimiento" 
+                        name="fecha_vencimiento" 
+                        class="form-control"
+                        min="<?= date('Y-m-d', strtotime('+1 day')) ?>">
+                <small class="text-muted">Fecha límite de pago del crédito</small>
+            </div>
           <div class="col-12 col-md-6 col-lg-4">
             <label class="form-label fw-bold">Referencia (opcional)</label>
             <input type="text" id="add_referencia" name="referencia" 
@@ -199,6 +210,10 @@
                     <span class="fs-5 fw-bold">Total:</span>
                     <strong class="fs-5 text-primary" id="summary_total">$0.00</strong>
                   </div>
+                  <div class="d-flex justify-content-between mt-1">
+                    <span class="fw-bold text-success">Total en Bs:</span>
+                    <strong class="text-success" id="summary_total_bs">Bs. 0,00</strong>
+                  </div>
                 </div>
               </div>
             </div>
@@ -239,11 +254,22 @@
   </div>
 </div>
 
+<?php 
+// Asegurarse de que las funciones JS estén disponibles
+if (!function_exists('getDolarRate')) {
+    require_once __DIR__ . '/../../core/AdminContext.php';
+}
+?>
+
+
+<script>
+    const DOLAR_BCV_RATE = <?php echo getDolarRate(); ?>;
+</script>
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="/BarkiOS/public/assets/js/sales-admin.js"></script>
-<script src="/BarkiOS/public/assets/js/logout.js"></script>
 
 </body>
 </html>

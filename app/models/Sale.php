@@ -87,86 +87,79 @@ class Sale extends Database
        CREAR VENTA
     ===================================================== */
 
-    public function addSale($data)
-    {
-        try {
-            $this->db->beginTransaction();
-/*
-            // Validar cliente VIP si es crédito
-            if ($data['tipo_venta'] === 'credito') {
-                $this->validateClientCredit($data['cliente_ced']);
-            }
-*/
-            // Validar disponibilidad de prendas (por código)
-            $this->validateProductsAvailability($data['productos']);
+public function addSale($data)
+{
+    try {
+        $this->db->beginTransaction();
 
-            // Calcular montos
-            $subtotal = 0;
-            foreach ($data['productos'] as $p) {
-                $subtotal += floatval($p['precio_unitario']);
-            }
+        // Validar disponibilidad de prendas (por código)
+        $this->validateProductsAvailability($data['productos']);
 
-            $ivaPorcentaje = $data['iva_porcentaje'] ?? self::IVA_DEFAULT;
-            $montoIva = round($subtotal * ($ivaPorcentaje / 100), 2);
-            $montoTotal = round($subtotal + $montoIva, 2);
-
-            // Generar referencia si no existe
-            // Usar referencia personalizada si el usuario la proporciona
-            if (!empty($data['referencia'])) {
-                $referencia = trim($data['referencia']);
-            } else {
-                $referencia = $this->generateReference();
-}
-
-
-            // Insertar venta
-            $stmt = $this->db->prepare("
-                INSERT INTO ventas (
-                    referencia, empleado_ced, cliente_ced, tipo_venta, 
-                    estado_venta, monto_subtotal, iva_porcentaje, 
-                    monto_iva, monto_total, saldo_pendiente, observaciones
-                ) VALUES (
-                    :ref, :empleado, :cliente, :tipo, :estado, 
-                    :subtotal, :iva_pct, :iva_monto, :total, :saldo, :obs
-                )
-            ");
-
-            $estado = $data['tipo_venta'] === 'credito' ? 'pendiente' : 'completada';
-            $saldo = $data['tipo_venta'] === 'credito' ? $montoTotal : 0.00;
-
-            $stmt->execute([
-                ':ref' => $referencia,
-                ':empleado' => $data['empleado_ced'],
-                ':cliente' => $data['cliente_ced'],
-                ':tipo' => $data['tipo_venta'],
-                ':estado' => $estado,
-                ':subtotal' => $subtotal,
-                ':iva_pct' => $ivaPorcentaje,
-                ':iva_monto' => $montoIva,
-                ':total' => $montoTotal,
-                ':saldo' => $saldo,
-                ':obs' => $data['observaciones'] ?? null
-            ]);
-
-            $ventaId = $this->db->lastInsertId();
-
-            // Insertar detalles (usando código_prenda)
-            $this->addSaleDetails($ventaId, $data['productos']);
-
-            // Crear crédito si es necesario
-            if ($data['tipo_venta'] === 'credito') {
-                $this->createCredit($ventaId, $referencia);
-            }
-
-            $this->db->commit();
-            return $ventaId;
-
-        } catch (Exception $e) {
-            $this->db->rollBack();
-            error_log("Sale::addSale - " . $e->getMessage());
-            throw $e;
+        // Calcular montos
+        $subtotal = 0;
+        foreach ($data['productos'] as $p) {
+            $subtotal += floatval($p['precio_unitario']);
         }
+
+        $ivaPorcentaje = $data['iva_porcentaje'] ?? self::IVA_DEFAULT;
+        $montoIva = round($subtotal * ($ivaPorcentaje / 100), 2);
+        $montoTotal = round($subtotal + $montoIva, 2);
+
+        // Generar referencia si no existe
+        if (!empty($data['referencia'])) {
+            $referencia = trim($data['referencia']);
+        } else {
+            $referencia = $this->generateReference();
+        }
+
+        // Insertar venta
+        $stmt = $this->db->prepare("
+            INSERT INTO ventas (
+                referencia, empleado_ced, cliente_ced, tipo_venta, 
+                estado_venta, monto_subtotal, iva_porcentaje, 
+                monto_iva, monto_total, saldo_pendiente, observaciones
+            ) VALUES (
+                :ref, :empleado, :cliente, :tipo, :estado, 
+                :subtotal, :iva_pct, :iva_monto, :total, :saldo, :obs
+            )
+        ");
+
+        $estado = $data['tipo_venta'] === 'credito' ? 'pendiente' : 'completada';
+        $saldo = $data['tipo_venta'] === 'credito' ? $montoTotal : 0.00;
+
+        $stmt->execute([
+            ':ref' => $referencia,
+            ':empleado' => $data['empleado_ced'],
+            ':cliente' => $data['cliente_ced'],
+            ':tipo' => $data['tipo_venta'],
+            ':estado' => $estado,
+            ':subtotal' => $subtotal,
+            ':iva_pct' => $ivaPorcentaje,
+            ':iva_monto' => $montoIva,
+            ':total' => $montoTotal,
+            ':saldo' => $saldo,
+            ':obs' => $data['observaciones'] ?? null
+        ]);
+
+        $ventaId = $this->db->lastInsertId();
+
+        // Insertar detalles (usando código_prenda)
+        $this->addSaleDetails($ventaId, $data['productos']);
+
+        // Crear crédito si es necesario CON FECHA DE VENCIMIENTO
+        if ($data['tipo_venta'] === 'credito') {
+            $this->createCredit($ventaId, $referencia, $data['fecha_vencimiento']);
+        }
+
+        $this->db->commit();
+        return $ventaId;
+
+    } catch (Exception $e) {
+        $this->db->rollBack();
+        error_log("Sale::addSale - " . $e->getMessage());
+        throw $e;
     }
+}
 /*
     private function validateClientCredit($clienteCed)
     {
@@ -264,30 +257,45 @@ class Sale extends Database
     }
 */
 
-    private function createCredit($ventaId, $referencia)
-    {
-        // Crear una referencia única para el crédito
-        $refCredito = 'CRE-' . $referencia;
-
-        // Insertar el crédito vinculado a la venta
-        $stmtCred = $this->db->prepare("
-            INSERT INTO credito (venta_id, referencia_credito)
-            VALUES (:venta_id, :ref)
-        ");
-        $stmtCred->execute([
-            ':venta_id' => $ventaId,
-            ':ref' => $refCredito
-        ]);
-
-        $creditoId = $this->db->lastInsertId();
-
-        // Crear la cuenta por cobrar asociada
-        $stmtCC = $this->db->prepare("
-            INSERT INTO cuentas_cobrar (credito_id, estado, emision)
-            VALUES (:credito_id, 'pendiente', NOW())
-        ");
-        $stmtCC->execute([':credito_id' => $creditoId]);
+    /**
+     * Crea un crédito con fecha de vencimiento para una venta
+     * @param int $ventaId ID de la venta
+     * @param string $referencia Referencia de la venta
+     * @param string $fechaVencimiento Fecha de vencimiento (opcional, por defecto 30 días)
+     */
+private function createCredit($ventaId, $referencia, $fechaVencimiento = null)
+{
+    // Si no se proporciona fecha de vencimiento, calcular 30 días por defecto
+    if (empty($fechaVencimiento)) {
+        error_log("Fecha de vencimiento no proporcionada.");
+    } else {
+        error_log("Fecha de vencimiento: " . $fechaVencimiento);
     }
+
+
+    // Insertar el crédito vinculado a la venta
+    $stmtCred = $this->db->prepare("
+        INSERT INTO credito (venta_id, referencia_credito)
+        VALUES (:venta_id, :ref)
+    ");
+    $stmtCred->execute([
+        ':venta_id' => $ventaId,
+        ':ref' => 'CRE-' . $referencia
+    ]);
+
+    $creditoId = $this->db->lastInsertId();
+
+    // Crear la cuenta por cobrar asociada con la fecha de vencimiento
+    $stmtCC = $this->db->prepare("
+        INSERT INTO cuentas_cobrar (credito_id, estado, emision, vencimiento)
+        VALUES (:credito_id, 'pendiente', NOW(), :vencimiento)
+    ");
+    $stmtCC->execute([
+        ':credito_id' => $creditoId,
+        ':vencimiento' => $fechaVencimiento
+    ]);
+}
+
 
     private function generateReference()
     {
