@@ -315,47 +315,117 @@ $(document).ready(function() {
 
         $('#accountDetailsContent').html(html);
     }
+    // =========================
+    //   CONFIGURACIÓN MONEDAS
+    // =========================
 
-    // --- REGISTRAR PAGO ---
+    const METODOS_USD = ["EFECTIVO", "TRANSFERENCIA"];
+    const METODOS_BS  = ["EFECTIVO", "PAGO_MOVIL", "TRANSFERENCIA"];
+
+    // Referencias del modal
+    const $moneda    = $('#payment_moneda');
+    const $monto     = $('input[name="monto_general"]');
+    const $equivInfo = $('#equiv_info');
+    const $tipoPago  = $('select[name="tipo_pago"]');
+
+    // ===============================
+    //   ABRIR MODAL DE PAGO
+    // ===============================
     window.openPaymentModal = function(id) {
         const account = accounts.find(a => a.id === id);
-        if (!account) {
-            toast('error', 'Cuenta no encontrada');
-            return;
-        }
+        if (!account) return toast('error', 'Cuenta no encontrada');
 
         $('#payment_cuenta_id').val(account.id);
         $('#payment_cliente').text(account.cliente);
         $('#payment_saldo').text(fmt(account.saldo_pendiente));
-        
-        $('input[name="monto"]').attr('max', account.saldo_pendiente);
-        
+
         $('#registerPaymentForm')[0].reset();
-        $('#payment_cuenta_id').val(account.id);
+        $equivInfo.text('').hide();
+
+        // Moneda por defecto: USD
+        cambiarMoneda("USD");
         $('#registerPaymentModal').modal('show');
     };
 
+    // ===============================
+    //   CAMBIO DE MONEDA
+    // ===============================
+    $moneda.on('change', function() {
+        const moneda = $(this).val();
+        cambiarMoneda(moneda);
+    });
+
+    function cambiarMoneda(moneda) {
+        $tipoPago.empty();
+
+        // ✅ Opción inicial en blanco
+        $tipoPago.append(`<option value="" disabled selected>Seleccione un método de pago</option>`);
+
+        const metodos = moneda === "USD" ? METODOS_USD : METODOS_BS;
+        metodos.forEach(m => $tipoPago.append(`<option value="${m}">${m}</option>`));
+        
+        $('#refBancariaGroup').hide();
+        $('#bancoGroup').hide();
+
+        if (moneda === "BS") {
+            $equivInfo.show();
+        } else {
+            $equivInfo.hide().text('');
+        }
+    }
+
+
+    // ================================
+    //   CONVERSIÓN EN TIEMPO REAL
+    // ================================
+    $monto.on('input', function() {
+        const moneda = $moneda.val();
+        const val = parseFloat($(this).val());
+        if (moneda === "BS" && val > 0) {
+            const equivalenteUSD = (val / DOLAR_BCV_RATE).toFixed(2);
+            $equivInfo.text(`≈ $${equivalenteUSD} (BCV ${DOLAR_BCV_RATE})`);
+        } else {
+            $equivInfo.text('');
+        }
+    });
+
+    // ================================
+    //   SUBMIT CON CONVERSIÓN A USD
+    // ================================
     $('#registerPaymentForm').on('submit', function(e) {
         e.preventDefault();
 
-        const formData = $(this).serialize();
-        const monto = parseFloat($('input[name="monto"]').val());
-        const saldoMax = parseFloat($('input[name="monto"]').attr('max'));
+        const moneda = $moneda.val();
+        const saldoPendUSD = parseFloat($('#payment_saldo').text().replace('$', ''));
+        let montoUSD = 0;
 
-        if (monto > saldoMax) {
-            toast('error', `El monto no puede ser mayor al saldo pendiente (${fmt(saldoMax)})`);
+        const montoInput = parseFloat($monto.val());
+        if (!montoInput || montoInput <= 0) {
+            toast('error', 'Ingrese un monto válido');
             return;
         }
 
+        if (moneda === "BS") {
+            montoUSD = montoInput / DOLAR_BCV_RATE;
+            const diffBS = (saldoPendUSD - montoUSD) * DOLAR_BCV_RATE;
+            if (Math.abs(diffBS) <= 50) montoUSD = saldoPendUSD;
+        } else {
+            montoUSD = montoInput;
+        }
+
+        $('input[name="monto"]').val(montoUSD.toFixed(2));
+
+        // Enviar datos al backend
+        const formData = $(this).serialize();
         const $btn = $(this).find('button[type="submit"]');
         const btnText = $btn.html();
+
         $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Procesando...');
 
-        ajax('POST', window.location.pathname + '?action=register_payment', formData, 
+        ajax('POST', window.location.pathname + '?action=register_payment', formData,
             function(r) {
                 $btn.prop('disabled', false).html(btnText);
-                
-                if (r && r.success) {
+                if (r?.success) {
                     toast('success', r.message || 'Pago registrado correctamente');
                     $('#registerPaymentModal').modal('hide');
                     loadAccounts();
@@ -443,7 +513,7 @@ $(document).ready(function() {
         }).then((result) => {
             if (result.isConfirmed) {
                 ajax('POST', window.location.pathname + '?action=delete', 
-                    { cuenta_id: id, confirmar: 'si' }, 
+                    { cuenta_cobrar_id: id, confirmar: 'si' }, 
                     function(r) {
                         if (r && r.success) {
                             toast('success', r.message || 'Cuenta eliminada correctamente');
@@ -507,20 +577,6 @@ $(document).ready(function() {
         });
     };
 
-    // --- VALIDACIÓN EN TIEMPO REAL ---
-    $('input[name="monto"]').on('input', function() {
-        const val = parseFloat($(this).val());
-        const max = parseFloat($(this).attr('max'));
-        
-        if (isNaN(val) || val <= 0) {
-            $(this).removeClass('is-valid').addClass('is-invalid');
-        } else if (val > max) {
-            $(this).removeClass('is-valid').addClass('is-invalid');
-        } else {
-            $(this).removeClass('is-invalid').addClass('is-valid');
-        }
-    });
-
     // Validar fecha de vencimiento
     $('input[name="nueva_fecha"]').on('change', function() {
         const selectedDate = new Date($(this).val());
@@ -540,22 +596,85 @@ $(document).ready(function() {
         const tipo = $(this).val();
         const $refBancaria = $('#refBancariaGroup');
         const $banco = $('#bancoGroup');
-        
+
         if (tipo === 'EFECTIVO') {
             $refBancaria.hide();
             $banco.hide();
-            $('input[name="referencia_bancaria"]').prop('required', false);
-            $('input[name="banco"]').prop('required', false);
         } else {
             $refBancaria.show();
             $banco.show();
-            $('input[name="referencia_bancaria"]').prop('required', false);
-            $('input[name="banco"]').prop('required', false);
         }
     });
-
     // Disparar evento al cargar
     $('select[name="tipo_pago"]').trigger('change');
+
+    // ================================
+//   VALIDACIONES EN TIEMPO REAL
+// ================================
+
+const $formPago = $('#registerPaymentForm');
+const $saldoPend = $('#payment_saldo');
+const $refInput = $('input[name="referencia_bancaria"]');
+const $bancoInput = $('input[name="banco"]');
+
+// --- Validar monto en tiempo real ---
+$monto.on('input', function () {
+    const val = parseFloat($(this).val());
+    const saldoPendiente = parseFloat($saldoPend.text().replace(/[^\d.-]/g, '')) || 0;
+
+    if (!val || val <= 0) {
+        $(this).addClass('is-invalid').removeClass('is-valid');
+        $(this).siblings('.invalid-feedback').remove();
+        $(this).after('<div class="invalid-feedback">Ingrese un monto válido</div>');
+    } else if (val > saldoPendiente && $moneda.val() === 'USD') {
+        $(this).addClass('is-invalid').removeClass('is-valid');
+        $(this).siblings('.invalid-feedback').remove();
+        $(this).after('<div class="invalid-feedback">El monto excede el saldo pendiente</div>');
+    } else {
+        $(this).addClass('is-valid').removeClass('is-invalid');
+        $(this).siblings('.invalid-feedback').remove();
+    }
+});
+
+// --- Validar tipo de pago ---
+$tipoPago.on('change', function () {
+    const tipo = $(this).val();
+    if (!tipo) {
+        $(this).addClass('is-invalid').removeClass('is-valid');
+    } else {
+        $(this).addClass('is-valid').removeClass('is-invalid');
+    }
+
+    // Mostrar/ocultar campos bancarios según tipo
+    const $refBancaria = $('#refBancariaGroup');
+    const $banco = $('#bancoGroup');
+    if (!tipo || tipo === 'EFECTIVO') {
+        $refBancaria.hide();
+        $banco.hide();
+        $refInput.val('').removeClass('is-valid is-invalid');
+        $bancoInput.val('').removeClass('is-valid is-invalid');
+    } else {
+        $refBancaria.show();
+        $banco.show();
+    }
+});
+
+// --- Validar referencia y banco ---
+$refInput.on('input', function () {
+    if ($(this).val().trim().length < 3) {
+        $(this).addClass('is-invalid').removeClass('is-valid');
+    } else {
+        $(this).addClass('is-valid').removeClass('is-invalid');
+    }
+});
+
+$bancoInput.on('input', function () {
+    if ($(this).val().trim().length < 3) {
+        $(this).addClass('is-invalid').removeClass('is-valid');
+    } else {
+        $(this).addClass('is-valid').removeClass('is-invalid');
+    }
+});
 
     // --- LIMPIAR MODALES AL CERRAR ---
     $('.modal').on('hidden.bs.modal', function() {

@@ -93,23 +93,28 @@ html, body {
     </div>
 </div>
 
-<!-- MODAL: Registrar Pago -->
+
+<!--  MODAL REGISTRAR PAGO -->
 <div class="modal fade" id="registerPaymentModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
+            
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-money-bill-wave me-2"></i> Registrar Pago
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
             <form id="registerPaymentForm">
-                <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title">
-                        <i class="fas fa-money-bill-wave me-2"></i>
-                        Registrar Pago
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
+            <input type="hidden" name="monto">
+
+                <input type="hidden" name="cuenta_cobrar_id" id="payment_cuenta_id">
+
                 <div class="modal-body">
-                    <input type="hidden" id="payment_cuenta_id" name="cuenta_cobrar_id">
-                    
-                    <!-- Info de la cuenta -->
-                    <div class="alert alert-info mb-3">
+
+                    <!--ALERTA CLIENTE / SALDO-->
+                    <div class="alert alert-info mb-3"> 
                         <div class="d-flex justify-content-between">
                             <span><strong>Cliente:</strong> <span id="payment_cliente"></span></span>
                         </div>
@@ -118,70 +123,55 @@ html, body {
                             <strong class="text-danger" id="payment_saldo">$0.00</strong>
                         </div>
                     </div>
+                    <!-- ✅ FIN ALERTA -->
 
-                    <!-- Monto -->
+                    <!-- Moneda -->
                     <div class="mb-3">
-                        <label class="form-label fw-bold">
-                            Monto a pagar <span class="text-danger">*</span>
-                        </label>
-                        <div class="input-group">
-                            <span class="input-group-text">$</span>
-                            <input type="number" class="form-control" name="monto" 
-                                   step="0.01" min="0.01" required>
-                        </div>
-                        <small class="text-muted">Ingrese el monto en USD</small>
+                        <label class="form-label">Moneda</label>
+                        <select name="moneda_pago" id="payment_moneda" class="form-select" required>
+                            <option value="USD" selected>USD</option>
+                            <option value="BS">Bolívares (Bs)</option>
+                        </select>
+                    </div>
+                    <!-- Input único de monto -->
+                    <div class="mb-3" id="group_monto_general">
+                        <label class="form-label">Monto</label>
+                        <input type="number" name="monto_general" step="0.01" class="form-control" min="0" placeholder="0.00" required>
+                        <small id="equiv_info" class="text-muted" style="display:none;"></small>
                     </div>
 
                     <!-- Tipo de pago -->
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Tipo de pago</label>
-                        <select class="form-select" name="tipo_pago">
-                            <option value="EFECTIVO">Efectivo</option>
-                            <option value="TRANSFERENCIA">Transferencia</option>
-                            <option value="PAGO_MOVIL">Pago Móvil</option>
-                            <option value="ZELLE">Zelle</option>
-                            <option value="PUNTO">Punto de Venta</option>
-                            <option value="CHEQUE">Cheque</option>
-                        </select>
+                        <label class="form-label">Tipo de Pago</label>
+                        <select name="tipo_pago" class="form-select" required></select>
                     </div>
 
-                    <!-- Moneda -->
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Moneda</label>
-                        <select class="form-select" name="moneda_pago">
-                            <option value="USD">USD ($)</option>
-                            <option value="BS">Bolívares (Bs)</option>
-                        </select>
-                    </div>
-
-                    <!-- Referencia bancaria -->
+                    <!-- Referencias bancarias -->
                     <div class="mb-3" id="refBancariaGroup">
-                        <label class="form-label fw-bold">Referencia bancaria</label>
-                        <input type="text" class="form-control" name="referencia_bancaria" 
-                               placeholder="Ej: 123456789">
+                        <label class="form-label">Referencia Bancaria</label>
+                        <input type="text" name="referencia_bancaria" class="form-control">
                     </div>
 
-                    <!-- Banco -->
                     <div class="mb-3" id="bancoGroup">
-                        <label class="form-label fw-bold">Banco</label>
-                        <input type="text" class="form-control" name="banco" 
-                               placeholder="Ej: Banesco">
+                        <label class="form-label">Banco</label>
+                        <input type="text" name="banco" class="form-control">
                     </div>
 
                     <!-- Observaciones -->
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Observaciones</label>
-                        <textarea class="form-control" name="observaciones" rows="2"></textarea>
+                        <label class="form-label">Observaciones</label>
+                        <textarea name="observaciones" class="form-control" rows="2"></textarea>
                     </div>
+
                 </div>
+
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        Cancelar
-                    </button>
                     <button type="submit" class="btn btn-success">
                         <i class="fas fa-check me-1"></i> Registrar Pago
                     </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                 </div>
+
             </form>
         </div>
     </div>
@@ -200,7 +190,7 @@ html, body {
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <input type="hidden" id="extend_cuenta_id" name="cuenta_id">
+                    <input type="hidden" id="extend_cuenta_id" name="cuenta_cobrar_id">
                     
                     <div class="alert alert-warning mb-3">
                         <i class="fas fa-info-circle me-2"></i>
@@ -229,15 +219,23 @@ html, body {
         </div>
     </div>
 </div>
+
+<?php 
+if (!function_exists('getDolarRate')) {
+    require_once __DIR__ . '/../../core/AdminContext.php';
+}
+?>
+
+<script>
+    const DOLAR_BCV_RATE = <?php echo getDolarRate(); ?>;
+</script>
+
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<!-- SweetAlert2 para alertas bonitas -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="/BarkiOS/public/assets/js/accountsReceivable.js"></script>
-<<<<<<<<< Temporary merge branch 1
-<script src="/BarkiOS/public/assets/js/logout.js"></script>
-=========
 
->>>>>>>>> Temporary merge branch 2
+<script src="/BarkiOS/public/assets/js/logout.js"></script>
+
 </body>
 </html>

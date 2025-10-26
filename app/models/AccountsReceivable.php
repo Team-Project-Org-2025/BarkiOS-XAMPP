@@ -153,7 +153,6 @@ class AccountsReceivable extends Database
                     p.fecha_pago,
                     p.monto,
                     p.tipo_pago,
-                    p.moneda_pago,
                     p.referencia_bancaria,
                     p.banco,
                     p.estado_pago,
@@ -213,26 +212,27 @@ class AccountsReceivable extends Database
             }
 
             // Insertar pago
+            // Insertar pago
             $stmt = $this->db->prepare("
                 INSERT INTO pagos (
-                    venta_id, credito_id, monto, tipo_pago, moneda_pago,
+                    venta_id, credito_id, monto, tipo_pago,
                     referencia_bancaria, banco, estado_pago, observaciones
                 ) VALUES (
-                    :venta_id, :credito_id, :monto, :tipo_pago, :moneda,
+                    :venta_id, :credito_id, :monto, :tipo_pago,
                     :referencia, :banco, 'CONFIRMADO', :obs
                 )
             ");
-            
+                    
             $stmt->execute([
-                ':venta_id' => $cuenta['venta_id'],
+                ':venta_id'   => $cuenta['venta_id'],
                 ':credito_id' => $cuenta['credito_id'],
-                ':monto' => $monto,
-                ':tipo_pago' => $data['tipo_pago'] ?? 'EFECTIVO',
-                ':moneda' => $data['moneda_pago'] ?? 'BS',
+                ':monto'      => $monto,
+                ':tipo_pago'  => $data['tipo_pago'] ?? 'EFECTIVO',
                 ':referencia' => $data['referencia_bancaria'] ?? null,
-                ':banco' => $data['banco'] ?? null,
-                ':obs' => $data['observaciones'] ?? null
+                ':banco'      => $data['banco'] ?? null,
+                ':obs'        => $data['observaciones'] ?? null
             ]);
+
 
             $pagoId = $this->db->lastInsertId();
 
