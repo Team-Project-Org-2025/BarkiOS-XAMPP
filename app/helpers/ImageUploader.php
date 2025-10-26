@@ -2,243 +2,130 @@
 // app/helpers/ImageUploader.php
 namespace Barkios\helpers;
 
-use Exception;
-
 class ImageUploader {
-    
     private $uploadDir;
     private $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-    private $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    private $maxFileSize = 5242880; // 5MB
-    private $errors = [];
-    
-    public function __construct(string $uploadDir = null) {
-        // Determinar la ruta base del proyecto
-        $basePath = dirname(__DIR__, 2); // Sube 2 niveles desde helpers hasta BarkiOS
+    private $maxFileSize = 5242880; // 5MB en bytes
+
+    public function __construct() {
+        // Construir ruta absoluta desde la raíz del proyecto
+        $projectRoot = dirname(dirname(__DIR__)); // Sube 2 niveles desde app/helpers/
+        $this->uploadDir = $projectRoot . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'products' . DIRECTORY_SEPARATOR;
         
-        if ($uploadDir === null) {
-            $this->uploadDir = $basePath . '/public/uploads/products/';
-        } else {
-            $this->uploadDir = $uploadDir;
-        }
-        
-        $this->uploadDir = rtrim(str_replace('\\', '/', $this->uploadDir), '/') . '/';
+        error_log("ImageUploader - Directorio: " . $this->uploadDir);
+        error_log("ImageUploader - Existe: " . (is_dir($this->uploadDir) ? 'SI' : 'NO'));
         
         // Crear directorio si no existe
         if (!is_dir($this->uploadDir)) {
-            mkdir($this->uploadDir, 0755, true);
+            error_log("ImageUploader - Creando directorio...");
+            if (!mkdir($this->uploadDir, 0777, true)) {
+                error_log("ERROR: No se pudo crear el directorio: " . $this->uploadDir);
+                throw new \Exception("No se pudo crear el directorio de imágenes");
+            }
+            error_log("ImageUploader - Directorio creado");
         }
+        
+        // Verificar permisos de escritura
+        if (!is_writable($this->uploadDir)) {
+            error_log("ERROR: No hay permisos de escritura en: " . $this->uploadDir);
+            throw new \Exception("No hay permisos de escritura en el directorio de imágenes");
+        }
+        
+        error_log("ImageUploader - Inicializado correctamente");
     }
-    
+
     /**
-     * Subir imagen de producto
+     * Sube una imagen y devuelve la ruta relativa
      */
-    public function upload(array $file, string $productId = null): array {
-        $this->errors = [];
+    public function upload($file, $productId) {
+        error_log("=== ImageUploader::upload INICIO ===");
+        error_log("Product ID: " . $productId);
         
-        // Validaciones básicas
-        if (!isset($file['tmp_name']) || empty($file['tmp_name'])) {
-            $this->errors[] = "No se recibió ningún archivo";
-            return $this->getResponse(false);
+        $errors = [];
+
+        // Validar que se haya subido un archivo
+        if (!isset($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
+            error_log("ERROR: No se subió ningún archivo");
+            $errors[] = 'No se ha subido ningún archivo';
+            return ['success' => false, 'errors' => $errors];
         }
-        
-        if ($file['error'] !== UPLOAD_ERR_OK) {
-            $this->errors[] = $this->getUploadError($file['error']);
-            return $this->getResponse(false);
-        }
-        
+        error_log("✓ Archivo temporal existe: " . $file['tmp_name']);
+
         // Validar tamaño
         if ($file['size'] > $this->maxFileSize) {
-            $this->errors[] = "El archivo excede el tamaño máximo de " . 
-                             $this->formatBytes($this->maxFileSize);
-            return $this->getResponse(false);
+            error_log("ERROR: Archivo muy grande: " . $file['size']);
+            $errors[] = 'El archivo excede el tamaño máximo permitido (5MB)';
+            return ['success' => false, 'errors' => $errors];
         }
-        
+        error_log("✓ Tamaño válido: " . $file['size'] . " bytes");
+
         // Validar extensión
         $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        error_log("Extensión detectada: " . $extension);
         if (!in_array($extension, $this->allowedExtensions)) {
-            $this->errors[] = "Extensión no permitida. Use: " . 
-                             implode(', ', $this->allowedExtensions);
-            return $this->getResponse(false);
+            error_log("ERROR: Extensión no permitida");
+            $errors[] = 'Tipo de archivo no permitido. Permitidos: ' . implode(', ', $this->allowedExtensions);
+            return ['success' => false, 'errors' => $errors];
         }
-        
-        // Validar tipo MIME
-        $finfo = finfo_open(FILEINFO_MIME_TYPE);
-        $mimeType = finfo_file($finfo, $file['tmp_name']);
-        finfo_close($finfo);
-        
-        if (!in_array($mimeType, $this->allowedMimeTypes)) {
-            $this->errors[] = "Tipo de archivo no permitido";
-            return $this->getResponse(false);
+        error_log("✓ Extensión válida");
+
+        // Validar que sea una imagen real
+        $imageInfo = getimagesize($file['tmp_name']);
+        if ($imageInfo === false) {
+            error_log("ERROR: No es una imagen válida");
+            $errors[] = 'El archivo no es una imagen válida';
+            return ['success' => false, 'errors' => $errors];
         }
-        
-        // Validar que sea imagen real
-        if (!getimagesize($file['tmp_name'])) {
-            $this->errors[] = "El archivo no es una imagen válida";
-            return $this->getResponse(false);
-        }
-        
+        error_log("✓ Imagen válida: " . $imageInfo['mime']);
+
         // Generar nombre único
-        $fileName = $productId ? "product_{$productId}_" : "product_";
-        $fileName .= uniqid() . '.' . $extension;
-        $destination = $this->uploadDir . $fileName;
+        $filename = 'product_' . $productId . '_' . time() . '.' . $extension;
+        $targetPath = $this->uploadDir . $filename;
         
+        error_log("Nombre archivo: " . $filename);
+        error_log("Ruta destino: " . $targetPath);
+        error_log("Directorio escribible: " . (is_writable($this->uploadDir) ? 'SI' : 'NO'));
+
         // Mover archivo
-        if (move_uploaded_file($file['tmp_name'], $destination)) {
-            // Redimensionar automáticamente
-            $this->resize($destination, 800, 800);
-            
-            return $this->getResponse(true, [
-                'filename' => $fileName,
-                'path' => $destination,
-                'url' => '/' . $destination,
-                'size' => $file['size'],
-                'mime_type' => $mimeType
-            ]);
+        if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
+            $lastError = error_get_last();
+            error_log("ERROR al mover archivo: " . print_r($lastError, true));
+            $errors[] = 'Error al guardar el archivo. Verifica permisos del directorio.';
+            return ['success' => false, 'errors' => $errors];
         }
         
-        $this->errors[] = "Error al guardar el archivo";
-        return $this->getResponse(false);
-    }
-    
-    /**
-     * Redimensionar imagen manteniendo proporción
-     */
-    public function resize(string $filePath, int $maxWidth = 800, int $maxHeight = 800): bool {
-        if (!file_exists($filePath)) {
-            return false;
-        }
+        error_log("✓ Archivo movido exitosamente a: " . $targetPath);
+        error_log("Archivo existe después de mover: " . (file_exists($targetPath) ? 'SI' : 'NO'));
+
+        // Devolver ruta relativa SIN barra inicial
+        $relativePath = 'public/uploads/products/' . $filename;
         
-        list($width, $height, $type) = getimagesize($filePath);
-        
-        // Calcular nuevas dimensiones
-        $ratio = min($maxWidth / $width, $maxHeight / $height);
-        
-        if ($ratio >= 1) {
-            return true; // No necesita redimensionar
-        }
-        
-        $newWidth = round($width * $ratio);
-        $newHeight = round($height * $ratio);
-        
-        // Crear imagen desde archivo
-        switch ($type) {
-            case IMAGETYPE_JPEG:
-                $source = imagecreatefromjpeg($filePath);
-                break;
-            case IMAGETYPE_PNG:
-                $source = imagecreatefrompng($filePath);
-                break;
-            case IMAGETYPE_GIF:
-                $source = imagecreatefromgif($filePath);
-                break;
-            case IMAGETYPE_WEBP:
-                $source = imagecreatefromwebp($filePath);
-                break;
-            default:
-                return false;
-        }
-        
-        // Crear nueva imagen
-        $destination = imagecreatetruecolor($newWidth, $newHeight);
-        
-        // Preservar transparencia
-        if ($type == IMAGETYPE_PNG || $type == IMAGETYPE_GIF) {
-            imagealphablending($destination, false);
-            imagesavealpha($destination, true);
-            $transparent = imagecolorallocatealpha($destination, 255, 255, 255, 127);
-            imagefilledrectangle($destination, 0, 0, $newWidth, $newHeight, $transparent);
-        }
-        
-        imagecopyresampled($destination, $source, 0, 0, 0, 0, 
-                          $newWidth, $newHeight, $width, $height);
-        
-        // Guardar
-        switch ($type) {
-            case IMAGETYPE_JPEG:
-                imagejpeg($destination, $filePath, 90);
-                break;
-            case IMAGETYPE_PNG:
-                imagepng($destination, $filePath, 9);
-                break;
-            case IMAGETYPE_GIF:
-                imagegif($destination, $filePath);
-                break;
-            case IMAGETYPE_WEBP:
-                imagewebp($destination, $filePath, 90);
-                break;
-        }
-        
-        imagedestroy($source);
-        imagedestroy($destination);
-        
-        return true;
-    }
-    
-    /**
-     * Eliminar imagen física del servidor
-     */
-    public function delete(string $fileName): bool {
-        $filePath = $this->uploadDir . $fileName;
-        
-        if (file_exists($filePath)) {
-            return unlink($filePath);
-        }
-        
-        return false;
-    }
-    
-    /**
-     * Eliminar imagen por ruta completa
-     */
-    public function deleteByPath(string $path): bool {
-        if (file_exists($path)) {
-            return unlink($path);
-        }
-        return false;
-    }
-    
-    // Métodos auxiliares
-    
-    private function getUploadError(int $code): string {
-        $errors = [
-            UPLOAD_ERR_INI_SIZE => 'El archivo excede el tamaño permitido por PHP',
-            UPLOAD_ERR_FORM_SIZE => 'El archivo excede el tamaño del formulario',
-            UPLOAD_ERR_PARTIAL => 'El archivo se subió parcialmente',
-            UPLOAD_ERR_NO_FILE => 'No se subió ningún archivo',
-            UPLOAD_ERR_NO_TMP_DIR => 'Falta la carpeta temporal',
-            UPLOAD_ERR_CANT_WRITE => 'Error al escribir en disco',
-            UPLOAD_ERR_EXTENSION => 'Una extensión detuvo la subida'
-        ];
-        
-        return $errors[$code] ?? 'Error desconocido';
-    }
-    
-    private function formatBytes(int $bytes): string {
-        $units = ['B', 'KB', 'MB', 'GB'];
-        $i = 0;
-        
-        while ($bytes >= 1024 && $i < count($units) - 1) {
-            $bytes /= 1024;
-            $i++;
-        }
-        
-        return round($bytes, 2) . ' ' . $units[$i];
-    }
-    
-    private function getResponse(bool $success, array $data = []): array {
+        error_log("Ruta relativa para BD: " . $relativePath);
+        error_log("=== ImageUploader::upload FIN ===");
+
         return [
-            'success' => $success,
-            'data' => $data,
-            'errors' => $this->errors
+            'success' => true,
+            'data' => [
+                'url' => $relativePath,
+                'filename' => $filename,
+                'size' => $file['size'],
+                'mime' => $imageInfo['mime'],
+                'absolute_path' => $targetPath
+            ],
+            'errors' => []
         ];
     }
-    
-    public function getErrors(): array {
-        return $this->errors;
-    }
-    
-    public function setMaxFileSize(int $bytes): void {
-        $this->maxFileSize = $bytes;
+
+    /**
+     * Elimina una imagen del servidor
+     */
+    public function delete($imagePath) {
+        $fullPath = __DIR__ . '/../../' . ltrim($imagePath, '/');
+        
+        if (file_exists($fullPath)) {
+            return @unlink($fullPath);
+        }
+        
+        return false;
     }
 }
