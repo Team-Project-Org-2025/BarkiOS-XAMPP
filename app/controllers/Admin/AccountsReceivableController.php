@@ -250,7 +250,6 @@ function registerPayment($model)
             'cuenta_cobrar_id' => intval($_POST['cuenta_cobrar_id']),
             'monto' => $monto,
             'tipo_pago' => $_POST['tipo_pago'] ?? 'EFECTIVO',
-            'moneda_pago' => $_POST['moneda_pago'] ?? 'BS',
             'referencia_bancaria' => $_POST['referencia_bancaria'] ?? null,
             'banco' => $_POST['banco'] ?? null,
             'observaciones' => $_POST['observaciones'] ?? null
