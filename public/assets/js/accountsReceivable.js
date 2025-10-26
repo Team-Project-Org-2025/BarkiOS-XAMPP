@@ -1,5 +1,5 @@
 // ============================================================
-// MÓDULO DE CUENTAS POR COBRAR - GARAGE BARKI (ACTUALIZADO)
+// MÓDULO DE CUENTAS POR COBRAR - GARAGE BARKI (CORREGIDO)
 // ============================================================
 
 $(document).ready(function() {
@@ -7,6 +7,7 @@ $(document).ready(function() {
     // --- ESTADO GLOBAL ---
     const $tableBody = $('#accountsTableBody');
     let accounts = [];
+    let currentAccountBalance = 0; // 💡 Balance actual en USD
 
     // --- UTILIDADES ---
     const esc = (text) => {
@@ -113,10 +114,9 @@ $(document).ready(function() {
         if (accounts.length === 0) {
             $tableBody.html(`
                 <tr>
-                    <td colspan="7" class="text-center py-4">
-                        <div class="alert alert-info mb-0">
-                            No hay cuentas por cobrar registradas
-                        </div>
+                    <td colspan="7" class="text-center" style="padding: 1.5rem 0;">
+                        <i class="fa-solid fa-circle-info me-2 text-primary"></i>
+                        No hay cuentas por cobrar registradas
                     </td>
                 </tr>
             `);
@@ -127,7 +127,6 @@ $(document).ready(function() {
         accounts.forEach((acc) => {
             const badgeClass = getBadgeClass(acc.estado_visual);
             
-            // Calcular días restantes con mejor formato
             let diasInfo = '';
             if (acc.dias_restantes > 0) {
                 diasInfo = `<small class="text-muted d-block">Vence en ${acc.dias_restantes} día${acc.dias_restantes !== 1 ? 's' : ''}</small>`;
@@ -269,7 +268,6 @@ $(document).ready(function() {
             </div>
         `;
 
-        // Historial de pagos
         if (acc.pagos && acc.pagos.length > 0) {
             html += `
                 <hr>
@@ -315,16 +313,19 @@ $(document).ready(function() {
 
         $('#accountDetailsContent').html(html);
     }
+
     // =========================
     //   CONFIGURACIÓN MONEDAS
     // =========================
 
     const METODOS_USD = ["EFECTIVO", "TRANSFERENCIA"];
-    const METODOS_BS  = ["EFECTIVO", "PAGO_MOVIL", "TRANSFERENCIA"];
+    const METODOS_BS  = ["EFECTIVO", "PAGO MOVIL", "TRANSFERENCIA"];
+    const MARGEN_ERROR_BS = 10; // ✅ Margen de ±10 Bs
 
     // Referencias del modal
     const $moneda    = $('#payment_moneda');
-    const $monto     = $('input[name="monto_general"]');
+    const $montoInput = $('input[name="monto_general"]');
+    const $montoHidden = $('input[name="monto"]');
     const $equivInfo = $('#equiv_info');
     const $tipoPago  = $('select[name="tipo_pago"]');
 
@@ -334,13 +335,23 @@ $(document).ready(function() {
     window.openPaymentModal = function(id) {
         const account = accounts.find(a => a.id === id);
         if (!account) return toast('error', 'Cuenta no encontrada');
+        
+        currentAccountBalance = parseFloat(account.saldo_pendiente); // 💡 Guardar balance
+        const saldoPendienteBS = currentAccountBalance * DOLAR_BCV_RATE;
 
         $('#payment_cuenta_id').val(account.id);
         $('#payment_cliente').text(account.cliente);
-        $('#payment_saldo').text(fmt(account.saldo_pendiente));
+        $('#payment_saldo').html(`
+            <strong>${fmt(currentAccountBalance)}</strong>
+            <br><small class="text-muted">≈ Bs ${saldoPendienteBS.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</small>
+        `);
 
+        // ✅ Resetear formulario y validaciones
         $('#registerPaymentForm')[0].reset();
-        $equivInfo.text('').hide();
+        $montoInput.val('').removeClass('is-valid is-invalid');
+        $montoHidden.val('');
+        $equivInfo.html('').hide();
+        $tipoPago.empty().removeClass('is-valid is-invalid');
 
         // Moneda por defecto: USD
         cambiarMoneda("USD");
@@ -353,12 +364,15 @@ $(document).ready(function() {
     $moneda.on('change', function() {
         const moneda = $(this).val();
         cambiarMoneda(moneda);
+        
+        // ✅ Revalidar monto al cambiar moneda
+        if ($montoInput.val()) {
+            $montoInput.trigger('input');
+        }
     });
 
     function cambiarMoneda(moneda) {
-        $tipoPago.empty();
-
-        // ✅ Opción inicial en blanco
+        $tipoPago.empty().removeClass('is-valid is-invalid');
         $tipoPago.append(`<option value="" disabled selected>Seleccione un método de pago</option>`);
 
         const metodos = moneda === "USD" ? METODOS_USD : METODOS_BS;
@@ -367,25 +381,85 @@ $(document).ready(function() {
         $('#refBancariaGroup').hide();
         $('#bancoGroup').hide();
 
+        // ✅ Mostrar/ocultar conversión según moneda
         if (moneda === "BS") {
             $equivInfo.show();
         } else {
-            $equivInfo.hide().text('');
+            $equivInfo.hide().html('');
         }
     }
 
-
     // ================================
-    //   CONVERSIÓN EN TIEMPO REAL
+    //   VALIDACIÓN EN TIEMPO REAL
     // ================================
-    $monto.on('input', function() {
+    $montoInput.on('input', function() {
         const moneda = $moneda.val();
-        const val = parseFloat($(this).val());
-        if (moneda === "BS" && val > 0) {
-            const equivalenteUSD = (val / DOLAR_BCV_RATE).toFixed(2);
-            $equivInfo.text(`≈ $${equivalenteUSD} (BCV ${DOLAR_BCV_RATE})`);
+        const valorIngresado = parseFloat($(this).val());
+
+        // ✅ Limpiar mensajes previos
+        $(this).siblings('.invalid-feedback').remove();
+
+        // Validación base
+        if (!valorIngresado || valorIngresado <= 0 || isNaN(valorIngresado)) {
+            $(this).addClass('is-invalid').removeClass('is-valid');
+            $(this).after('<div class="invalid-feedback">Ingrese un monto válido</div>');
+            $montoHidden.val('');
+            $equivInfo.html('').hide();
+            return;
+        }
+
+        let montoUSD = 0;
+        let esValido = false;
+
+        if (moneda === "USD") {
+            // 💵 Validación directa en USD
+            montoUSD = valorIngresado;
+            
+            if (montoUSD > currentAccountBalance) {
+                $(this).addClass('is-invalid').removeClass('is-valid');
+                $(this).after(`<div class="invalid-feedback">El monto excede el saldo pendiente (${fmt(currentAccountBalance)})</div>`);
+            } else {
+                esValido = true;
+            }
+
+        } else if (moneda === "BS") {
+            // 🇻🇪 Conversión y validación con margen ±10 Bs
+            montoUSD = valorIngresado / DOLAR_BCV_RATE;
+            const diferenciaBs = (montoUSD - currentAccountBalance) * DOLAR_BCV_RATE;
+
+            if (Math.abs(diferenciaBs) <= MARGEN_ERROR_BS) {
+                // ✅ Dentro del margen: ajustar automáticamente
+                montoUSD = currentAccountBalance;
+                esValido = true;
+                
+                // 💡 Mostrar conversión con indicador de ajuste
+                $equivInfo.html(`
+                    <span class="text-success">
+                        <i class="fas fa-check-circle me-1"></i>
+                        Equivale a: <strong>${fmt(montoUSD)}</strong>
+                        ${Math.abs(diferenciaBs) > 0.01 ? '<small class="d-block">(Ajustado automáticamente)</small>' : ''}
+                    </span>
+                `).show();
+                
+            } else if (diferenciaBs > MARGEN_ERROR_BS) {
+                // ❌ Excede el límite superior
+                $(this).addClass('is-invalid').removeClass('is-valid');
+                $(this).after(`<div class="invalid-feedback">El monto excede el saldo pendiente</div>`);
+                $equivInfo.html(`<span class="text-danger">Equivale a: ${fmt(montoUSD)}</span>`).show();
+                
+            } else {
+                // ❌ Por debajo del mínimo aceptable
+                esValido = true;
+                $equivInfo.html(`<span class="text-info">Equivale a: <strong>${fmt(montoUSD)}</strong></span>`).show();
+            }
+        }
+
+        // ✅ Aplicar clases de validación
+        if (esValido) {
+            $(this).addClass('is-valid').removeClass('is-invalid');
+            $montoHidden.val(montoUSD.toFixed(4)); // ✅ Sincronizar input oculto
         } else {
-            $equivInfo.text('');
+            $montoHidden.val('');
         }
     });
 
@@ -395,27 +469,21 @@ $(document).ready(function() {
     $('#registerPaymentForm').on('submit', function(e) {
         e.preventDefault();
 
-        const moneda = $moneda.val();
-        const saldoPendUSD = parseFloat($('#payment_saldo').text().replace('$', ''));
-        let montoUSD = 0;
-
-        const montoInput = parseFloat($monto.val());
-        if (!montoInput || montoInput <= 0) {
+        // ✅ Validar que el monto oculto esté sincronizado
+        const montoUSD = parseFloat($montoHidden.val());
+        
+        if (!montoUSD || montoUSD <= 0) {
             toast('error', 'Ingrese un monto válido');
+            $montoInput.focus();
             return;
         }
 
-        if (moneda === "BS") {
-            montoUSD = montoInput / DOLAR_BCV_RATE;
-            const diffBS = (saldoPendUSD - montoUSD) * DOLAR_BCV_RATE;
-            if (Math.abs(diffBS) <= 50) montoUSD = saldoPendUSD;
-        } else {
-            montoUSD = montoInput;
+        if (!$tipoPago.val()) {
+            toast('error', 'Seleccione un método de pago');
+            $tipoPago.focus();
+            return;
         }
 
-        $('input[name="monto"]').val(montoUSD.toFixed(2));
-
-        // Enviar datos al backend
         const formData = $(this).serialize();
         const $btn = $(this).find('button[type="submit"]');
         const btnText = $btn.html();
@@ -440,7 +508,7 @@ $(document).ready(function() {
         );
     });
 
-    // --- EXTENDER FECHA (AHORA SIEMPRE DISPONIBLE) ---
+    // --- EXTENDER FECHA ---
     window.openExtendDateModal = function(id) {
         const account = accounts.find(a => a.id === id);
         if (!account) {
@@ -452,7 +520,6 @@ $(document).ready(function() {
         $('#extend_cliente').text(account.cliente);
         $('#extend_fecha_actual').text(fmtDate(account.fecha_vencimiento));
         
-        // Establecer fecha mínima (mañana)
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
         const minDate = tomorrow.toISOString().split('T')[0];
@@ -513,7 +580,7 @@ $(document).ready(function() {
         }).then((result) => {
             if (result.isConfirmed) {
                 ajax('POST', window.location.pathname + '?action=delete', 
-                    { cuenta_cobrar_id: id, confirmar: 'si' }, 
+                    { cuenta_id: id, confirmar: 'si' }, 
                     function(r) {
                         if (r && r.success) {
                             toast('success', r.message || 'Cuenta eliminada correctamente');
@@ -592,95 +659,92 @@ $(document).ready(function() {
     });
 
     // Mostrar/ocultar campos bancarios según tipo de pago
-    $('select[name="tipo_pago"]').on('change', function() {
+    $tipoPago.on('change', function() {
         const tipo = $(this).val();
         const $refBancaria = $('#refBancariaGroup');
         const $banco = $('#bancoGroup');
+        const $refInput = $('input[name="referencia_bancaria"]');
+        const $bancoInput = $('input[name="banco"]');
 
-        if (tipo === 'EFECTIVO') {
+        if (!tipo) {
+            $(this).addClass('is-invalid').removeClass('is-valid');
+        } else {
+            $(this).addClass('is-valid').removeClass('is-invalid');
+        }
+
+        if (tipo === 'EFECTIVO' || !tipo) {
             $refBancaria.hide();
             $banco.hide();
+            $refInput.val('').removeClass('is-valid is-invalid');
+            $bancoInput.val('').removeClass('is-valid is-invalid');
         } else {
             $refBancaria.show();
             $banco.show();
         }
     });
-    // Disparar evento al cargar
-    $('select[name="tipo_pago"]').trigger('change');
 
     // ================================
-//   VALIDACIONES EN TIEMPO REAL
-// ================================
+    //   VALIDACIONES CON REGEX
+    // ================================
+    
+    // Referencia bancaria: 8-10 dígitos numéricos
+    const REGEX_REFERENCIA = /^\d{8,10}$/;
+    
+    // Banco: hasta 30 caracteres (letras, números, espacios y algunos caracteres especiales)
+    const REGEX_BANCO = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s\-\.]{3,30}$/;
 
-const $formPago = $('#registerPaymentForm');
-const $saldoPend = $('#payment_saldo');
-const $refInput = $('input[name="referencia_bancaria"]');
-const $bancoInput = $('input[name="banco"]');
+    $('input[name="referencia_bancaria"]').on('input', function() {
+        if (!$(this).is(':visible')) return;
 
-// --- Validar monto en tiempo real ---
-$monto.on('input', function () {
-    const val = parseFloat($(this).val());
-    const saldoPendiente = parseFloat($saldoPend.text().replace(/[^\d.-]/g, '')) || 0;
-
-    if (!val || val <= 0) {
-        $(this).addClass('is-invalid').removeClass('is-valid');
+        const valor = $(this).val().trim();
         $(this).siblings('.invalid-feedback').remove();
-        $(this).after('<div class="invalid-feedback">Ingrese un monto válido</div>');
-    } else if (val > saldoPendiente && $moneda.val() === 'USD') {
-        $(this).addClass('is-invalid').removeClass('is-valid');
+
+        if (valor.length === 0) {
+            $(this).addClass('is-invalid').removeClass('is-valid');
+            $(this).after('<div class="invalid-feedback">La referencia bancaria es requerida</div>');
+        } else if (!REGEX_REFERENCIA.test(valor)) {
+            $(this).addClass('is-invalid').removeClass('is-valid');
+            if (!/^\d+$/.test(valor)) {
+                $(this).after('<div class="invalid-feedback">Solo se permiten números</div>');
+            } else if (valor.length < 8) {
+                $(this).after('<div class="invalid-feedback">Mínimo 8 dígitos</div>');
+            } else {
+                $(this).after('<div class="invalid-feedback">Máximo 10 dígitos</div>');
+            }
+        } else {
+            $(this).addClass('is-valid').removeClass('is-invalid');
+        }
+    });
+
+    $('input[name="banco"]').on('input', function() {
+        if (!$(this).is(':visible')) return;
+
+        const valor = $(this).val().trim();
         $(this).siblings('.invalid-feedback').remove();
-        $(this).after('<div class="invalid-feedback">El monto excede el saldo pendiente</div>');
-    } else {
-        $(this).addClass('is-valid').removeClass('is-invalid');
-        $(this).siblings('.invalid-feedback').remove();
-    }
-});
 
-// --- Validar tipo de pago ---
-$tipoPago.on('change', function () {
-    const tipo = $(this).val();
-    if (!tipo) {
-        $(this).addClass('is-invalid').removeClass('is-valid');
-    } else {
-        $(this).addClass('is-valid').removeClass('is-invalid');
-    }
-
-    // Mostrar/ocultar campos bancarios según tipo
-    const $refBancaria = $('#refBancariaGroup');
-    const $banco = $('#bancoGroup');
-    if (!tipo || tipo === 'EFECTIVO') {
-        $refBancaria.hide();
-        $banco.hide();
-        $refInput.val('').removeClass('is-valid is-invalid');
-        $bancoInput.val('').removeClass('is-valid is-invalid');
-    } else {
-        $refBancaria.show();
-        $banco.show();
-    }
-});
-
-// --- Validar referencia y banco ---
-$refInput.on('input', function () {
-    if ($(this).val().trim().length < 3) {
-        $(this).addClass('is-invalid').removeClass('is-valid');
-    } else {
-        $(this).addClass('is-valid').removeClass('is-invalid');
-    }
-});
-
-$bancoInput.on('input', function () {
-    if ($(this).val().trim().length < 3) {
-        $(this).addClass('is-invalid').removeClass('is-valid');
-    } else {
-        $(this).addClass('is-valid').removeClass('is-invalid');
-    }
-});
+        if (valor.length === 0) {
+            $(this).addClass('is-invalid').removeClass('is-valid');
+            $(this).after('<div class="invalid-feedback">El nombre del banco es requerido</div>');
+        } else if (!REGEX_BANCO.test(valor)) {
+            $(this).addClass('is-invalid').removeClass('is-valid');
+            if (valor.length < 3) {
+                $(this).after('<div class="invalid-feedback">Mínimo 3 caracteres</div>');
+            } else if (valor.length > 30) {
+                $(this).after('<div class="invalid-feedback">Máximo 30 caracteres (actual: ' + valor.length + ')</div>');
+            } else {
+                $(this).after('<div class="invalid-feedback">Solo se permiten letras, números, espacios, guiones y puntos</div>');
+            }
+        } else {
+            $(this).addClass('is-valid').removeClass('is-invalid');
+        }
+    });
 
     // --- LIMPIAR MODALES AL CERRAR ---
     $('.modal').on('hidden.bs.modal', function() {
         $(this).find('form').each(function() {
             if (this.reset) this.reset();
             $(this).find('.is-valid, .is-invalid').removeClass('is-valid is-invalid');
+            $(this).find('.invalid-feedback').remove();
         });
     });
 

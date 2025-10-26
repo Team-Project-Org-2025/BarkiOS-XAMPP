@@ -94,7 +94,8 @@ html, body {
 </div>
 
 
-<!--  MODAL REGISTRAR PAGO -->
+
+<!-- MODAL REGISTRAR PAGO - VERSIÓN MEJORADA -->
 <div class="modal fade" id="registerPaymentModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -107,75 +108,120 @@ html, body {
             </div>
 
             <form id="registerPaymentForm">
-            <input type="hidden" name="monto">
-
+                <!-- ✅ Input oculto para enviar monto en USD -->
+                <input type="hidden" name="monto">
                 <input type="hidden" name="cuenta_cobrar_id" id="payment_cuenta_id">
 
                 <div class="modal-body">
 
-                    <!--ALERTA CLIENTE / SALDO-->
+                    <!-- ALERTA CLIENTE / SALDO -->
                     <div class="alert alert-info mb-3"> 
-                        <div class="d-flex justify-content-between">
-                            <span><strong>Cliente:</strong> <span id="payment_cliente"></span></span>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span><strong>Cliente:</strong></span>
+                            <span id="payment_cliente" class="text-dark fw-bold"></span>
                         </div>
-                        <div class="d-flex justify-content-between">
+                        <div class="d-flex justify-content-between align-items-center">
                             <span><strong>Saldo pendiente:</strong></span>
-                            <strong class="text-danger" id="payment_saldo">$0.00</strong>
+                            <span class="text-danger fw-bold fs-5" id="payment_saldo">$0.00</span>
                         </div>
                     </div>
-                    <!-- ✅ FIN ALERTA -->
 
                     <!-- Moneda -->
                     <div class="mb-3">
-                        <label class="form-label">Moneda</label>
+                        <label class="form-label fw-bold">
+                            Moneda <span class="text-danger">*</span>
+                        </label>
                         <select name="moneda_pago" id="payment_moneda" class="form-select" required>
-                            <option value="USD" selected>USD</option>
+                            <option value="USD" selected>Dólares (USD)</option>
                             <option value="BS">Bolívares (Bs)</option>
                         </select>
                     </div>
-                    <!-- Input único de monto -->
-                    <div class="mb-3" id="group_monto_general">
-                        <label class="form-label">Monto</label>
-                        <input type="number" name="monto_general" step="0.01" class="form-control" min="0" placeholder="0.00" required>
-                        <small id="equiv_info" class="text-muted" style="display:none;"></small>
+
+                    <!-- Input único de monto con validación visual -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">
+                            Monto <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text" id="currency-symbol">$</span>
+                            <input type="number" 
+                                   name="monto_general" 
+                                   step="0.01" 
+                                   class="form-control" 
+                                   min="0.01" 
+                                   placeholder="0.00" 
+                                   required
+                                   aria-describedby="equiv_info">
+                        </div>
+                        <!-- ✅ Área de conversión/equivalencia -->
+                        <div id="equiv_info" class="mt-2" style="display: none;"></div>
+                        <div class="invalid-feedback"></div>
                     </div>
 
                     <!-- Tipo de pago -->
                     <div class="mb-3">
-                        <label class="form-label">Tipo de Pago</label>
-                        <select name="tipo_pago" class="form-select" required></select>
+                        <label class="form-label fw-bold">
+                            Método de Pago <span class="text-danger">*</span>
+                        </label>
+                        <select name="tipo_pago" class="form-select" required>
+                            <option value="" disabled selected>Seleccione un método de pago</option>
+                        </select>
+                        <div class="invalid-feedback">Seleccione un método de pago</div>
                     </div>
 
-                    <!-- Referencias bancarias -->
-                    <div class="mb-3" id="refBancariaGroup">
-                        <label class="form-label">Referencia Bancaria</label>
-                        <input type="text" name="referencia_bancaria" class="form-control">
+                    <!-- Referencias bancarias (ocultos inicialmente) -->
+                    <div class="mb-3" id="refBancariaGroup" style="display: none;">
+                        <label class="form-label fw-bold">
+                            Referencia Bancaria <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" 
+                               name="referencia_bancaria" 
+                               class="form-control"
+                               placeholder="Ej: 12345678"
+                               maxlength="10"
+                               pattern="\d{8,10}">
+                        <small class="form-text text-muted">8 a 10 dígitos numéricos</small>
+                        <div class="invalid-feedback">Ingrese una referencia válida (8-10 dígitos)</div>
                     </div>
 
-                    <div class="mb-3" id="bancoGroup">
-                        <label class="form-label">Banco</label>
-                        <input type="text" name="banco" class="form-control">
+                    <div class="mb-3" id="bancoGroup" style="display: none;">
+                        <label class="form-label fw-bold">
+                            Banco <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" 
+                               name="banco" 
+                               class="form-control"
+                               placeholder="Ej: Banco Provincial"
+                               maxlength="30">
+                        <small class="form-text text-muted">Hasta 30 caracteres</small>
+                        <div class="invalid-feedback">Ingrese el nombre del banco (3-30 caracteres)</div>
                     </div>
 
                     <!-- Observaciones -->
                     <div class="mb-3">
-                        <label class="form-label">Observaciones</label>
-                        <textarea name="observaciones" class="form-control" rows="2"></textarea>
+                        <label class="form-label">Observaciones (opcional)</label>
+                        <textarea name="observaciones" 
+                                  class="form-control" 
+                                  rows="2"
+                                  placeholder="Notas adicionales sobre el pago..."></textarea>
                     </div>
 
                 </div>
 
                 <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
                     <button type="submit" class="btn btn-success">
                         <i class="fas fa-check me-1"></i> Registrar Pago
                     </button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                 </div>
 
             </form>
         </div>
     </div>
 </div>
+
 
 <!-- MODAL: Extender Vencimiento -->
 <div class="modal fade" id="extendDateModal" tabindex="-1" aria-hidden="true">
@@ -190,7 +236,7 @@ html, body {
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <input type="hidden" id="extend_cuenta_id" name="cuenta_cobrar_id">
+                    <input type="hidden" id="extend_cuenta_id" name="cuenta_id">
                     
                     <div class="alert alert-warning mb-3">
                         <i class="fas fa-info-circle me-2"></i>
