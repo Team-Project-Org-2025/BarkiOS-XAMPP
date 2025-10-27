@@ -283,6 +283,6 @@
     <!-- AOS Animation Library -->
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <!-- Help Page Script -->
-    <script src="../../../public/assets/js/help.js"></script>
+    <script src="/BarkiOS/public/assets/js/help.js"></script>
 </body>
 </html>
