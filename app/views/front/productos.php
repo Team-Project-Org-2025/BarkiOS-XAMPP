@@ -616,6 +616,6 @@
     <!-- AOS Animation Library -->
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <!-- Controller Scripts -->
-    <script src="../../../public/assets/js/products.js"></script>
+    <script src="/BarkiOS/public/assets/js/products.js"></script>
 </body>
 </html>

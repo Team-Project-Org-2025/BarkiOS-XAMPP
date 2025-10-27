@@ -4,6 +4,9 @@
 
 $(document).ready(function() {
     
+    // ✅ CORREGIDO: Ruta base correcta
+    const baseUrl = '/BarkiOS/admin/accounts-receivable';
+    
     // --- ESTADO GLOBAL ---
     const $tableBody = $('#accountsTableBody');
     let accounts = [];
@@ -83,7 +86,8 @@ $(document).ready(function() {
             </tr>
         `);
 
-        ajax('GET', window.location.pathname + '?action=get_accounts', null, function(r) {
+        // ✅ CORREGIDO: Usar baseUrl
+        ajax('GET', baseUrl + '?action=get_accounts', null, function(r) {
             if (r && r.success) {
                 accounts = r.accounts || [];
                 renderAccounts();
@@ -206,7 +210,8 @@ $(document).ready(function() {
         `);
         $('#viewAccountModal').modal('show');
 
-        ajax('GET', window.location.pathname + `?action=get_account_details&id=${id}`, null, function(r) {
+        // ✅ CORREGIDO: Usar baseUrl
+        ajax('GET', baseUrl + `?action=get_account_details&id=${id}`, null, function(r) {
             if (r && r.success && r.account) {
                 renderAccountDetails(r.account);
             } else {
@@ -314,6 +319,7 @@ $(document).ready(function() {
         $('#accountDetailsContent').html(html);
     }
 
+    // Continúa en la parte 2...
     // =========================
     //   CONFIGURACIÓN MONEDAS
     // =========================
@@ -336,7 +342,7 @@ $(document).ready(function() {
         const account = accounts.find(a => a.id === id);
         if (!account) return toast('error', 'Cuenta no encontrada');
         
-        currentAccountBalance = parseFloat(account.saldo_pendiente); // 💡 Guardar balance
+        currentAccountBalance = parseFloat(account.saldo_pendiente);
         const saldoPendienteBS = currentAccountBalance * DOLAR_BCV_RATE;
 
         $('#payment_cuenta_id').val(account.id);
@@ -346,14 +352,12 @@ $(document).ready(function() {
             <br><small class="text-muted">≈ Bs ${saldoPendienteBS.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</small>
         `);
 
-        // ✅ Resetear formulario y validaciones
         $('#registerPaymentForm')[0].reset();
         $montoInput.val('').removeClass('is-valid is-invalid');
         $montoHidden.val('');
         $equivInfo.html('').hide();
         $tipoPago.empty().removeClass('is-valid is-invalid');
 
-        // Moneda por defecto: USD
         cambiarMoneda("USD");
         $('#registerPaymentModal').modal('show');
     };
@@ -365,7 +369,6 @@ $(document).ready(function() {
         const moneda = $(this).val();
         cambiarMoneda(moneda);
         
-        // ✅ Revalidar monto al cambiar moneda
         if ($montoInput.val()) {
             $montoInput.trigger('input');
         }
@@ -381,7 +384,6 @@ $(document).ready(function() {
         $('#refBancariaGroup').hide();
         $('#bancoGroup').hide();
 
-        // ✅ Mostrar/ocultar conversión según moneda
         if (moneda === "BS") {
             $equivInfo.show();
         } else {
@@ -396,10 +398,8 @@ $(document).ready(function() {
         const moneda = $moneda.val();
         const valorIngresado = parseFloat($(this).val());
 
-        // ✅ Limpiar mensajes previos
         $(this).siblings('.invalid-feedback').remove();
 
-        // Validación base
         if (!valorIngresado || valorIngresado <= 0 || isNaN(valorIngresado)) {
             $(this).addClass('is-invalid').removeClass('is-valid');
             $(this).after('<div class="invalid-feedback">Ingrese un monto válido</div>');
@@ -412,7 +412,6 @@ $(document).ready(function() {
         let esValido = false;
 
         if (moneda === "USD") {
-            // 💵 Validación directa en USD
             montoUSD = valorIngresado;
             
             if (montoUSD > currentAccountBalance) {
@@ -423,16 +422,13 @@ $(document).ready(function() {
             }
 
         } else if (moneda === "BS") {
-            // 🇻🇪 Conversión y validación con margen ±10 Bs
             montoUSD = valorIngresado / DOLAR_BCV_RATE;
             const diferenciaBs = (montoUSD - currentAccountBalance) * DOLAR_BCV_RATE;
 
             if (Math.abs(diferenciaBs) <= MARGEN_ERROR_BS) {
-                // ✅ Dentro del margen: ajustar automáticamente
                 montoUSD = currentAccountBalance;
                 esValido = true;
                 
-                // 💡 Mostrar conversión con indicador de ajuste
                 $equivInfo.html(`
                     <span class="text-success">
                         <i class="fas fa-check-circle me-1"></i>
@@ -442,22 +438,19 @@ $(document).ready(function() {
                 `).show();
                 
             } else if (diferenciaBs > MARGEN_ERROR_BS) {
-                // ❌ Excede el límite superior
                 $(this).addClass('is-invalid').removeClass('is-valid');
                 $(this).after(`<div class="invalid-feedback">El monto excede el saldo pendiente</div>`);
                 $equivInfo.html(`<span class="text-danger">Equivale a: ${fmt(montoUSD)}</span>`).show();
                 
             } else {
-                // ❌ Por debajo del mínimo aceptable
                 esValido = true;
                 $equivInfo.html(`<span class="text-info">Equivale a: <strong>${fmt(montoUSD)}</strong></span>`).show();
             }
         }
 
-        // ✅ Aplicar clases de validación
         if (esValido) {
             $(this).addClass('is-valid').removeClass('is-invalid');
-            $montoHidden.val(montoUSD.toFixed(4)); // ✅ Sincronizar input oculto
+            $montoHidden.val(montoUSD.toFixed(4));
         } else {
             $montoHidden.val('');
         }
@@ -469,7 +462,6 @@ $(document).ready(function() {
     $('#registerPaymentForm').on('submit', function(e) {
         e.preventDefault();
 
-        // ✅ Validar que el monto oculto esté sincronizado
         const montoUSD = parseFloat($montoHidden.val());
         
         if (!montoUSD || montoUSD <= 0) {
@@ -489,8 +481,8 @@ $(document).ready(function() {
         const btnText = $btn.html();
 
         $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Procesando...');
-
-        ajax('POST', window.location.pathname + '?action=register_payment', formData,
+        // ✅ CORREGIDO: Usar baseUrl
+        ajax('POST', baseUrl + '?action=register_payment', formData,
             function(r) {
                 $btn.prop('disabled', false).html(btnText);
                 if (r?.success) {
@@ -538,7 +530,8 @@ $(document).ready(function() {
         const btnText = $btn.html();
         $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Actualizando...');
 
-        ajax('POST', window.location.pathname + '?action=update_due_date', formData, 
+        // ✅ CORREGIDO: Usar baseUrl
+        ajax('POST', baseUrl + '?action=update_due_date', formData, 
             function(r) {
                 $btn.prop('disabled', false).html(btnText);
                 
@@ -579,7 +572,8 @@ $(document).ready(function() {
             cancelButtonText: 'Cancelar'
         }).then((result) => {
             if (result.isConfirmed) {
-                ajax('POST', window.location.pathname + '?action=delete', 
+                // ✅ CORREGIDO: Usar baseUrl
+                ajax('POST', baseUrl + '?action=delete', 
                     { cuenta_id: id, confirmar: 'si' }, 
                     function(r) {
                         if (r && r.success) {
@@ -620,7 +614,8 @@ $(document).ready(function() {
                     didOpen: () => { Swal.showLoading(); }
                 });
 
-                ajax('POST', window.location.pathname + '?action=process_expired', {}, 
+                // ✅ CORREGIDO: Usar baseUrl
+                ajax('POST', baseUrl + '?action=process_expired', {}, 
                     function(r) {
                         Swal.close();
                         if (r && r.success) {
@@ -687,10 +682,7 @@ $(document).ready(function() {
     //   VALIDACIONES CON REGEX
     // ================================
     
-    // Referencia bancaria: 8-10 dígitos numéricos
     const REGEX_REFERENCIA = /^\d{8,10}$/;
-    
-    // Banco: hasta 30 caracteres (letras, números, espacios y algunos caracteres especiales)
     const REGEX_BANCO = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s\-\.]{3,30}$/;
 
     $('input[name="referencia_bancaria"]').on('input', function() {
