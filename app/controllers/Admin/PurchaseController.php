@@ -30,10 +30,10 @@ function handleRequest($purchaseModel, $supplierModel) {
                 case 'POST_add_ajax':    handleAddAjax($purchaseModel, $supplierModel); break;
                 case 'POST_edit_ajax':   handleEditAjax($purchaseModel, $supplierModel); break;
                 case 'POST_delete_ajax': handleDeleteAjax($purchaseModel); break;
+                case 'GET_generate_pdf': generatePdf($purchaseModel); break;
                 case 'GET_get_purchases': getPurchasesAjax($purchaseModel); break;
                 case 'GET_get_purchase_detail': getPurchaseDetailAjax($purchaseModel); break;
                 case 'GET_search_supplier': searchSupplierAjax($supplierModel); break;
-                case 'GET_download_pdf': downloadPdfAjax($purchaseModel); break;
                 default: echo json_encode(['success'=>false,'message'=>'Acción inválida']); exit();
             }
         }
@@ -415,40 +415,51 @@ function searchSupplierAjax($supplierModel) {
     exit();
 }
 
-function downloadPdfAjax($purchaseModel) {
+use Dompdf\Dompdf;
+use Dompdf\Options;
+
+function generatePdf($purchaseModel) {
+
     if (empty($_GET['compra_id'])) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'ID de compra no proporcionado'
-        ]);
-        exit();
+        die("ID de compra no proporcionado");
     }
 
-    try {
-        $purchase = $purchaseModel->getById($_GET['compra_id']);
-        $prendas = $purchaseModel->getPrendasByCompraId($_GET['compra_id']);
+    $id = $_GET['compra_id'];
+    $purchase = $purchaseModel->getById($id);
+    $prendas  = $purchaseModel->getPrendasByCompraId($id);
 
-        if (!$purchase) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Compra no encontrada'
-            ]);
-            exit();
-        }
-
-        // Marcar como generado
-        $purchaseModel->markPdfGenerated($_GET['compra_id']);
-
-        echo json_encode([
-            'success' => true,
-            'message' => 'PDF listo para descargar',
-            'pdf_url' => '/BarkiOS/app/controllers/Admin/PurchaseController.php?action=generate_pdf&compra_id=' . $_GET['compra_id']
-        ]);
-    } catch (Exception $e) {
-        echo json_encode([
-            'success' => false,
-            'message' => $e->getMessage()
-        ]);
+    if (!$purchase) {
+        die("Compra no encontrada");
     }
-    exit();
+
+    require __DIR__ . '/../../../vendor/autoload.php';
+
+    $options = new Options();
+    $options->set('isRemoteEnabled', true);
+    $dompdf = new Dompdf($options);
+
+    // HTML simple (luego lo estilizamos)
+    $html = "<h2>Factura #{$purchase['factura_numero']}</h2>";
+    $html .= "<p><b>Proveedor:</b> {$purchase['nombre_proveedor']}</p>";
+    $html .= "<p><b>Fecha:</b> {$purchase['fecha_compra']}</p>";
+    $html .= "<p><b>Total:</b> {$purchase['monto_total']}</p>";
+
+    $html .= "<hr><h3>Prendas</h3>";
+    $html .= "<table width='100%' border='1' cellspacing='0' cellpadding='4'>
+        <tr><th>Código</th><th>Nombre</th><th>Costo</th></tr>";
+    foreach ($prendas as $p) {
+        $html .= "<tr>
+            <td>{$p['codigo_prenda']}</td>
+            <td>{$p['nombre']}</td>
+            <td>{$p['precio_costo']}</td>
+        </tr>";
+    }
+    $html .= "</table>";
+
+    $dompdf->loadHtml($html);
+    $dompdf->setPaper('A4', 'portrait');
+    $dompdf->render();
+
+    $dompdf->stream("compra_$id.pdf", ["Attachment" => true]);
+    exit;
 }

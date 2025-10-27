@@ -279,13 +279,13 @@ $(document).ready(function() {
     // ============================================
     $('#editPurchaseForm').on('submit', function(e) {
         e.preventDefault();
-        
+
         const btn = $('#btnGuardarEdit');
         btn.prop('disabled', true).find('.spinner-border').removeClass('d-none');
-        
+
         const formData = new FormData(this);
         formData.delete('prendas'); // Previene que llegue accidentalmente
-        
+
         $.ajax({
             url: window.location.pathname + '?action=edit_ajax',
             method: 'POST',
@@ -435,23 +435,11 @@ $(document).ready(function() {
         });
     };
 
-    window.downloadPdf = (id) => {
-        Swal.fire({ title: 'Generando PDF...', didOpen: () => Swal.showLoading() });
-        
-        $.ajax({
-            url: window.location.pathname + '?action=download_pdf',
-            data: { compra_id: id },
-            headers: { 'X-Requested-With': 'XMLHttpRequest' },
-            success: function(data) {
-                if (data.success) {
-                    Swal.fire({ icon: 'success', title: 'PDF Generado', timer: 2000, showConfirmButton: false });
-                    fetchPurchases();
-                } else {
-                    showError(data.message);
-                }
-            }
-        });
-    };
+window.downloadPdf = (id) => {
+    window.location.href = window.location.pathname + `?action=generate_pdf&compra_id=${id}`;
+};
+
+
 
     function showError(msg) {
         Swal.fire({ icon: 'error', title: 'Error', text: msg });
