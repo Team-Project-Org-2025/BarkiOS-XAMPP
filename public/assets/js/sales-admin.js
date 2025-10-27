@@ -4,6 +4,7 @@
 // ============================================================
 
 $(document).ready(function () {
+    const baseUrl = '/BarkiOS/admin/sale';
     // --- Estado Global ---
     const $salesBody = $('#salesTableBody');
     const $addSaleForm = $('#addSaleForm');
@@ -182,7 +183,7 @@ $(document).ready(function () {
 
     function loadSales() {
         $salesBody.html(`<tr><td colspan="9" class="text-center py-4"><div class="spinner-border text-primary"></div> Cargando...</td></tr>`);
-        ajax('GET', window.location.pathname + '?action=get_sales', null, function (r) {
+        ajax('GET', baseUrl + '?action=get_sales', null, function (r) {
             if (r && r.success) {
                 renderSales(r.sales || []);
             } else {
@@ -193,7 +194,7 @@ $(document).ready(function () {
     }
 
     function loadClients() {
-        ajax('GET', window.location.pathname + '?action=get_clients', null, function (r) {
+        ajax('GET', baseUrl + '?action=get_clients', null, function (r) {
             if (r && r.success) {
                 clients = r.clients || [];
                 const opts = clients.map(c => 
@@ -207,7 +208,7 @@ $(document).ready(function () {
     }
 
     function loadEmployees() {
-        ajax('GET', window.location.pathname + '?action=get_employees', null, function (r) {
+        ajax('GET', baseUrl + '?action=get_employees', null, function (r) {
             if (r && r.success) {
                 employees = r.employees || [];
                 const opts = employees.map(e => 
@@ -221,7 +222,7 @@ $(document).ready(function () {
     }
 
     function loadProducts() {
-        ajax('GET', window.location.pathname + '?action=get_products', null, function (r) {
+        ajax('GET', baseUrl + '?action=get_products', null, function (r) {
             if (r && r.success) {
                 products = r.products || [];
                 updateProductCount(products.length);
@@ -511,7 +512,7 @@ $(document).ready(function () {
         const btnText = $btn.html();
         $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Guardando...');
 
-        ajax('POST', window.location.pathname + '?action=add_sale', data, 
+        ajax('POST', baseUrl + '?action=add_sale', data, 
             function (r) {
                 $btn.prop('disabled', false).html(btnText);
                 
@@ -549,7 +550,7 @@ $(document).ready(function () {
         $('#saleDetailsContent').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div><p class="mt-2">Cargando...</p></div>');
         $('#viewSaleModal').modal('show');
 
-        ajax('GET', window.location.pathname + `?action=get_by_id&id=${encodeURIComponent(id)}`, null, 
+        ajax('GET', baseUrl + `?action=get_by_id&id=${encodeURIComponent(id)}`, null, 
             function (r) {
                 if (r && r.success && r.venta) {
                     renderSaleDetails(r.venta);
@@ -668,7 +669,7 @@ $(document).ready(function () {
         }).then(res => {
             if (!res.isConfirmed) return;
             
-            ajax('POST', window.location.pathname + '?action=cancel_sale', { venta_id: ventaId }, 
+            ajax('POST', baseUrl + '?action=cancel_sale', { venta_id: ventaId }, 
                 function (r) {
                     if (r && r.success) {
                         toast('success', r.message || 'Venta anulada');
