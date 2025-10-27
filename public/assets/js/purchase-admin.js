@@ -1,5 +1,5 @@
 // ============================================
-// PURCHASE ADMIN JS
+// PURCHASE ADMIN JS - CON AGREGAR PRENDAS EN EDICIÓN
 // ============================================
 $(document).ready(function() {
     let prendaIndex = 0;
@@ -25,9 +25,9 @@ $(document).ready(function() {
     };
 
     // ============================================
-    // GESTIÓN DE PRENDAS (SIN PRECIO VENTA NI MARGEN)
+    // GESTIÓN DE PRENDAS
     // ============================================
-    function addPrenda(containerId, data = null) {
+    function addPrenda(containerId, data = null, editable = true) {
         const container = $(`#${containerId}`);
         const template = $('#prendaTemplate').html();
         const newPrenda = $(template);
@@ -47,22 +47,32 @@ $(document).ready(function() {
             newPrenda.find('.prenda-tipo').val(data.tipo || '');
             newPrenda.find('.prenda-costo').val(data.precio_costo || '');
             newPrenda.find('.prenda-descripcion').val(data.descripcion || '');
+            
+            // Marcar como prenda existente (no editable)
+            if (!editable) {
+                newPrenda.addClass('prenda-existente');
+                newPrenda.find('input, select, textarea').prop('disabled', true);
+                newPrenda.find('.remove-prenda').remove();
+                newPrenda.css('background-color', '#f8f9fa');
+            }
         }
         
         container.append(newPrenda);
         prendaIndex++;
         
-        newPrenda.find('.remove-prenda').on('click', function() {
-            $(this).closest('.prenda-row').fadeOut(300, function() {
-                $(this).remove();
-                updateSummary();
-                renumberPrendas(containerId);
+        if (editable) {
+            newPrenda.find('.remove-prenda').on('click', function() {
+                $(this).closest('.prenda-row').fadeOut(300, function() {
+                    $(this).remove();
+                    updateSummary();
+                    renumberPrendas(containerId);
+                });
             });
-        });
-        
-        newPrenda.find('input, select').on('input change', function() {
-            updateSummary();
-        });
+            
+            newPrenda.find('input, select').on('input change', function() {
+                updateSummary();
+            });
+        }
         
         updateSummary();
     }
@@ -230,15 +240,34 @@ $(document).ready(function() {
     });
 
     // ============================================
-    // FORMULARIO: EDITAR COMPRA
+    // FORMULARIO: EDITAR COMPRA (CON AGREGAR PRENDAS)
     // ============================================
     $('#editPurchaseForm').on('submit', function(e) {
         e.preventDefault();
+
+        // Recopilar solo las prendas NUEVAS (editables)
+        const nuevasPrendas = [];
+        $('#editPrendasContainer .prenda-row:not(.prenda-existente)').each(function() {
+            const row = $(this);
+            nuevasPrendas.push({
+                codigo_prenda: row.find('.prenda-codigo').val().trim(),
+                nombre: row.find('.prenda-nombre').val().trim(),
+                categoria: row.find('.prenda-categoria').val(),
+                tipo: row.find('.prenda-tipo').val(),
+                precio_costo: row.find('.prenda-costo').val(),
+                descripcion: row.find('.prenda-descripcion').val().trim()
+            });
+        });
 
         const btn = $('#btnGuardarEdit');
         btn.prop('disabled', true).find('.spinner-border').removeClass('d-none');
 
         const formData = new FormData(this);
+        
+        // Agregar las nuevas prendas al FormData
+        nuevasPrendas.forEach((p, i) => {
+            Object.keys(p).forEach(k => formData.append(`nuevas_prendas[${i}][${k}]`, p[k]));
+        });
 
         $.ajax({
             url: window.location.pathname + '?action=edit_ajax',
@@ -261,6 +290,11 @@ $(document).ready(function() {
         });
     });
 
+    // Botón para agregar nuevas prendas en edición
+    $('#addEditPrendaBtn').on('click', function() {
+        addPrenda('editPrendasContainer', null, true);
+    });
+
     // ============================================
     // CARGAR Y RENDERIZAR COMPRAS
     // ============================================
@@ -274,6 +308,7 @@ $(document).ready(function() {
                 if (data.success && data.data.length) {
                     allPurchases = data.data;
                     renderPurchases(allPurchases);
+                    pintarMontoPagadoDashboard();
                 } else {
                     $('#purchaseTableBody').html('<tr><td colspan="6" class="text-center py-4"><i class="fas fa-inbox fa-3x text-muted mb-3"></i><p>No hay compras registradas</p></td></tr>');
                 }
@@ -298,7 +333,7 @@ $(document).ready(function() {
                     ${p.tracking ? `<small class="text-muted">Tracking: ${p.tracking}</small>` : ''}
                 </td>
                 <td class="text-end">
-                    <strong class="text-success">${p.monto_total}</strong>
+                    <strong class="text-success">$${p.monto_total}</strong>
                 </td>
                 <td class="text-center">
                     <span class="badge bg-success">${p.prendas_disponibles || 0}</span>
@@ -328,6 +363,19 @@ $(document).ready(function() {
     // ============================================
     // CARGAR ESTADÍSTICAS
     // ============================================
+    function pintarMontoPagadoDashboard() {
+        let totalPagado = 0;
+        let totalPendiente = 0;
+
+        allPurchases.forEach(p => {
+            totalPagado    += parseFloat(p.total_pagado || 0);
+            totalPendiente += parseFloat(p.saldo_pendiente || 0);
+        });
+
+        $('#statMontoPagado').text('Pagado: $' + totalPagado.toFixed(2));
+        $('#statSaldoPendiente').text('$' + totalPendiente.toFixed(2));
+    }
+
     function loadStats() {
         $.ajax({
             url: window.location.pathname + '?action=get_stats',
@@ -337,7 +385,6 @@ $(document).ready(function() {
                     const stats = data.stats;
                     $('#statTotalCompras').text(stats.total_compras || 0);
                     $('#statMontoTotal').text('$' + parseFloat(stats.monto_total_compras || 0).toFixed(2));
-                    $('#statPrendasDisponibles').text(stats.prendas_disponibles || 0);
                     $('#statValorInventario').text('$' + parseFloat(stats.valor_inventario || 0).toFixed(2));
                 }
             }
@@ -442,9 +489,9 @@ $(document).ready(function() {
                     
                     $('#editPrendasContainer').empty();
                     prendaIndex = 0;
-                    data.data.prendas.forEach(p => addPrenda('editPrendasContainer', p));
-
-                    $('#editPrendasContainer').find('input, select, textarea, button.remove-prenda').prop('disabled', true);
+                    
+                    // Agregar prendas existentes (no editables)
+                    data.data.prendas.forEach(p => addPrenda('editPrendasContainer', p, false));
 
                     $('#editPurchaseModal').modal('show');
                 }

@@ -122,16 +122,39 @@ html, body {
                 </div>
             </div>
 
+            <!-- Monto Total con gráfico -->
             <div class="col-6 col-lg-3">
                 <div class="card shadow-sm border-0 stat-card success">
-                    <div class="card-body text-center">
-                        <i class="fas fa-dollar-sign fa-2x text-success mb-2"></i>
+                    <div class="card-body text-center position-relative">
+                        <div class="progress-circle mx-auto mb-2" id="progressCircle">
+                            <svg width="80" height="80">
+                                <circle cx="40" cy="40" r="35" fill="none" stroke="#e9ecef" stroke-width="8"></circle>
+                                <circle id="progressBar" cx="40" cy="40" r="35" fill="none" stroke="#198754" stroke-width="8"
+                                        stroke-dasharray="220" stroke-dashoffset="220"
+                                        transform="rotate(-90 40 40)" 
+                                        style="transition: stroke-dashoffset 0.5s ease;"></circle>
+                                <text x="40" y="45" text-anchor="middle" font-size="12" fill="#198754" font-weight="bold">
+                                    <tspan id="progressPercent">0%</tspan>
+                                </text>
+                            </svg>
+                        </div>
                         <h6 class="text-muted small mb-1">Monto Total</h6>
                         <h5 class="mb-0 text-success" id="statMontoTotal">$0.00</h5>
+                        <small class="text-muted d-block mt-1" id="statMontoPagado">Pagado: $0.00</small>
                     </div>
                 </div>
             </div>
-
+            <!-- Por Pagar -->
+            <div class="col-6 col-lg-2">
+                <div class="card shadow-sm border-0 stat-card warning">
+                    <div class="card-body text-center">
+                        <i class="fas fa-exclamation-triangle fa-2x text-warning mb-2"></i>
+                        <h6 class="text-muted small mb-1">Por Pagar</h6>
+                        <h5 class="mb-0 text-warning" id="statSaldoPendiente">$0.00</h5>
+                    </div>
+                </div>
+            </div>
+<!--
             <div class="col-6 col-lg-3">
                 <div class="card shadow-sm border-0 stat-card info">
                     <div class="card-body text-center">
@@ -141,6 +164,7 @@ html, body {
                     </div>
                 </div>
             </div>
+-->
 
             <div class="col-6 col-lg-3">
                 <div class="card shadow-sm border-0 stat-card primary">
@@ -387,7 +411,7 @@ html, body {
     </div>
 </div>
 
-<!-- MODAL: EDITAR COMPRA -->
+<!-- MODAL: EDITAR COMPRA - CON BOTÓN PARA AGREGAR PRENDAS -->
 <div class="modal fade" id="editPurchaseModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
@@ -445,15 +469,18 @@ html, body {
                         </div>
                     </div>
 
-                    <!-- Productos (Solo lectura) -->
+                    <!-- Productos (Con opción de agregar) -->
                     <div class="card mb-3">
-                        <div class="card-header bg-light">
-                            <h6 class="mb-0"><i class="fas fa-box me-2"></i>Productos (No editables)</h6>
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0"><i class="fas fa-box me-2"></i>Productos de la Compra</h6>
+                            <button type="button" class="btn btn-sm btn-success" id="addEditPrendaBtn">
+                                <i class="fas fa-plus me-1"></i>Agregar Nueva Prenda
+                            </button>
                         </div>
                         <div class="card-body">
                             <div class="alert alert-info">
                                 <i class="fas fa-info-circle me-2"></i>
-                                Las prendas no pueden modificarse. Para cambios, elimine la compra y cree una nueva.
+                                <strong>Nota:</strong> Las prendas existentes no pueden editarse. Puede agregar nuevas prendas a esta compra.
                             </div>
                             <div id="editPrendasContainer"></div>
                         </div>

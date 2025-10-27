@@ -188,7 +188,7 @@ function handleAddAjax($purchaseModel, $supplierModel) {
 }
 
 /**
- * Maneja la edición vía AJAX (solo datos generales, no prendas)
+ * Maneja la edición vía AJAX (con opción de agregar nuevas prendas)
  */
 function handleEditAjax($purchaseModel, $supplierModel) {
     $id = isset($_POST['compra_id']) ? intval($_POST['compra_id']) : null;
@@ -228,19 +228,152 @@ function handleEditAjax($purchaseModel, $supplierModel) {
         exit();
     }
 
-    $datos = [
-        'proveedor_rif' => $proveedor_rif,
-        'factura_numero' => $factura_numero,
-        'fecha_compra' => trim($_POST['fecha_compra']),
-        'tracking' => trim($_POST['tracking'] ?? ''),
-        'monto_total' => floatval($_POST['monto_total'] ?? 0),
-        'observaciones' => trim($_POST['observaciones'] ?? '')
-    ];
-
     try {
-        $purchaseModel->update($id, $datos);
-        echo json_encode(['success' => true, 'message' => 'Compra actualizada']);
-    } catch (Exception $e) {
+        $purchaseModel->db->beginTransaction();
+
+        // 1. Actualizar datos generales de la compra
+        $montoActual = floatval($_POST['monto_total'] ?? 0);
+        
+        // Procesar nuevas prendas si existen
+        $nuevasPrendas = $_POST['nuevas_prendas'] ?? [];
+        $montoNuevasPrendas = 0;
+        
+        if (!empty($nuevasPrendas) && is_array($nuevasPrendas)) {
+            foreach ($nuevasPrendas as $prenda) {
+                if (
+                    empty($prenda['codigo_prenda']) ||
+                    empty($prenda['nombre']) ||
+                    empty($prenda['categoria']) ||
+                    empty($prenda['tipo']) ||
+                    !isset($prenda['precio_costo'])
+                ) {
+                    throw new Exception('Todos los campos de las nuevas prendas son obligatorios');
+                }
+
+                $codigoPrenda = strtoupper(trim($prenda['codigo_prenda']));
+                $precioCosto = floatval($prenda['precio_costo']);
+
+                if (!preg_match('/^[A-Z0-9\-]+$/', $codigoPrenda)) {
+                    throw new Exception("Código '$codigoPrenda' contiene caracteres inválidos");
+                }
+
+                if ($precioCosto <= 0) {
+                    throw new Exception('El precio de costo debe ser mayor a cero');
+                }
+
+                // Validar código único
+                $checkStmt = $purchaseModel->db->prepare("
+                    SELECT COUNT(*) FROM prendas WHERE codigo_prenda = :codigo AND activo = 1
+                ");
+                $checkStmt->execute([':codigo' => $codigoPrenda]);
+                
+                if ($checkStmt->fetchColumn() > 0) {
+                    throw new Exception("El código '$codigoPrenda' ya existe en el inventario");
+                }
+
+                // Calcular precio de venta (50% de margen por defecto)
+                $precioVenta = isset($prenda['precio_venta']) && $prenda['precio_venta'] > 0
+                    ? floatval($prenda['precio_venta'])
+                    : round($precioCosto * 1.5, 2);
+
+                // Insertar en prendas
+                $stmtPrenda = $purchaseModel->db->prepare("
+                    INSERT INTO prendas (
+                        codigo_prenda, compra_id, nombre, categoria, tipo, 
+                        precio, precio_compra, descripcion, estado, activo
+                    )
+                    VALUES (
+                        :codigo_prenda, :compra_id, :nombre, :categoria, :tipo, 
+                        :precio, :precio_compra, :descripcion, 'DISPONIBLE', 1
+                    )
+                ");
+
+                $stmtPrenda->execute([
+                    ':codigo_prenda' => $codigoPrenda,
+                    ':compra_id' => $id,
+                    ':nombre' => trim($prenda['nombre']),
+                    ':categoria' => $prenda['categoria'],
+                    ':tipo' => $prenda['tipo'],
+                    ':precio' => $precioVenta,
+                    ':precio_compra' => $precioCosto,
+                    ':descripcion' => trim($prenda['descripcion'] ?? '')
+                ]);
+
+                // Insertar en detalle_compra
+                $stmtDetalle = $purchaseModel->db->prepare("
+                    INSERT INTO detalle_compra (
+                        compra_id, codigo_prenda, precio_compra
+                    )
+                    VALUES (
+                        :compra_id, :codigo_prenda, :precio_compra
+                    )
+                ");
+
+                $stmtDetalle->execute([
+                    ':compra_id' => $id,
+                    ':codigo_prenda' => $codigoPrenda,
+                    ':precio_compra' => $precioCosto
+                ]);
+
+                $montoNuevasPrendas += $precioCosto;
+            }
+        }
+
+        // Calcular monto total actualizado
+        $montoTotalFinal = $montoActual + $montoNuevasPrendas;
+
+        // 2. Actualizar compra
+        $stmt = $purchaseModel->db->prepare("
+            UPDATE compras
+            SET proveedor_rif = :proveedor_rif,
+                factura_numero = :factura_numero,
+                fecha_compra = :fecha_compra,
+                tracking = :tracking,
+                monto_total = :monto_total,
+                observaciones = :observaciones,
+                fec_actualizacion = CURRENT_TIMESTAMP
+            WHERE compra_id = :id
+        ");
+
+        $result = $stmt->execute([
+            ':id' => $id,
+            ':proveedor_rif' => $proveedor_rif,
+            ':factura_numero' => $factura_numero,
+            ':fecha_compra' => trim($_POST['fecha_compra']),
+            ':tracking' => trim($_POST['tracking'] ?? ''),
+            ':monto_total' => $montoTotalFinal,
+            ':observaciones' => trim($_POST['observaciones'] ?? '')
+        ]);
+
+        if (!$result) {
+            throw new Exception('Error al actualizar la compra');
+        }
+
+        // 3. Actualizar cuenta por pagar asociada
+        $stmtCuenta = $purchaseModel->db->prepare("
+            UPDATE cuentas_pagar
+            SET proveedor_rif = :proveedor_rif,
+                monto = :monto,
+                fec_actualizacion = CURRENT_TIMESTAMP
+            WHERE compra_id = :compra_id
+        ");
+
+        $stmtCuenta->execute([
+            ':compra_id' => $id,
+            ':proveedor_rif' => $proveedor_rif,
+            ':monto' => $montoTotalFinal
+        ]);
+
+        $purchaseModel->db->commit();
+        
+        $mensaje = count($nuevasPrendas) > 0 
+            ? 'Compra actualizada y ' . count($nuevasPrendas) . ' prenda(s) agregada(s)'
+            : 'Compra actualizada';
+            
+        echo json_encode(['success' => true, 'message' => $mensaje]);
+    } catch (\Throwable $e) {
+        $purchaseModel->db->rollBack();
+        error_log('Error en handleEditAjax - ' . $e->getMessage());
         http_response_code(500);
         echo json_encode(['success' => false, 'message' => $e->getMessage()]);
     }
