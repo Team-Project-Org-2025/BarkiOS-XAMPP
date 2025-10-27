@@ -2,7 +2,9 @@ $(document).ready(function () {
     const $clientsTableBody = $('#clientesTableBody');
     const $addClientForm = $('#addClientForm');
     const $editClientForm = $('#editClientForm');
-    const baseUrl = 'index.php?controller=clients';
+    
+    // ✅ CORREGIDO: Base URL correcta
+    const baseUrl = '/BarkiOS/admin/clients';
 
     const escapeHtml = str => String(str ?? '')
         .replace(/&/g, '&amp;')
@@ -91,54 +93,59 @@ $(document).ready(function () {
         </td></tr>`);
 
         $.ajax({
-            url: `${baseUrl}&action=get_clients`,
+            url: `${baseUrl}?action=get_clients`,
+            method: 'GET',
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
             dataType: 'json'
         }).done(data => {
             if (!data.clients?.length) {
                 $clientsTableBody.html(`
-                    <td colspan="6" class="text-center" style="padding: 1.5rem 0;">
+                    <tr><td colspan="6" class="text-center" style="padding: 1.5rem 0;">
                         <i class="fa-solid fa-circle-info me-2 text-primary"></i>
                         No hay clientes disponibles
-                    </td>`);
+                    </td></tr>`);
                 return;
             }
 
-        const rows = data.clients.map(c => `
-            <tr id="cliente-${escapeHtml(c.cliente_ced)}">
-                <td class="text-center">${escapeHtml(c.cliente_ced)}</td>
-                <td>${escapeHtml(c.nombre_cliente)}</td>
-                <td>${escapeHtml(c.direccion)}</td>
-                <td class="text-end">${formatearTelefono(c.telefono)}</td>
-                <td class="text-center">${escapeHtml(c.tipo)}</td>
-                <td class="text-center">
-                <button class="btn btn-sm btn-outline-primary btn-editar"
-                    data-cedula="${escapeHtml(c.cliente_ced)}"
-                    data-nombre="${escapeHtml(c.nombre_cliente)}"
-                    data-direccion="${escapeHtml(c.direccion)}"
-                    data-telefono="${escapeHtml(c.telefono)}"
-                    data-membresia="${escapeHtml(c.tipo)}">
-                        <i class="fas fa-edit"></i> Editar
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger btn-eliminar"
-                        data-cedula='${escapeHtml(c.cliente_ced)}'
-                        data-nombre='${escapeHtml(c.nombre_cliente)}'>
-                        <i class="fas fa-trash"></i> Eliminar
-                    </button>
-                </td>
-            </tr>`).join('');
+            const rows = data.clients.map(c => `
+                <tr id="cliente-${escapeHtml(c.cliente_ced)}">
+                    <td class="text-center">${escapeHtml(c.cliente_ced)}</td>
+                    <td>${escapeHtml(c.nombre_cliente)}</td>
+                    <td>${escapeHtml(c.direccion)}</td>
+                    <td class="text-end">${formatearTelefono(c.telefono)}</td>
+                    <td class="text-center">${escapeHtml(c.tipo)}</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-primary btn-editar"
+                            data-cedula="${escapeHtml(c.cliente_ced)}"
+                            data-nombre="${escapeHtml(c.nombre_cliente)}"
+                            data-direccion="${escapeHtml(c.direccion)}"
+                            data-telefono="${escapeHtml(c.telefono)}"
+                            data-membresia="${escapeHtml(c.tipo)}">
+                            <i class="fas fa-edit"></i> Editar
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger btn-eliminar"
+                            data-cedula='${escapeHtml(c.cliente_ced)}'
+                            data-nombre='${escapeHtml(c.nombre_cliente)}'>
+                            <i class="fas fa-trash"></i> Eliminar
+                        </button>
+                    </td>
+                </tr>`).join('');
 
             $clientsTableBody.html(rows);
             $('.btn-eliminar').on('click', handleDelete);
             $('.btn-editar').on('click', e => loadClientForEdit($(e.currentTarget)));
-        }).fail(() => showAlert('Error al cargar clientes', 'danger'));
+        }).fail((xhr, status, error) => {
+            console.error('Error al cargar clientes:', error);
+            showAlert('Error al cargar clientes', 'danger');
+        });
     }
 
     // --- AGREGAR CLIENTE ---
     function handleAdd(e) {
         e.preventDefault();
+        
         $.ajax({
-            url: `${baseUrl}&action=add_ajax`,
+            url: `${baseUrl}?action=add_ajax`,
             method: 'POST',
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
             data: $addClientForm.serialize(),
@@ -149,34 +156,32 @@ $(document).ready(function () {
                 $addClientForm.trigger('reset');
                 $('#addClientModal').modal('hide');
                 AjaxClients();
-            } else showAlert(data.message, 'danger');
-        }).fail(() => showAlert('Error al agregar', 'danger'));
+            } else {
+                showAlert(data.message, 'danger');
+            }
+        }).fail((xhr, status, error) => {
+            console.error('Error al agregar:', error);
+            showAlert('Error al agregar cliente', 'danger');
+        });
     }
 
     // --- CARGAR CLIENTE EN MODAL EDITAR ---
-function loadClientForEdit($btn) {
-    // Cédula
-    $('#editClientCedula').val($btn.data('cedula'));
-    $('#editClientCedulaHidden').val($btn.data('cedula'));
-
-    // Nombre, Dirección, Teléfono
-    $('#editClientNombre').val($btn.data('nombre'));
-    $('#editClientDireccion').val($btn.data('direccion'));
-    $('#editClientTelefono').val($btn.data('telefono'));
-
-    // Membresía: asignar la opción seleccionada correctamente
-    $('#editClientMembresia').val($btn.data('membresia') || '');
-
-    // Mostrar el modal
-    $('#editClientModal').modal('show');
-}
-
+    function loadClientForEdit($btn) {
+        $('#editClientCedula').val($btn.data('cedula'));
+        $('#editClientCedulaHidden').val($btn.data('cedula'));
+        $('#editClientNombre').val($btn.data('nombre'));
+        $('#editClientDireccion').val($btn.data('direccion'));
+        $('#editClientTelefono').val($btn.data('telefono'));
+        $('#editClientMembresia').val($btn.data('membresia') || '');
+        $('#editClientModal').modal('show');
+    }
 
     // --- EDITAR CLIENTE ---
     function handleEdit(e) {
         e.preventDefault();
+        
         $.ajax({
-            url: `${baseUrl}&action=edit_ajax`,
+            url: `${baseUrl}?action=edit_ajax`,
             method: 'POST',
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
             data: $editClientForm.serialize(),
@@ -186,8 +191,13 @@ function loadClientForEdit($btn) {
                 showAlert('Cliente actualizado correctamente', 'success');
                 $('#editClientModal').modal('hide');
                 AjaxClients();
-            } else showAlert(data.message, 'danger');
-        }).fail(() => showAlert('Error al actualizar', 'danger'));
+            } else {
+                showAlert(data.message, 'danger');
+            }
+        }).fail((xhr, status, error) => {
+            console.error('Error al actualizar:', error);
+            showAlert('Error al actualizar cliente', 'danger');
+        });
     }
 
     // --- ELIMINAR CLIENTE ---
@@ -205,7 +215,7 @@ function loadClientForEdit($btn) {
         }).then(res => {
             if (res.isConfirmed) {
                 $.ajax({
-                    url: `${baseUrl}&action=delete_ajax`,
+                    url: `${baseUrl}?action=delete_ajax`,
                     method: 'POST',
                     headers: { 'X-Requested-With': 'XMLHttpRequest' },
                     data: { cedula },
@@ -214,8 +224,13 @@ function loadClientForEdit($btn) {
                     if (data.success) {
                         showAlert('Cliente eliminado correctamente', 'success');
                         AjaxClients();
-                    } else showAlert(data.message, 'danger');
-                }).fail(() => showAlert('Error al eliminar', 'danger'));
+                    } else {
+                        showAlert(data.message, 'danger');
+                    }
+                }).fail((xhr, status, error) => {
+                    console.error('Error al eliminar:', error);
+                    showAlert('Error al eliminar cliente', 'danger');
+                });
             }
         });
     }

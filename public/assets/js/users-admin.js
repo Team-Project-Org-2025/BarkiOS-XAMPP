@@ -6,7 +6,7 @@ $(document).ready(function () {
     // Mejorar la robustez del baseUrl
     const baseUrl = (window.location.pathname.endsWith('/users') || window.location.pathname.endsWith('/users/')) 
         ? window.location.pathname 
-        : '/BarkiOS/users';
+        : '/BarkiOS/admin/users';
 
     // --- Utilidades ---
     const escapeHtml = str => String(str ?? '')
