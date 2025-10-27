@@ -280,27 +280,11 @@ $(document).ready(function() {
     $('#editPurchaseForm').on('submit', function(e) {
         e.preventDefault();
         
-        const prendas = [];
-        $('.prenda-row').each(function() {
-            const row = $(this);
-            prendas.push({
-                nombre: row.find('.prenda-nombre').val().trim(),
-                categoria: row.find('.prenda-categoria').val(),
-                tipo: row.find('.prenda-tipo').val(),
-                precio_costo: row.find('.prenda-costo').val(),
-                precio_venta: row.find('.prenda-venta').val(),
-                descripcion: row.find('.prenda-descripcion').val().trim()
-            });
-        });
-        
         const btn = $('#btnGuardarEdit');
         btn.prop('disabled', true).find('.spinner-border').removeClass('d-none');
         
         const formData = new FormData(this);
-        formData.delete('prendas');
-        prendas.forEach((p, i) => {
-            Object.keys(p).forEach(k => formData.append(`prendas[${i}][${k}]`, p[k]));
-        });
+        formData.delete('prendas'); // Previene que llegue accidentalmente
         
         $.ajax({
             url: window.location.pathname + '?action=edit_ajax',
@@ -412,7 +396,10 @@ $(document).ready(function() {
                     $('#editPrendasContainer').empty();
                     prendaIndex = 0;
                     data.data.prendas.forEach(p => addPrenda('editPrendasContainer', p));
-                    
+                    // --- BLOQUEAR CAMPOS DE PRENDAS ---
+                    $('#editPrendasContainer').find('input, select, textarea, button.remove-prenda').each(function(){
+                        $(this).prop('disabled', true);
+                    });
                     $('#editPurchaseModal').modal('show');
                 }
             }
@@ -474,7 +461,6 @@ $(document).ready(function() {
     // EVENTOS
     // ============================================
     $('#addPrendaBtn').on('click', () => addPrenda('prendasContainer'));
-    $('#editAddPrendaBtn').on('click', () => addPrenda('editPrendasContainer'));
     
     $('#searchInput').on('input', function() {
         const term = $(this).val().toLowerCase();

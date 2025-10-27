@@ -228,114 +228,61 @@ function handleAddAjax($purchaseModel, $supplierModel) {
 
 function handleEditAjax($purchaseModel, $supplierModel) {
     if (empty($_POST['compra_id'])) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'ID de compra no proporcionado'
-        ]);
+        echo json_encode(['success'=>false,'message'=>'ID de compra no proporcionado']);
         exit();
     }
 
-    // Las mismas validaciones que en add
+    // Validaciones base (como en add pero sin prendas)
     $required = ['proveedor_rif', 'factura_numero', 'fecha_compra'];
-    $missingFields = [];
-    
-    foreach ($required as $field) {
-        if (empty($_POST[$field])) {
-            $missingFields[] = str_replace('_', ' ', $field);
-        }
+    $missing = [];
+    foreach ($required as $f) {
+        if (empty($_POST[$f])) $missing[] = str_replace('_',' ',$f);
     }
-
-    if (!empty($missingFields)) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'Los siguientes campos son requeridos: ' . implode(', ', $missingFields)
-        ]);
+    if ($missing) {
+        echo json_encode(['success'=>false,'message'=>'Los siguientes campos son requeridos: '.implode(', ',$missing)]);
         exit();
     }
 
     if (!preg_match('/^\d{8}$/', $_POST['factura_numero'])) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'El número de factura debe tener exactamente 8 dígitos'
-        ]);
+        echo json_encode(['success'=>false,'message'=>'El número de factura debe tener exactamente 8 dígitos']);
         exit();
     }
 
     if (!empty($_POST['tracking']) && !preg_match('/^\d{8}$/', $_POST['tracking'])) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'El número de tracking debe tener exactamente 8 dígitos'
-        ]);
+        echo json_encode(['success'=>false,'message'=>'El número de tracking debe tener exactamente 8 dígitos']);
         exit();
     }
 
-    // Validar prendas y calcular total
-    if (empty($_POST['prendas']) || !is_array($_POST['prendas'])) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'Debe agregar al menos una prenda'
-        ]);
-        exit();
-    }
-
+    // Recalcular monto desde DB (no desde POST)
+    $prendas = $purchaseModel->getPrendasByCompraId($_POST['compra_id']);
     $montoTotal = 0;
-    $prendasValidas = [];
-    
-    foreach ($_POST['prendas'] as $prenda) {
-        if (empty($prenda['nombre']) || empty($prenda['categoria']) || 
-            empty($prenda['tipo']) || empty($prenda['precio_costo']) || empty($prenda['precio_venta'])) {
-            continue;
-        }
-
-        $precioCosto = floatval($prenda['precio_costo']);
-        $precioVenta = floatval($prenda['precio_venta']);
-        
-        if ($precioCosto > 0 && $precioVenta > $precioCosto) {
-            $prendasValidas[] = [
-                'codigo_prenda' => isset($prenda['codigo_prenda']) ? strtoupper(trim($prenda['codigo_prenda'])) : '',
-                'nombre' => trim($prenda['nombre']),
-                'categoria' => $prenda['categoria'],
-                'tipo' => $prenda['tipo'],
-                'precio_costo' => $precioCosto,
-                'precio_venta' => $precioVenta,
-                'descripcion' => trim($prenda['descripcion'] ?? '')
-            ];
-            $montoTotal += $precioCosto;
-        }
+    foreach ($prendas as $p) {
+        $montoTotal += floatval($p['precio_costo']);
     }
 
     try {
         $datos = [
-            'proveedor_rif' => $_POST['proveedor_rif'],
-            'factura_numero' => $_POST['factura_numero'],
-            'fecha_compra' => $_POST['fecha_compra'],
-            'tracking' => $_POST['tracking'] ?? '',
-            'monto_total' => $montoTotal,
-            'observaciones' => trim($_POST['observaciones'] ?? ''),
-            'prendas' => $prendasValidas
+            'proveedor_rif'   => $_POST['proveedor_rif'],
+            'factura_numero'  => $_POST['factura_numero'],
+            'fecha_compra'    => $_POST['fecha_compra'],
+            'tracking'        => $_POST['tracking'] ?? '',
+            'monto_total'     => $montoTotal,
+            'observaciones'   => trim($_POST['observaciones'] ?? '')
+            // NO SE PASAN PRENDAS
         ];
 
         $result = $purchaseModel->update($_POST['compra_id'], $datos);
 
-        if ($result) {
-            echo json_encode([
-                'success' => true,
-                'message' => 'Compra actualizada exitosamente'
-            ]);
-        } else {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Error al actualizar la compra'
-            ]);
-        }
-    } catch (Exception $e) {
         echo json_encode([
-            'success' => false,
-            'message' => $e->getMessage()
+            'success' => $result,
+            'message' => $result ? 'Compra actualizada exitosamente' : 'Error al actualizar la compra'
         ]);
+    } catch (Exception $e) {
+        echo json_encode(['success'=>false,'message'=>$e->getMessage()]);
     }
     exit();
 }
+
 
 function handleDeleteAjax($purchaseModel) {
     if (empty($_POST['compra_id'])) {

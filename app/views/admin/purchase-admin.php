@@ -445,17 +445,11 @@ html, body {
                     <div class="card mb-3">
                         <div class="card-header bg-light d-flex justify-content-between align-items-center">
                             <h6 class="mb-0"><i class="fas fa-box me-2"></i>Productos Comprados</h6>
-                            <button type="button" 
-                                    class="btn btn-sm btn-primary" 
-                                    id="editAddPrendaBtn">
-                                <i class="fas fa-plus me-1"></i>Agregar Producto
-                            </button>
                         </div>
                         <div class="card-body">
-                            <div class="alert alert-warning">
-                                <i class="fas fa-exclamation-triangle me-2"></i>
-                                <strong>Nota:</strong> Al editar, se reemplazarán todos los productos. 
-                                Solo se pueden editar compras con productos disponibles (no vendidos).
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Las prendas de esta compra no pueden modificarse desde este módulo.
                             </div>
                             <div id="editPrendasContainer">
                                 <!-- Las prendas se cargarán dinámicamente aquí -->

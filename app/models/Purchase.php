@@ -182,84 +182,45 @@ class Purchase extends Database {
      * Actualiza una compra existente
      */
     public function update($id, $datos) {
-        try {
-            $this->db->beginTransaction();
+    try {
+        $this->db->beginTransaction();
 
-            // Actualizar compra principal
-            $stmt = $this->db->prepare("
-                UPDATE compras
-                SET proveedor_rif = :proveedor_rif,
-                    factura_numero = :factura_numero,
-                    fecha_compra = :fecha_compra,
-                    tracking = :tracking,
-                    monto_total = :monto_total,
-                    observaciones = :observaciones,
-                    fec_actualizacion = CURRENT_TIMESTAMP
-                WHERE compra_id = :id
-            ");
+        // Actualizar compra principal
+        $stmt = $this->db->prepare("
+            UPDATE compras
+            SET proveedor_rif = :proveedor_rif,
+                factura_numero = :factura_numero,
+                fecha_compra = :fecha_compra,
+                tracking = :tracking,
+                monto_total = :monto_total,
+                observaciones = :observaciones,
+                fec_actualizacion = CURRENT_TIMESTAMP
+            WHERE compra_id = :id
+        ");
 
-            $result = $stmt->execute([
-                ':id' => $id,
-                ':proveedor_rif' => $datos['proveedor_rif'],
-                ':factura_numero' => $datos['factura_numero'],
-                ':fecha_compra' => $datos['fecha_compra'],
-                ':tracking' => $datos['tracking'] ?? '',
-                ':monto_total' => $datos['monto_total'],
-                ':observaciones' => $datos['observaciones'] ?? ''
-            ]);
+        $result = $stmt->execute([
+            ':id' => $id,
+            ':proveedor_rif' => $datos['proveedor_rif'],
+            ':factura_numero' => $datos['factura_numero'],
+            ':fecha_compra' => $datos['fecha_compra'],
+            ':tracking' => $datos['tracking'] ?? '',
+            ':monto_total' => $datos['monto_total'],
+            ':observaciones' => $datos['observaciones'] ?? ''
+        ]);
 
-            if (!$result) {
-                throw new Exception('Error al actualizar la compra');
-            }
-
-            // Desactivar prendas existentes (soft delete)
-            $stmt = $this->db->prepare("
-                UPDATE prendas 
-                SET activo = 0 
-                WHERE compra_id = :compra_id AND estado = 'DISPONIBLE'
-            ");
-            $stmt->execute([':compra_id' => $id]);
-
-            // Insertar nuevas prendas
-            if (isset($datos['prendas']) && is_array($datos['prendas'])) {
-                foreach ($datos['prendas'] as $index => $prenda) {
-                    $codigoPrenda = !empty($prenda['codigo_prenda'])
-                    ? strtoupper(trim($prenda['codigo_prenda']))
-                    : $this->generateCodigoPrenda($id, $index);
-
-
-                    $stmt = $this->db->prepare("
-                        INSERT INTO prendas (
-                            codigo_prenda, compra_id, nombre, categoria, tipo, 
-                            precio, precio_compra, descripcion, estado, activo
-                        )
-                        VALUES (
-                            :codigo_prenda, :compra_id, :nombre, :categoria, :tipo, 
-                            :precio, :precio_compra, :descripcion, 'DISPONIBLE', 1
-                        )
-                    ");
-
-                    $stmt->execute([
-                        ':codigo_prenda' => $codigoPrenda,
-                        ':compra_id' => $id,
-                        ':nombre' => $prenda['nombre'],
-                        ':categoria' => $prenda['categoria'],
-                        ':tipo' => $prenda['tipo'],
-                        ':precio' => $prenda['precio_venta'],
-                        ':precio_compra' => $prenda['precio_costo'],
-                        ':descripcion' => $prenda['descripcion'] ?? ''
-                    ]);
-                }
-            }
-
-            $this->db->commit();
-            return true;
-        } catch (\Throwable $e) {
-            $this->db->rollBack();
-            error_log('Error en Purchase::update - ' . $e->getMessage());
-            throw new Exception('Error al actualizar la compra: ' . $e->getMessage());
+        if (!$result) {
+            throw new Exception('Error al actualizar la compra');
         }
+
+        $this->db->commit();
+        return true;
+    } catch (\Throwable $e) {
+        $this->db->rollBack();
+        error_log('Error en Purchase::update - ' . $e->getMessage());
+        throw new Exception('Error al actualizar la compra: ' . $e->getMessage());
     }
+}
+
 
     /**
      * Elimina una compra (soft delete)
