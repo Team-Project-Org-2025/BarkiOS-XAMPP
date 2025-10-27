@@ -2,7 +2,7 @@ $(document).ready(function () {
     const $suppliersTableBody = $('#suppliersTableBody');
     const $addSupplierForm = $('#addSupplierForm');
     const $editSupplierForm = $('#editSupplierForm');
-
+    const baseUrl = '/BarkiOS/admin/supplier'
     // --- UTILIDADES ---
     const escapeHtml = str => String(str ?? '')
         .replace(/&/g, '&amp;')
@@ -137,7 +137,7 @@ $(document).ready(function () {
         if (!validarProveedor($addSupplierForm)) return;
 
         $.ajax({
-            url: 'supplier-admin.php?action=add_ajax',
+            url: `${baseUrl}?action=add_ajax`,
             method: 'POST',
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
             data: $addSupplierForm.serialize(),
@@ -169,7 +169,7 @@ $(document).ready(function () {
         if (!validarProveedor($editSupplierForm, false)) return;
 
         $.ajax({
-            url: 'supplier-admin.php?action=edit_ajax',
+            url: `${baseUrl}?action=edit_ajax`,
             method: 'POST',
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
             data: $editSupplierForm.serialize(),
@@ -197,7 +197,7 @@ $(document).ready(function () {
         }).then(res => {
             if (res.isConfirmed) {
                 $.ajax({
-                    url: 'supplier-admin.php?action=delete_ajax',
+                    url: `${baseUrl}?action=delete_ajax`,
                     method: 'POST',
                     headers: { 'X-Requested-With': 'XMLHttpRequest' },
                     data: { proveedor_rif },
