@@ -11,31 +11,31 @@
         <div class="sidebar-sticky flex-grow-1 overflow-auto">
             <ul class="nav flex-column">
                 <li class="nav-item">
-                    <a class="nav-link" href="/BarkiOS/home/">
+                    <a class="nav-link" href="/BarkiOS/admin/home/">
                         <i class="fas fa-tachometer-alt"></i>
                         Inicio
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/BarkiOS/products/">
+                    <a class="nav-link" href="/BarkiOS/admin/products/">
                         <i class="fas fa-tshirt"></i>
                         Productos
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/BarkiOS/supplier/">
+                    <a class="nav-link" href="/BarkiOS/admin/supplier/">
                         <i class="fas fa-shopping-cart"></i>
                         Proveedores
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/BarkiOS/clients/">
+                    <a class="nav-link" href="/BarkiOS/admin/clients/">
                         <i class="fas fa-users"></i>
                         Clientes
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/BarkiOS/users">
+                    <a class="nav-link" href="/BarkiOS/admin/users">
                         <i class="fas fa-user-shield"></i>
                         Usuarios
                     </a>
@@ -70,7 +70,7 @@
         <!-- FOOTER (Fijo: Logout) -->
         <div class="sidebar-footer border-top mt-auto">
             <a class="nav-link mx-3 mb-2 rounded logout-link" 
-            href="/BarkiOS/login/logout">
+            href="/BarkiOS/admin/login/logout">
                 <i class="fas fa-sign-out-alt me-2"></i>
                 Cerrar Sesión
             </a>

@@ -51,7 +51,7 @@ function login() {
     $userModel = $GLOBALS['userModel']; // ✅ acceso seguro a la instancia
 
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        header('Location: /BarkiOS/login/show');
+        header('Location: /BarkiOS/admin/login/show');
         exit();
     }
 
@@ -115,7 +115,7 @@ function dashboard() {
 function logout() {
     session_unset();
     session_destroy();
-    header('Location: /BarkiOS/login/show');
+    header('Location: /BarkiOS/admin/login/show');
     exit();
 }
 
