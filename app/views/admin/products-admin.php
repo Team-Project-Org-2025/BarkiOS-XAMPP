@@ -27,6 +27,7 @@ require_once __DIR__ . '/../partials/header-admin.php';
                     <table class="table table-hover align-middle table-hover text-center">
                         <thead>
                             <tr>
+                                <th>Imagen</th>
                                 <th>Código</th>
                                 <th>Nombre</th>
                                 <th>Tipo</th>
@@ -59,7 +60,7 @@ require_once __DIR__ . '/../partials/header-admin.php';
                 <h5 class="modal-title" id="addProductModalLabel">Añadir Nuevo Producto</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="addProductForm">
+            <form id="addProductForm" enctype="multipart/form-data">
                 <div class="modal-body">
                     <div id="addProductErrors" class="alert alert-danger d-none"></div>
                     <div class="mb-3">
@@ -123,6 +124,15 @@ require_once __DIR__ . '/../partials/header-admin.php';
                         <small class="text-muted">
                             Equivalente: <span id="addPriceBs" class="fw-bold">Bs. 0.00</span>
                         </small>
+                        <div class="mb-3">
+                            <label class="form-label">Imagen del Producto (Opcional)</label>
+                            <input type="file" 
+                                class="form-control" 
+                                name="imagen" 
+                                id="productImage"
+                                accept="image/*">
+                            <small class="text-muted">JPG, PNG, GIF, WEBP - Máximo 5MB</small>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -145,7 +155,7 @@ require_once __DIR__ . '/../partials/header-admin.php';
                 <h5 class="modal-title" id="editProductModalLabel">Editar Producto</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="editProductForm">
+            <form id="editProductForm" enctype="multipart/form-data">
                 <input type="hidden" name="prenda_id" id="editProductIdHidden">
                 <div class="modal-body">
                     <div id="editProductErrors" class="alert alert-danger d-none"></div>
@@ -205,6 +215,16 @@ require_once __DIR__ . '/../partials/header-admin.php';
                         <small class="text-muted">
                             Equivalente: <span id="editPriceBs" class="fw-bold">Bs. 0.00</span>
                         </small>
+                        <div class="mb-3">
+                            <label class="form-label">Imagen del Producto</label>
+                            <input type="file" 
+                                class="form-control" 
+                                name="imagen" 
+                                id="editProductImage"
+                                accept="image/*">
+                            <small class="text-muted">Dejar vacío para mantener la imagen actual</small>
+                            <div id="currentImagePreview" class="mt-2"></div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
