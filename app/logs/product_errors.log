@@ -112,3 +112,15 @@
 [27-Oct-2025 02:01:38 Europe/Berlin] ExchangeRateService [Primary API]: HTTP 403 - Response: <!DOCTYPE html><html lang="en-US"><head><title>Just a moment...</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=Edge"><meta nam
 [27-Oct-2025 02:01:38 Europe/Berlin] ExchangeRateService [Backup API]: Error. cURL: Could not resolve host: pydolarve.org, HTTP: 0
 [27-Oct-2025 02:01:38 Europe/Berlin] ExchangeRateService: Todas las APIs fallaron. Usando FALLBACK_RATE.
+[27-Oct-2025 02:12:58 Europe/Berlin] PHP Fatal error:  Cannot redeclare index() (previously declared in C:\xampp\htdocs\BarkiOS\app\controllers\Admin\ProductsController.php:60) in C:\xampp\htdocs\BarkiOS\app\controllers\Admin\LoginController.php on line 180
+[27-Oct-2025 02:13:42 Europe/Berlin] PHP Fatal error:  Cannot redeclare index() (previously declared in C:\xampp\htdocs\BarkiOS\app\controllers\Admin\ProductsController.php:60) in C:\xampp\htdocs\BarkiOS\app\controllers\Admin\LoginController.php on line 180
+[27-Oct-2025 02:14:15 Europe/Berlin] PHP Fatal error:  Cannot redeclare index() (previously declared in C:\xampp\htdocs\BarkiOS\app\controllers\Admin\ProductsController.php:60) in C:\xampp\htdocs\BarkiOS\app\controllers\Admin\LoginController.php on line 180
+[27-Oct-2025 02:15:11 Europe/Berlin] ExchangeRateService [Primary API]: HTTP 403 - Response: <!DOCTYPE html><html lang="en-US"><head><title>Just a moment...</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=Edge"><meta nam
+[27-Oct-2025 02:15:11 Europe/Berlin] ExchangeRateService [Backup API]: Error. cURL: Could not resolve host: pydolarve.org, HTTP: 0
+[27-Oct-2025 02:15:11 Europe/Berlin] ExchangeRateService: Todas las APIs fallaron. Usando FALLBACK_RATE.
+[27-Oct-2025 02:15:28 Europe/Berlin] PHP Fatal error:  Cannot redeclare index() (previously declared in C:\xampp\htdocs\BarkiOS\app\controllers\Admin\ProductsController.php:60) in C:\xampp\htdocs\BarkiOS\app\controllers\Admin\LoginController.php on line 180
+[27-Oct-2025 02:15:31 Europe/Berlin] PHP Fatal error:  Cannot redeclare index() (previously declared in C:\xampp\htdocs\BarkiOS\app\controllers\Admin\ProductsController.php:60) in C:\xampp\htdocs\BarkiOS\app\controllers\Admin\LoginController.php on line 180
+[27-Oct-2025 02:15:32 Europe/Berlin] PHP Fatal error:  Cannot redeclare index() (previously declared in C:\xampp\htdocs\BarkiOS\app\controllers\Admin\ProductsController.php:60) in C:\xampp\htdocs\BarkiOS\app\controllers\Admin\LoginController.php on line 180
+[27-Oct-2025 02:15:58 Europe/Berlin] ExchangeRateService [Primary API]: HTTP 403 - Response: <!DOCTYPE html><html lang="en-US"><head><title>Just a moment...</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=Edge"><meta nam
+[27-Oct-2025 02:15:58 Europe/Berlin] ExchangeRateService [Backup API]: Error. cURL: Could not resolve host: pydolarve.org, HTTP: 0
+[27-Oct-2025 02:15:58 Europe/Berlin] ExchangeRateService: Todas las APIs fallaron. Usando FALLBACK_RATE.

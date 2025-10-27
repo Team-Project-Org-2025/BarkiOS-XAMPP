@@ -172,10 +172,3 @@ function check_session() {
     exit();
 }
 
-// ===============================
-// [GET] Función index por defecto
-// ===============================
-function index() {
-    // Si accede sin especificar acción, mostrar el login
-    show();
-}
