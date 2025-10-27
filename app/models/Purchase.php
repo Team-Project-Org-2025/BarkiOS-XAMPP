@@ -5,22 +5,30 @@ use PDO;
 use Exception;
 
 /**
- * Modelo Compras
+ * Modelo Compras - Con Cuentas por Pagar y Pagos a Proveedores
  * 
- * Gestiona las compras y crea productos en la tabla prendas
+ * Cada compra genera automáticamente una cuenta por pagar
+ * Los pagos se registran en pagos_compras
  */
 class Purchase extends Database {
     
-    public function facturaExiste($numeroFactura)
-    {
+    public function facturaExiste($numeroFactura, $excludeId = null) {
         try {
-            $stmt = $this->db->prepare("
-                SELECT COUNT(*) 
-                FROM compras 
-                WHERE factura_numero = :factura_numero 
-                  AND activo = 1
-            ");
-            $stmt->execute([':factura_numero' => $numeroFactura]);
+            $sql = "SELECT COUNT(*) FROM compras 
+                    WHERE factura_numero = :factura_numero AND activo = 1";
+            
+            if ($excludeId) {
+                $sql .= " AND compra_id != :exclude_id";
+            }
+            
+            $stmt = $this->db->prepare($sql);
+            $stmt->bindValue(':factura_numero', $numeroFactura);
+            
+            if ($excludeId) {
+                $stmt->bindValue(':exclude_id', $excludeId, PDO::PARAM_INT);
+            }
+            
+            $stmt->execute();
             return $stmt->fetchColumn() > 0;
         } catch (Exception $e) {
             error_log("Error en facturaExiste: " . $e->getMessage());
@@ -28,20 +36,48 @@ class Purchase extends Database {
         }
     }
 
-
+    /**
+     * Obtiene todas las compras con estado de pago
+     */
     public function getAll() {
         try {
             $stmt = $this->db->query("
-                SELECT c.*,
-                       p.nombre_empresa as nombre_proveedor,
-                       p.nombre_contacto,
-                       COUNT(pr.prenda_id) as total_prendas
+                SELECT 
+                    c.*,
+                    p.nombre_empresa as nombre_proveedor,
+                    p.nombre_contacto,
+                    p.tipo_rif,
+                    COUNT(DISTINCT pr.prenda_id) as total_prendas,
+                    SUM(CASE WHEN pr.estado = 'DISPONIBLE' THEN 1 ELSE 0 END) as prendas_disponibles,
+                    SUM(CASE WHEN pr.estado = 'VENDIDA' THEN 1 ELSE 0 END) as prendas_vendidas,
+                    cp.cuenta_pagar_id,
+                    cp.estado as estado_pago,
+                    cp.fecha_vencimiento,
+                    COALESCE(
+                        (SELECT SUM(pc.monto) 
+                         FROM pagos_compras pc 
+                         WHERE pc.cuenta_pagar_id = cp.cuenta_pagar_id 
+                         AND pc.estado_pago = 'CONFIRMADO'),
+                        0
+                    ) as total_pagado,
+                    (c.monto_total - COALESCE(
+                        (SELECT SUM(pc.monto) 
+                         FROM pagos_compras pc 
+                         WHERE pc.cuenta_pagar_id = cp.cuenta_pagar_id 
+                         AND pc.estado_pago = 'CONFIRMADO'),
+                        0
+                    )) as saldo_pendiente,
+                    CASE 
+                        WHEN cp.fecha_vencimiento < CURDATE() AND cp.estado = 'pendiente' THEN 1
+                        ELSE 0
+                    END as vencida
                 FROM compras c
                 JOIN proveedores p ON c.proveedor_rif = p.proveedor_rif
                 LEFT JOIN prendas pr ON c.compra_id = pr.compra_id AND pr.activo = 1
+                LEFT JOIN cuentas_pagar cp ON c.compra_id = cp.compra_id
                 WHERE c.activo = 1
                 GROUP BY c.compra_id
-                ORDER BY c.fecha_compra DESC
+                ORDER BY c.fecha_compra DESC, c.compra_id DESC
             ");
             return $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
         } catch (\Throwable $e) {
@@ -51,17 +87,40 @@ class Purchase extends Database {
     }
 
     /**
-     * Obtiene una compra específica por su ID
+     * Obtiene una compra específica con cuenta por pagar
      */
     public function getById($id) {
         try {
             $stmt = $this->db->prepare("
-                SELECT c.*,
-                       p.nombre_empresa as nombre_proveedor,
-                       p.nombre_contacto,
-                       p.direccion as direccion_proveedor
+                SELECT 
+                    c.*,
+                    p.nombre_empresa as nombre_proveedor,
+                    p.nombre_contacto,
+                    p.direccion as direccion_proveedor,
+                    p.telefono as telefono_proveedor,
+                    p.correo as correo_proveedor,
+                    p.tipo_rif,
+                    cp.cuenta_pagar_id,
+                    cp.estado as estado_pago,
+                    cp.fecha_vencimiento,
+                    cp.observaciones as observaciones_pago,
+                    COALESCE(
+                        (SELECT SUM(pc.monto) 
+                         FROM pagos_compras pc 
+                         WHERE pc.cuenta_pagar_id = cp.cuenta_pagar_id 
+                         AND pc.estado_pago = 'CONFIRMADO'),
+                        0
+                    ) as total_pagado,
+                    (c.monto_total - COALESCE(
+                        (SELECT SUM(pc.monto) 
+                         FROM pagos_compras pc 
+                         WHERE pc.cuenta_pagar_id = cp.cuenta_pagar_id 
+                         AND pc.estado_pago = 'CONFIRMADO'),
+                        0
+                    )) as saldo_pendiente
                 FROM compras c
                 JOIN proveedores p ON c.proveedor_rif = p.proveedor_rif
+                LEFT JOIN cuentas_pagar cp ON c.compra_id = cp.compra_id
                 WHERE c.compra_id = :id AND c.activo = 1
             ");
             $stmt->execute([':id' => $id]);
@@ -73,25 +132,30 @@ class Purchase extends Database {
     }
 
     /**
-     * Obtiene las prendas de una compra específica
+     * Obtiene prendas de una compra
      */
     public function getPrendasByCompraId($compraId) {
         try {
             $stmt = $this->db->prepare("
                 SELECT 
-                    prenda_id,
-                    codigo_prenda,
-                    nombre,
-                    categoria,
-                    tipo,
-                    precio_compra as precio_costo,
-                    precio as precio_venta,
-                    descripcion,
-                    estado,
-                    fecha_creacion
-                FROM prendas
-                WHERE compra_id = :compra_id AND activo = 1
-                ORDER BY categoria, nombre
+                    pr.prenda_id,
+                    pr.codigo_prenda,
+                    pr.nombre,
+                    pr.categoria,
+                    pr.tipo,
+                    pr.precio_compra as precio_costo,
+                    pr.precio as precio_venta,
+                    pr.descripcion,
+                    pr.estado,
+                    pr.fecha_creacion,
+                    dc.detalle_compra_id,
+                    (pr.precio - pr.precio_compra) as margen_ganancia,
+                    ((pr.precio - pr.precio_compra) / pr.precio_compra * 100) as porcentaje_ganancia
+                FROM prendas pr
+                LEFT JOIN detalle_compra dc ON pr.codigo_prenda = dc.codigo_prenda 
+                    AND dc.compra_id = :compra_id
+                WHERE pr.compra_id = :compra_id AND pr.activo = 1
+                ORDER BY pr.categoria, pr.nombre
             ");
             $stmt->execute([':compra_id' => $compraId]);
             return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
@@ -102,13 +166,13 @@ class Purchase extends Database {
     }
 
     /**
-     * Agrega una nueva compra con sus prendas
+     * Agrega una nueva compra con cuenta por pagar automática
      */
     public function add($datos) {
         try {
             $this->db->beginTransaction();
 
-            // Insertar compra principal
+            // 1. Insertar compra principal
             $stmt = $this->db->prepare("
                 INSERT INTO compras (
                     proveedor_rif, factura_numero, fecha_compra, 
@@ -135,17 +199,46 @@ class Purchase extends Database {
 
             $compraId = $this->db->lastInsertId();
 
-            // Insertar prendas en la tabla prendas
+            // 2. Crear cuenta por pagar automáticamente
+            $fechaVencimiento = $datos['fecha_vencimiento'] ?? date('Y-m-d', strtotime('+30 days'));
+            
+            $stmtCuenta = $this->db->prepare("
+                INSERT INTO cuentas_pagar (
+                    compra_id, proveedor_rif, monto, fecha, 
+                    fecha_vencimiento, estado, observaciones
+                )
+                VALUES (
+                    :compra_id, :proveedor_rif, :monto, :fecha,
+                    :fecha_vencimiento, 'pendiente', :observaciones
+                )
+            ");
+
+            $stmtCuenta->execute([
+                ':compra_id' => $compraId,
+                ':proveedor_rif' => $datos['proveedor_rif'],
+                ':monto' => $datos['monto_total'],
+                ':fecha' => $datos['fecha_compra'],
+                ':fecha_vencimiento' => $fechaVencimiento,
+                ':observaciones' => 'Cuenta generada automáticamente - Factura #' . $datos['factura_numero']
+            ]);
+
+            // 3. Insertar prendas y detalle_compra
             if (isset($datos['prendas']) && is_array($datos['prendas'])) {
                 foreach ($datos['prendas'] as $index => $prenda) {
-                    // Generar código único para la prenda
-                    // Usar el código proporcionado o generar uno si no existe
-                $codigoPrenda = !empty($prenda['codigo_prenda'])
-                    ? strtoupper(trim($prenda['codigo_prenda']))
-                    : $this->generateCodigoPrenda($compraId, $index);
-                                
+                    $codigoPrenda = strtoupper(trim($prenda['codigo_prenda']));
 
-                    $stmt = $this->db->prepare("
+                    // Validar código único
+                    $checkStmt = $this->db->prepare("
+                        SELECT COUNT(*) FROM prendas WHERE codigo_prenda = :codigo AND activo = 1
+                    ");
+                    $checkStmt->execute([':codigo' => $codigoPrenda]);
+                    
+                    if ($checkStmt->fetchColumn() > 0) {
+                        throw new Exception("El código '$codigoPrenda' ya existe en el inventario");
+                    }
+
+                    // Insertar en prendas
+                    $stmtPrenda = $this->db->prepare("
                         INSERT INTO prendas (
                             codigo_prenda, compra_id, nombre, categoria, tipo, 
                             precio, precio_compra, descripcion, estado, activo
@@ -156,7 +249,7 @@ class Purchase extends Database {
                         )
                     ");
 
-                    $stmt->execute([
+                    $stmtPrenda->execute([
                         ':codigo_prenda' => $codigoPrenda,
                         ':compra_id' => $compraId,
                         ':nombre' => $prenda['nombre'],
@@ -165,6 +258,22 @@ class Purchase extends Database {
                         ':precio' => $prenda['precio_venta'],
                         ':precio_compra' => $prenda['precio_costo'],
                         ':descripcion' => $prenda['descripcion'] ?? ''
+                    ]);
+
+                    // Insertar en detalle_compra (registro del lote)
+                    $stmtDetalle = $this->db->prepare("
+                        INSERT INTO detalle_compra (
+                            compra_id, codigo_prenda, precio_compra
+                        )
+                        VALUES (
+                            :compra_id, :codigo_prenda, :precio_compra
+                        )
+                    ");
+
+                    $stmtDetalle->execute([
+                        ':compra_id' => $compraId,
+                        ':codigo_prenda' => $codigoPrenda,
+                        ':precio_compra' => $prenda['precio_costo']
                     ]);
                 }
             }
@@ -179,58 +288,71 @@ class Purchase extends Database {
     }
 
     /**
-     * Actualiza una compra existente
+     * Actualiza una compra (solo datos generales, NO prendas)
      */
     public function update($id, $datos) {
-    try {
-        $this->db->beginTransaction();
+        try {
+            $this->db->beginTransaction();
 
-        // Actualizar compra principal
-        $stmt = $this->db->prepare("
-            UPDATE compras
-            SET proveedor_rif = :proveedor_rif,
-                factura_numero = :factura_numero,
-                fecha_compra = :fecha_compra,
-                tracking = :tracking,
-                monto_total = :monto_total,
-                observaciones = :observaciones,
-                fec_actualizacion = CURRENT_TIMESTAMP
-            WHERE compra_id = :id
-        ");
+            // Actualizar compra
+            $stmt = $this->db->prepare("
+                UPDATE compras
+                SET proveedor_rif = :proveedor_rif,
+                    factura_numero = :factura_numero,
+                    fecha_compra = :fecha_compra,
+                    tracking = :tracking,
+                    monto_total = :monto_total,
+                    observaciones = :observaciones,
+                    fec_actualizacion = CURRENT_TIMESTAMP
+                WHERE compra_id = :id
+            ");
 
-        $result = $stmt->execute([
-            ':id' => $id,
-            ':proveedor_rif' => $datos['proveedor_rif'],
-            ':factura_numero' => $datos['factura_numero'],
-            ':fecha_compra' => $datos['fecha_compra'],
-            ':tracking' => $datos['tracking'] ?? '',
-            ':monto_total' => $datos['monto_total'],
-            ':observaciones' => $datos['observaciones'] ?? ''
-        ]);
+            $result = $stmt->execute([
+                ':id' => $id,
+                ':proveedor_rif' => $datos['proveedor_rif'],
+                ':factura_numero' => $datos['factura_numero'],
+                ':fecha_compra' => $datos['fecha_compra'],
+                ':tracking' => $datos['tracking'] ?? '',
+                ':monto_total' => $datos['monto_total'],
+                ':observaciones' => $datos['observaciones'] ?? ''
+            ]);
 
-        if (!$result) {
-            throw new Exception('Error al actualizar la compra');
+            if (!$result) {
+                throw new Exception('Error al actualizar la compra');
+            }
+
+            // Actualizar cuenta por pagar asociada
+            $stmtCuenta = $this->db->prepare("
+                UPDATE cuentas_pagar
+                SET proveedor_rif = :proveedor_rif,
+                    monto = :monto,
+                    fec_actualizacion = CURRENT_TIMESTAMP
+                WHERE compra_id = :compra_id
+            ");
+
+            $stmtCuenta->execute([
+                ':compra_id' => $id,
+                ':proveedor_rif' => $datos['proveedor_rif'],
+                ':monto' => $datos['monto_total']
+            ]);
+
+            $this->db->commit();
+            return true;
+        } catch (\Throwable $e) {
+            $this->db->rollBack();
+            error_log('Error en Purchase::update - ' . $e->getMessage());
+            throw new Exception('Error al actualizar la compra: ' . $e->getMessage());
         }
-
-        $this->db->commit();
-        return true;
-    } catch (\Throwable $e) {
-        $this->db->rollBack();
-        error_log('Error en Purchase::update - ' . $e->getMessage());
-        throw new Exception('Error al actualizar la compra: ' . $e->getMessage());
     }
-}
-
 
     /**
      * Elimina una compra (soft delete)
-     * Solo se pueden eliminar compras donde todas las prendas están DISPONIBLES
      */
     public function delete($id) {
         try {
             $this->db->beginTransaction();
 
-            // Verificar si hay prendas vendidas
+            // Verificar prendas vendidas
             $stmt = $this->db->prepare("
                 SELECT COUNT(*) as vendidas
                 FROM prendas
@@ -240,7 +362,21 @@ class Purchase extends Database {
             $vendidas = $stmt->fetch(PDO::FETCH_ASSOC)['vendidas'];
 
             if ($vendidas > 0) {
-                throw new Exception('No se puede eliminar esta compra porque tiene prendas vendidas');
+                throw new Exception('No se puede eliminar: hay ' . $vendidas . ' prenda(s) vendida(s)');
+            }
+
+            // Verificar si hay pagos
+            $stmtPagos = $this->db->prepare("
+                SELECT COUNT(*) as total_pagos
+                FROM pagos_compras pc
+                JOIN cuentas_pagar cp ON pc.cuenta_pagar_id = cp.cuenta_pagar_id
+                WHERE cp.compra_id = :id AND pc.estado_pago = 'CONFIRMADO'
+            ");
+            $stmtPagos->execute([':id' => $id]);
+            $totalPagos = $stmtPagos->fetch(PDO::FETCH_ASSOC)['total_pagos'];
+
+            if ($totalPagos > 0) {
+                throw new Exception('No se puede eliminar: la compra tiene pagos registrados');
             }
 
             // Desactivar compra
@@ -251,7 +387,15 @@ class Purchase extends Database {
             ");
             $stmt->execute([':id' => $id]);
 
-            // Desactivar prendas asociadas
+            // Anular cuenta por pagar
+            $stmt = $this->db->prepare("
+                UPDATE cuentas_pagar 
+                SET estado = 'cancelado', fec_actualizacion = CURRENT_TIMESTAMP
+                WHERE compra_id = :id
+            ");
+            $stmt->execute([':id' => $id]);
+
+            // Desactivar prendas
             $stmt = $this->db->prepare("
                 UPDATE prendas 
                 SET activo = 0, estado = 'ELIMINADA'
@@ -269,7 +413,30 @@ class Purchase extends Database {
     }
 
     /**
-     * Marca el PDF como generado
+     * Obtiene pagos de una compra
+     */
+    public function getPagosByCompraId($compraId) {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT 
+                    pc.*,
+                    cp.cuenta_pagar_id
+                FROM pagos_compras pc
+                JOIN cuentas_pagar cp ON pc.cuenta_pagar_id = cp.cuenta_pagar_id
+                WHERE cp.compra_id = :compra_id
+                AND pc.estado_pago != 'ANULADO'
+                ORDER BY pc.fecha_pago DESC
+            ");
+            $stmt->execute([':compra_id' => $compraId]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (\Throwable $e) {
+            error_log('Error en Purchase::getPagosByCompraId - ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Marca PDF como generado
      */
     public function markPdfGenerated($id) {
         try {
@@ -286,41 +453,39 @@ class Purchase extends Database {
     }
 
     /**
-     * Genera un código único para cada prenda
-     * Formato: PRD-YYYYMMDD-COMPRAID-INDEX
-     */
-    private function generateCodigoPrenda($compraId, $index) {
-        $fecha = date('Ymd');
-        $codigo = sprintf('PRD-%s-%04d-%03d', $fecha, $compraId, $index + 1);
-        
-        // Verificar si el código ya existe
-        $stmt = $this->db->prepare("
-            SELECT COUNT(*) FROM prendas WHERE codigo_prenda = :codigo
-        ");
-        $stmt->execute([':codigo' => $codigo]);
-        
-        // Si existe, agregar un sufijo aleatorio
-        if ($stmt->fetchColumn() > 0) {
-            $codigo .= '-' . strtoupper(substr(md5(uniqid()), 0, 4));
-        }
-        
-        return $codigo;
-    }
-
-    /**
-     * Obtiene estadísticas de compras
+     * Obtiene estadísticas completas
      */
     public function getEstadisticas() {
         try {
             $stmt = $this->db->query("
                 SELECT 
-                    COUNT(*) as total_compras,
-                    SUM(monto_total) as monto_total_compras,
-                    COUNT(DISTINCT proveedor_rif) as total_proveedores,
+                    COUNT(DISTINCT c.compra_id) as total_compras,
+                    SUM(c.monto_total) as monto_total_compras,
+                    COUNT(DISTINCT c.proveedor_rif) as total_proveedores,
                     (SELECT COUNT(*) FROM prendas WHERE activo = 1 AND estado = 'DISPONIBLE') as prendas_disponibles,
-                    (SELECT COUNT(*) FROM prendas WHERE activo = 1 AND estado = 'VENDIDA') as prendas_vendidas
-                FROM compras 
-                WHERE activo = 1
+                    (SELECT COUNT(*) FROM prendas WHERE activo = 1 AND estado = 'VENDIDA') as prendas_vendidas,
+                    (SELECT SUM(precio_compra) FROM prendas WHERE activo = 1 AND estado = 'DISPONIBLE') as valor_inventario,
+                    COALESCE((
+                        SELECT SUM(c2.monto_total - COALESCE(
+                            (SELECT SUM(pc.monto) 
+                             FROM pagos_compras pc 
+                             JOIN cuentas_pagar cp2 ON pc.cuenta_pagar_id = cp2.cuenta_pagar_id
+                             WHERE cp2.compra_id = c2.compra_id 
+                             AND pc.estado_pago = 'CONFIRMADO'),
+                            0
+                        ))
+                        FROM compras c2
+                        JOIN cuentas_pagar cp ON c2.compra_id = cp.compra_id
+                        WHERE c2.activo = 1 AND cp.estado = 'pendiente'
+                    ), 0) as saldo_pendiente_total,
+                    (
+                        SELECT COUNT(*)
+                        FROM cuentas_pagar
+                        WHERE estado = 'pendiente' 
+                        AND fecha_vencimiento < CURDATE()
+                    ) as cuentas_vencidas
+                FROM compras c
+                WHERE c.activo = 1
             ");
             return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
         } catch (\Throwable $e) {
@@ -330,64 +495,7 @@ class Purchase extends Database {
     }
 
     /**
-     * Obtiene el historial de precios de un producto similar
-     */
-    public function getPrecioHistorico($nombre, $categoria) {
-        try {
-            $stmt = $this->db->prepare("
-                SELECT 
-                    p.nombre,
-                    p.precio_compra,
-                    p.precio as precio_venta,
-                    c.fecha_compra,
-                    pr.nombre_empresa as proveedor
-                FROM prendas p
-                JOIN compras c ON p.compra_id = c.compra_id
-                JOIN proveedores pr ON c.proveedor_rif = pr.proveedor_rif
-                WHERE p.categoria = :categoria
-                AND p.nombre LIKE :nombre
-                AND p.activo = 1
-                ORDER BY c.fecha_compra DESC
-                LIMIT 10
-            ");
-            $stmt->execute([
-                ':categoria' => $categoria,
-                ':nombre' => '%' . $nombre . '%'
-            ]);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-        } catch (\Throwable $e) {
-            error_log('Error en Purchase::getPrecioHistorico - ' . $e->getMessage());
-            return [];
-        }
-    }
-
-    /**
-     * Obtiene el margen de ganancia promedio por categoría
-     */
-    public function getMargenPorCategoria() {
-        try {
-            $stmt = $this->db->query("
-                SELECT 
-                    categoria,
-                    COUNT(*) as total_prendas,
-                    AVG(precio_compra) as precio_compra_promedio,
-                    AVG(precio) as precio_venta_promedio,
-                    AVG(precio - precio_compra) as margen_promedio,
-                    AVG(((precio - precio_compra) / precio_compra) * 100) as porcentaje_ganancia
-                FROM prendas
-                WHERE activo = 1 AND precio_compra IS NOT NULL AND precio_compra > 0
-                GROUP BY categoria
-                ORDER BY margen_promedio DESC
-            ");
-            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-        } catch (\Throwable $e) {
-            error_log('Error en Purchase::getMargenPorCategoria - ' . $e->getMessage());
-            return [];
-        }
-    }
-
-    /**
-     * Valida que una compra pueda ser editada
+     * Valida si una compra puede editarse
      */
     public function canEdit($compraId) {
         try {

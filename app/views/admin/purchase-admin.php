@@ -3,7 +3,6 @@
 <?= require_once __DIR__ . '/../partials/navbar-admin.php'; ?>
 
 <style>
-/* Scroll para toda la página */
 html, body {
     height: 100%;
     overflow-y: auto;
@@ -15,13 +14,28 @@ html, body {
     padding-bottom: 2rem;
 }
 
-/* Scroll para los modales */
 .modal-dialog-scrollable .modal-body {
     max-height: calc(100vh - 200px);
     overflow-y: auto;
 }
 
-/* Estilos de prendas */
+.stat-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    border-left: 4px solid;
+    cursor: pointer;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15) !important;
+}
+
+.stat-card.primary { border-left-color: #0d6efd; }
+.stat-card.success { border-left-color: #198754; }
+.stat-card.warning { border-left-color: #ffc107; }
+.stat-card.danger { border-left-color: #dc3545; }
+.stat-card.info { border-left-color: #0dcaf0; }
+
 .prenda-row {
     transition: all 0.3s ease;
     border-left: 4px solid transparent;
@@ -30,11 +44,6 @@ html, body {
 .prenda-row:hover {
     border-left-color: #0d6efd;
     box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
-}
-
-/* Búsqueda de proveedores */
-.search-loading {
-    position: relative;
 }
 
 #supplierResults, #editSupplierResults {
@@ -48,7 +57,6 @@ html, body {
     background-color: #f8f9fa;
 }
 
-/* Filas de tabla */
 .purchase-row {
     transition: all 0.2s ease;
 }
@@ -58,21 +66,17 @@ html, body {
     transform: translateX(2px);
 }
 
-/* Margen de ganancia */
-.margen-display {
-    font-weight: 600;
+.badge-pago {
+    font-size: 0.75rem;
+    padding: 0.35em 0.65em;
 }
 
-/* Tarjetas estadísticas */
-.stat-card {
-    transition: transform 0.2s;
+#prendasContainer, #editPrendasContainer {
+    max-height: 500px;
+    overflow-y: auto;
+    padding-right: 10px;
 }
 
-.stat-card:hover {
-    transform: translateY(-5px);
-}
-
-/* Scrollbar personalizado */
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -91,13 +95,6 @@ html, body {
 ::-webkit-scrollbar-thumb:hover {
     background: #555;
 }
-
-/* Container de prendas con scroll */
-#prendasContainer, #editPrendasContainer {
-    max-height: 500px;
-    overflow-y: auto;
-    padding-right: 10px;
-}
 </style>
 
 <div class="main-content">
@@ -106,16 +103,59 @@ html, body {
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-2">
             <div>
                 <h3 class="mb-1"><i class="fas fa-shopping-bag me-2 text-primary"></i>Gestión de Compras</h3>
-                <p class="text-muted mb-0 small">Registre las compras a proveedores y agregue productos al inventario</p>
+                <p class="text-muted mb-0 small">Registre compras a proveedores y gestione el inventario</p>
             </div>
             <button class="btn btn-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#addPurchaseModal">
                 <i class="fas fa-plus me-2"></i>Nueva Compra
             </button>
         </div>
 
+        <!-- Estadísticas -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-lg-3">
+                <div class="card shadow-sm border-0 stat-card primary">
+                    <div class="card-body text-center">
+                        <i class="fas fa-shopping-cart fa-2x text-primary mb-2"></i>
+                        <h6 class="text-muted small mb-1">Total Compras</h6>
+                        <h4 class="mb-0" id="statTotalCompras">0</h4>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-lg-3">
+                <div class="card shadow-sm border-0 stat-card success">
+                    <div class="card-body text-center">
+                        <i class="fas fa-dollar-sign fa-2x text-success mb-2"></i>
+                        <h6 class="text-muted small mb-1">Monto Total</h6>
+                        <h5 class="mb-0 text-success" id="statMontoTotal">$0.00</h5>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-lg-3">
+                <div class="card shadow-sm border-0 stat-card info">
+                    <div class="card-body text-center">
+                        <i class="fas fa-boxes fa-2x text-info mb-2"></i>
+                        <h6 class="text-muted small mb-1">Prendas en Inventario</h6>
+                        <h4 class="mb-0 text-info" id="statPrendasDisponibles">0</h4>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-lg-3">
+                <div class="card shadow-sm border-0 stat-card primary">
+                    <div class="card-body text-center">
+                        <i class="fas fa-warehouse fa-2x text-primary mb-2"></i>
+                        <h6 class="text-muted small mb-1">Valor Inventario</h6>
+                        <h5 class="mb-0 text-primary" id="statValorInventario">$0.00</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Filtros y Búsqueda -->
         <div class="row mb-4">
-            <div class="col-12 col-md-8 col-lg-6">
+            <div class="col-12 col-md-8">
                 <div class="input-group">
                     <span class="input-group-text bg-white">
                         <i class="fas fa-search text-muted"></i>
@@ -123,7 +163,7 @@ html, body {
                     <input type="text" 
                            class="form-control border-start-0" 
                            id="searchInput" 
-                           placeholder="Buscar por factura, proveedor, fecha...">
+                           placeholder="Buscar por factura, proveedor...">
                 </div>
             </div>
         </div>
@@ -137,13 +177,15 @@ html, body {
                             <tr>
                                 <th class="px-4">N° Factura</th>
                                 <th>Proveedor</th>
-                                <th>Fecha / Monto</th>
+                                <th>Fecha</th>
+                                <th class="text-end">Monto</th>
+                                <th class="text-center">Prendas</th>
                                 <th class="text-center" width="200">Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="purchaseTableBody">
                             <tr>
-                                <td colspan="4" class="text-center py-5">
+                                <td colspan="6" class="text-center py-5">
                                     <div class="spinner-border text-primary" role="status"></div>
                                     <p class="mt-2 text-muted">Cargando compras...</p>
                                 </td>
@@ -156,9 +198,7 @@ html, body {
     </div>
 </div>
 
-<!-- ============================================ -->
 <!-- MODAL: AGREGAR COMPRA -->
-<!-- ============================================ -->
 <div class="modal fade" id="addPurchaseModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
@@ -193,7 +233,6 @@ html, body {
                                            placeholder="12345678" 
                                            required>
                                     <div class="form-text">8 dígitos exactos</div>
-                                    <div class="invalid-feedback">Debe tener exactamente 8 dígitos</div>
                                 </div>
 
                                 <div class="col-md-4">
@@ -207,7 +246,6 @@ html, body {
                                            value="<?= date('Y-m-d') ?>" 
                                            max="<?= date('Y-m-d') ?>"
                                            required>
-                                    <div class="invalid-feedback">Ingrese la fecha de compra</div>
                                 </div>
 
                                 <div class="col-md-4">
@@ -233,41 +271,58 @@ html, body {
                             <h6 class="mb-0"><i class="fas fa-truck me-2"></i>Proveedor</h6>
                         </div>
                         <div class="card-body">
-                            <div class="search-loading">
-                                <label class="form-label fw-bold">
-                                    Buscar Proveedor <span class="text-danger">*</span>
-                                </label>
-                                <input type="text" 
-                                       class="form-control" 
-                                       id="searchSupplier"
-                                       placeholder="Escriba el nombre, empresa o RIF del proveedor..." 
-                                       autocomplete="off">
-                                <input type="hidden" id="proveedorId" name="proveedor_rif" required>
-                                <div id="supplierResults" 
-                                     class="list-group mt-2 position-absolute w-100" 
-                                     style="z-index: 1050; display: none;">
-                                </div>
-                                <div class="form-text">
-                                    <i class="fas fa-info-circle me-1"></i>
-                                    Empiece a escribir para buscar (mínimo 2 caracteres)
-                                </div>
-                                <div class="invalid-feedback">Debe seleccionar un proveedor</div>
+                            <label class="form-label fw-bold">
+                                Buscar Proveedor <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="searchSupplier"
+                                   placeholder="Escriba el nombre, empresa o RIF..." 
+                                   autocomplete="off">
+                            <input type="hidden" id="proveedorId" name="proveedor_rif" required>
+                            <div id="supplierResults" 
+                                 class="list-group mt-2 position-absolute w-100" 
+                                 style="z-index: 1050; display: none;">
+                            </div>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Mínimo 2 caracteres
                             </div>
                         </div>
                     </div>
 
-                    <!-- Observaciones -->
+                    <!-- Cuenta por Pagar -->
                     <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Cuenta por Pagar</h6>
+                        </div>
                         <div class="card-body">
-                            <label class="form-label fw-bold">
-                                Observaciones <small class="text-muted">(opcional)</small>
-                            </label>
-                            <textarea class="form-control" 
-                                      name="observaciones" 
-                                      rows="2" 
-                                      maxlength="500"
-                                      placeholder="Notas adicionales sobre esta compra..."></textarea>
-                            <div class="form-text">Máximo 500 caracteres</div>
+                            <div class="alert alert-info mb-3">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Nota:</strong> Esta compra generará automáticamente una cuenta por pagar a crédito.
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">
+                                        Fecha de Vencimiento
+                                    </label>
+                                    <input type="date" 
+                                           class="form-control" 
+                                           id="fechaVencimiento" 
+                                           name="fecha_vencimiento"
+                                           value="<?= date('Y-m-d', strtotime('+30 days')) ?>"
+                                           min="<?= date('Y-m-d') ?>">
+                                    <div class="form-text">Por defecto: +30 días</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Observaciones</label>
+                                    <textarea class="form-control" 
+                                              name="observaciones" 
+                                              rows="1" 
+                                              maxlength="500"
+                                              placeholder="Notas adicionales..."></textarea>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -283,7 +338,7 @@ html, body {
                         </div>
                         <div class="card-body">
                             <div id="prendasContainer">
-                                <!-- Las prendas se agregarán dinámicamente aquí -->
+                                <!-- Las prendas se agregarán aquí -->
                             </div>
                         </div>
                     </div>
@@ -294,22 +349,20 @@ html, body {
                             <h6 class="mb-0"><i class="fas fa-calculator me-2"></i>Resumen de Compra</h6>
                         </div>
                         <div class="card-body">
-                            <div id="purchaseSummary">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <p class="mb-2">
-                                            <i class="fas fa-box-open me-2 text-primary"></i>
-                                            <strong>Total de productos:</strong> 
-                                            <span id="summaryTotalPrendas" class="badge bg-primary ms-2">0</span>
-                                        </p>
-                                    </div>
-                                    <div class="col-md-6 text-md-end">
-                                        <p class="mb-2">
-                                            <i class="fas fa-dollar-sign me-2 text-success"></i>
-                                            <strong>Monto total:</strong> 
-                                            <span class="fs-5 text-success ms-2">$<span id="summaryMontoTotal">0.00</span></span>
-                                        </p>
-                                    </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-2">
+                                        <i class="fas fa-box-open me-2 text-primary"></i>
+                                        <strong>Total de productos:</strong> 
+                                        <span id="summaryTotalPrendas" class="badge bg-primary ms-2">0</span>
+                                    </p>
+                                </div>
+                                <div class="col-md-6 text-md-end">
+                                    <p class="mb-2">
+                                        <i class="fas fa-dollar-sign me-2 text-success"></i>
+                                        <strong>Monto total:</strong> 
+                                        <span class="fs-5 text-success ms-2">$<span id="summaryMontoTotal">0.00</span></span>
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -334,9 +387,7 @@ html, body {
     </div>
 </div>
 
-<!-- ============================================ -->
 <!-- MODAL: EDITAR COMPRA -->
-<!-- ============================================ -->
 <div class="modal fade" id="editPurchaseModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
@@ -353,7 +404,6 @@ html, body {
 
                     <input type="hidden" id="editCompraId" name="compra_id">
 
-                    <!-- Información General -->
                     <div class="card mb-3">
                         <div class="card-header bg-light">
                             <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Información de la Factura</h6>
@@ -361,125 +411,69 @@ html, body {
                         <div class="card-body">
                             <div class="row g-3">
                                 <div class="col-md-4">
-                                    <label class="form-label fw-bold">
-                                        N° Factura <span class="text-danger">*</span>
-                                    </label>
-                                    <input type="text" 
-                                           class="form-control" 
-                                           id="editFacturaNumero" 
-                                           name="factura_numero"
-                                           maxlength="8" 
-                                           pattern="\d{8}" 
-                                           required>
-                                    <div class="invalid-feedback">Debe tener exactamente 8 dígitos</div>
+                                    <label class="form-label fw-bold">N° Factura <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="editFacturaNumero" name="factura_numero" maxlength="8" pattern="\d{8}" required>
                                 </div>
-
                                 <div class="col-md-4">
-                                    <label class="form-label fw-bold">
-                                        Fecha de Compra <span class="text-danger">*</span>
-                                    </label>
-                                    <input type="date" 
-                                           class="form-control" 
-                                           id="editFechaCompra" 
-                                           name="fecha_compra"
-                                           required>
-                                    <div class="invalid-feedback">Ingrese la fecha de compra</div>
+                                    <label class="form-label fw-bold">Fecha de Compra <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" id="editFechaCompra" name="fecha_compra" required>
                                 </div>
-
                                 <div class="col-md-4">
-                                    <label class="form-label fw-bold">
-                                        N° Tracking <small class="text-muted">(opcional)</small>
-                                    </label>
-                                    <input type="text" 
-                                           class="form-control" 
-                                           id="editTracking" 
-                                           name="tracking"
-                                           maxlength="8" 
-                                           pattern="\d{8}">
+                                    <label class="form-label fw-bold">N° Tracking</label>
+                                    <input type="text" class="form-control" id="editTracking" name="tracking" maxlength="8" pattern="\d{8}">
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Proveedor -->
                     <div class="card mb-3">
                         <div class="card-header bg-light">
                             <h6 class="mb-0"><i class="fas fa-truck me-2"></i>Proveedor</h6>
                         </div>
                         <div class="card-body">
-                            <div class="search-loading">
-                                <label class="form-label fw-bold">
-                                    Buscar Proveedor <span class="text-danger">*</span>
-                                </label>
-                                <input type="text" 
-                                       class="form-control" 
-                                       id="editSearchSupplier"
-                                       placeholder="Escriba el nombre, empresa o RIF del proveedor..." 
-                                       autocomplete="off">
-                                <input type="hidden" id="editProveedorId" name="proveedor_rif" required>
-                                <div id="editSupplierResults" 
-                                     class="list-group mt-2 position-absolute w-100" 
-                                     style="z-index: 1050; display: none;">
-                                </div>
-                                <div class="invalid-feedback">Debe seleccionar un proveedor</div>
-                            </div>
+                            <label class="form-label fw-bold">Buscar Proveedor <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="editSearchSupplier" placeholder="Escriba el nombre, empresa o RIF..." autocomplete="off">
+                            <input type="hidden" id="editProveedorId" name="proveedor_rif" required>
+                            <div id="editSupplierResults" class="list-group mt-2 position-absolute w-100" style="z-index: 1050; display: none;"></div>
                         </div>
                     </div>
 
-                    <!-- Observaciones -->
                     <div class="card mb-3">
                         <div class="card-body">
-                            <label class="form-label fw-bold">
-                                Observaciones <small class="text-muted">(opcional)</small>
-                            </label>
-                            <textarea class="form-control" 
-                                      id="editObservaciones"
-                                      name="observaciones" 
-                                      rows="2" 
-                                      maxlength="500"
-                                      placeholder="Notas adicionales sobre esta compra..."></textarea>
+                            <label class="form-label fw-bold">Observaciones</label>
+                            <textarea class="form-control" id="editObservaciones" name="observaciones" rows="2" maxlength="500"></textarea>
                         </div>
                     </div>
 
-                    <!-- Productos -->
+                    <!-- Productos (Solo lectura) -->
                     <div class="card mb-3">
-                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                            <h6 class="mb-0"><i class="fas fa-box me-2"></i>Productos Comprados</h6>
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="fas fa-box me-2"></i>Productos (No editables)</h6>
                         </div>
                         <div class="card-body">
                             <div class="alert alert-info">
                                 <i class="fas fa-info-circle me-2"></i>
-                                Las prendas de esta compra no pueden modificarse desde este módulo.
+                                Las prendas no pueden modificarse. Para cambios, elimine la compra y cree una nueva.
                             </div>
-                            <div id="editPrendasContainer">
-                                <!-- Las prendas se cargarán dinámicamente aquí -->
-                            </div>
+                            <div id="editPrendasContainer"></div>
                         </div>
                     </div>
 
-                    <!-- Resumen -->
                     <div class="card border-warning">
                         <div class="card-header bg-warning text-dark">
-                            <h6 class="mb-0"><i class="fas fa-calculator me-2"></i>Resumen de Compra</h6>
+                            <h6 class="mb-0"><i class="fas fa-calculator me-2"></i>Resumen</h6>
                         </div>
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-md-6">
-                                    <p class="mb-2">
-                                        <strong>Total de productos:</strong> 
-                                        <span id="editSummaryTotalPrendas" class="badge bg-warning ms-2">0</span>
-                                    </p>
+                                    <p><strong>Total de productos:</strong> <span id="editSummaryTotalPrendas" class="badge bg-warning">0</span></p>
                                 </div>
                                 <div class="col-md-6 text-md-end">
-                                    <p class="mb-2">
-                                        <strong>Monto total:</strong> 
-                                        <span class="fs-5 text-success ms-2">$<span id="editSummaryMontoTotal">0.00</span></span>
-                                    </p>
+                                    <p><strong>Monto total:</strong> <span class="fs-5 text-success">$<span id="editSummaryMontoTotal">0.00</span></span></p>
                                 </div>
                             </div>
                         </div>
                     </div>
-
                     <input type="hidden" id="editMontoTotal" name="monto_total" value="0.00">
                 </div>
 
@@ -488,10 +482,8 @@ html, body {
                         <i class="fas fa-times me-1"></i>Cancelar
                     </button>
                     <button type="submit" class="btn btn-warning" id="btnGuardarEdit">
-                        <span class="spinner-border spinner-border-sm d-none me-2" role="status"></span>
-                        <span class="btn-text">
-                            <i class="fas fa-save me-1"></i>Guardar Cambios
-                        </span>
+                        <span class="spinner-border spinner-border-sm d-none me-2"></span>
+                        <span class="btn-text"><i class="fas fa-save me-1"></i>Guardar Cambios</span>
                     </button>
                 </div>
             </form>
@@ -499,9 +491,28 @@ html, body {
     </div>
 </div>
 
-<!-- ============================================ -->
-<!-- TEMPLATE: PRENDA -->
-<!-- ============================================ -->
+<!-- MODAL: VER DETALLE -->
+<div class="modal fade" id="viewPurchaseModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title"><i class="fas fa-eye me-2"></i>Detalle de Compra</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="viewPurchaseContent">
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary"></div>
+                    <p class="mt-2">Cargando...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TEMPLATE: PRENDA (SIN PRECIO DE VENTA) -->
 <template id="prendaTemplate">
     <div class="prenda-row border rounded p-3 mb-3 bg-light">
         <div class="d-flex justify-content-between align-items-center mb-2">
@@ -513,20 +524,13 @@ html, body {
         
         <div class="row g-2">
             <div class="col-md-4">
-                <label class="form-label small fw-bold">Código de Prenda <span class="text-danger">*</span></label>
-                <input type="text" class="form-control prenda-codigo" 
-                       placeholder="Ej: PRD001" maxlength="20" required>
-                <div class="invalid-feedback">El código es obligatorio</div>
+                <label class="form-label small fw-bold">Código <span class="text-danger">*</span></label>
+                <input type="text" class="form-control prenda-codigo" placeholder="PRD001" maxlength="20" required>
             </div>
-        
             <div class="col-md-8">
-                <label class="form-label small fw-bold">Nombre/Descripción <span class="text-danger">*</span></label>
-                <input type="text" class="form-control prenda-nombre" 
-                       placeholder="Ej: Pantalón Levi's 501 Talla 32" 
-                       maxlength="150" required>
-                <div class="invalid-feedback">El nombre es obligatorio (3-150 caracteres)</div>
+                <label class="form-label small fw-bold">Nombre <span class="text-danger">*</span></label>
+                <input type="text" class="form-control prenda-nombre" placeholder="Pantalón Levi's 501" maxlength="150" required>
             </div>
-            
             <div class="col-md-4">
                 <label class="form-label small fw-bold">Categoría <span class="text-danger">*</span></label>
                 <select class="form-select prenda-categoria" required>
@@ -538,9 +542,7 @@ html, body {
                     <option value="Verano">Verano</option>
                     <option value="Fiesta">Fiesta</option>
                 </select>
-                <div class="invalid-feedback">Seleccione una categoría</div>
             </div>
-            
             <div class="col-md-4">
                 <label class="form-label small fw-bold">Tipo <span class="text-danger">*</span></label>
                 <select class="form-select prenda-tipo" required>
@@ -554,55 +556,27 @@ html, body {
                     <option value="Falda">Falda</option>
                     <option value="Enterizo">Enterizo</option>
                 </select>
-                <div class="invalid-feedback">Seleccione un tipo</div>
             </div>
-            
             <div class="col-md-4">
                 <label class="form-label small fw-bold">Precio Costo <span class="text-danger">*</span></label>
                 <div class="input-group">
                     <span class="input-group-text">$</span>
-                    <input type="number" class="form-control precio-input prenda-costo" 
-                           min="0.01" step="0.01" placeholder="0.00" required>
-                </div>
-                <div class="invalid-feedback">Ingrese un precio válido</div>
-            </div>
-            
-            <div class="col-md-6">
-                <label class="form-label small fw-bold">Precio Venta <span class="text-danger">*</span></label>
-                <div class="input-group">
-                    <span class="input-group-text">$</span>
-                    <input type="number" class="form-control precio-input prenda-venta" 
-                           min="0.01" step="0.01" placeholder="0.00" required>
-                </div>
-                <div class="invalid-feedback">El precio de venta debe ser mayor al costo</div>
-            </div>
-            
-            <div class="col-md-6">
-                <label class="form-label small fw-bold">Margen de Ganancia</label>
-                <div class="input-group">
-                    <input type="text" class="form-control margen-display" readonly 
-                           value="$0.00 (0%)" style="background-color: #f8f9fa;">
-                    <span class="input-group-text"><i class="fas fa-chart-line"></i></span>
+                    <input type="number" class="form-control prenda-costo" min="0.01" step="0.01" placeholder="0.00" required>
                 </div>
             </div>
-            
             <div class="col-md-12">
                 <label class="form-label small fw-bold">Descripción adicional (opcional)</label>
-                <textarea class="form-control prenda-descripcion" 
-                          rows="2" maxlength="500" 
-                          placeholder="Talla, color, marca, etc."></textarea>
+                <textarea class="form-control prenda-descripcion" rows="2" maxlength="500" placeholder="Talla, color, marca, etc."></textarea>
             </div>
         </div>
     </div>
 </template>
 
-<!-- ============================================ -->
-<!-- SCRIPTS -->
-<!-- ============================================ -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="/BarkiOS/public/assets/js/purchase-admin.js"></script>
+<script src="/BarkiOS/public/assets/js/logout.js"></script>
 
 </body>
 </html>

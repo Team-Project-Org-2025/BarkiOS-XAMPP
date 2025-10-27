@@ -122,4 +122,34 @@ class Supplier extends Database{
         $stmt = $this->db->prepare("UPDATE proveedores SET activo = 0 WHERE proveedor_rif = :proveedor_rif");
         return $stmt->execute([':proveedor_rif' => $proveedor_rif]);
     }
+        /**
+     * Busca proveedores por nombre, contacto o RIF.
+     *
+     * @param string $term Texto de búsqueda parcial.
+     * @return array Lista de proveedores coincidentes.
+     */
+    public function search($term) {
+        try {
+            $sql = "SELECT 
+                        proveedor_rif AS rif,
+                        nombre_empresa,
+                        nombre_contacto
+                    FROM proveedores
+                    WHERE activo = 1
+                      AND (
+                          nombre_empresa LIKE :term
+                          OR nombre_contacto LIKE :term
+                          OR proveedor_rif LIKE :term
+                      )
+                    ORDER BY nombre_empresa ASC
+                    LIMIT 10";
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([':term' => "%$term%"]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            error_log('❌ Error en Supplier::search - ' . $e->getMessage());
+            return [];
+        }
+    }
 }

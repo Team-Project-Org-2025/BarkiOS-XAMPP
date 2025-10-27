@@ -1,12 +1,13 @@
 <?php
-// filepath: c:\xampp\htdocs\BarkiOS\app\controllers\Admin\PurchaseController.php
+// filepath: app/controllers/Admin/PurchaseController.php
 
 use Barkios\models\Purchase;
 use Barkios\models\Supplier;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 
 require_once __DIR__ . '/LoginController.php';
 
-// Protege todo el módulo
 checkAuth();
 
 $purchaseModel = new Purchase();
@@ -30,12 +31,14 @@ function handleRequest($purchaseModel, $supplierModel) {
                 case 'POST_add_ajax':    handleAddAjax($purchaseModel, $supplierModel); break;
                 case 'POST_edit_ajax':   handleEditAjax($purchaseModel, $supplierModel); break;
                 case 'POST_delete_ajax': handleDeleteAjax($purchaseModel); break;
-                case 'GET_generate_pdf': generatePdf($purchaseModel); break;
                 case 'GET_get_purchases': getPurchasesAjax($purchaseModel); break;
                 case 'GET_get_purchase_detail': getPurchaseDetailAjax($purchaseModel); break;
                 case 'GET_search_supplier': searchSupplierAjax($supplierModel); break;
+                case 'GET_get_stats': getStatsAjax($purchaseModel); break;
                 default: echo json_encode(['success'=>false,'message'=>'Acción inválida']); exit();
             }
+        } elseif ($action === 'generate_pdf') {
+            generatePdf($purchaseModel);
         }
     } catch (Exception $e) {
         if ($isAjax) {
@@ -48,10 +51,13 @@ function handleRequest($purchaseModel, $supplierModel) {
     }
 }
 
+/**
+ * Maneja la creación vía AJAX
+ */
 function handleAddAjax($purchaseModel, $supplierModel) {
+    // campos requeridos
     $required = ['proveedor_rif', 'factura_numero', 'fecha_compra'];
 
-    // Validar campos requeridos
     $missingFields = [];
     foreach ($required as $field) {
         if (empty($_POST[$field])) {
@@ -62,121 +68,90 @@ function handleAddAjax($purchaseModel, $supplierModel) {
     if (!empty($missingFields)) {
         echo json_encode([
             'success' => false,
-            'message' => 'Los siguientes campos son requeridos: ' . implode(', ', $missingFields)
+            'message' => 'Campos requeridos: ' . implode(', ', $missingFields)
         ]);
         exit();
     }
 
-    // Validar número de factura (8 dígitos)
-    if (!preg_match('/^\d{8}$/', $_POST['factura_numero'])) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'El número de factura debe tener exactamente 8 dígitos'
-        ]);
+    // Validaciones básicas
+    $factura_numero = trim($_POST['factura_numero']);
+    $proveedor_rif = trim($_POST['proveedor_rif']);
+    $fecha_compra = trim($_POST['fecha_compra']);
+    $tracking = trim($_POST['tracking'] ?? '');
+    $observaciones = trim($_POST['observaciones'] ?? '');
+    $fecha_vencimiento = !empty($_POST['fecha_vencimiento']) ? trim($_POST['fecha_vencimiento']) : null;
+
+    if (!preg_match('/^\d{8}$/', $factura_numero)) {
+        echo json_encode(['success' => false, 'message' => 'El número de factura debe tener 8 dígitos']);
         exit();
     }
 
-    // Validar tracking si existe (8 dígitos)
-    if (!empty($_POST['tracking']) && !preg_match('/^\d{8}$/', $_POST['tracking'])) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'El número de tracking debe tener exactamente 8 dígitos'
-        ]);
+    if (!empty($tracking) && !preg_match('/^\d{8}$/', $tracking)) {
+        echo json_encode(['success' => false, 'message' => 'El número de tracking debe tener 8 dígitos']);
         exit();
     }
 
-    // Validar que el proveedor exista
-    if (!$supplierModel->getById($_POST['proveedor_rif'])) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'El proveedor seleccionado no existe'
-        ]);
+    // Existe proveedor?
+    if (!method_exists($supplierModel, 'getById') || !$supplierModel->getById($proveedor_rif)) {
+        echo json_encode(['success' => false, 'message' => 'El proveedor no existe']);
         exit();
     }
 
-    // Validar número de factura único
-// Validar número de factura único
-    if ($purchaseModel->facturaExiste($_POST['factura_numero'])) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'Ya existe una compra con este número de factura'
-        ]);
+    // Factura duplicada?
+    if ($purchaseModel->facturaExiste($factura_numero)) {
+        echo json_encode(['success' => false, 'message' => 'Ya existe una compra con este número de factura']);
         exit();
     }
 
-
-    // Validar que haya al menos una prenda
-    if (empty($_POST['prendas']) || !is_array($_POST['prendas'])) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'Debe agregar al menos una prenda a la compra'
-        ]);
+    // Prendas
+    $rawPrendas = $_POST['prendas'] ?? null;
+    if (empty($rawPrendas) || !is_array($rawPrendas)) {
+        echo json_encode(['success' => false, 'message' => 'Debe agregar al menos una prenda']);
         exit();
     }
 
-    // Validar y calcular monto total
     $montoTotal = 0;
     $prendasValidas = [];
 
-    foreach ($_POST['prendas'] as $prenda) {
-        // Validar campos requeridos
+    foreach ($rawPrendas as $prenda) {
+        // campos obligatorios por prenda
         if (
             empty($prenda['codigo_prenda']) ||
             empty($prenda['nombre']) ||
             empty($prenda['categoria']) ||
             empty($prenda['tipo']) ||
-            empty($prenda['precio_costo']) ||
-            empty($prenda['precio_venta'])
+            !isset($prenda['precio_costo'])
         ) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Todos los campos de las prendas son obligatorios, incluyendo el código de prenda'
-            ]);
+            echo json_encode(['success' => false, 'message' => 'Todos los campos de las prendas son obligatorios']);
             exit();
         }
 
         $codigoPrenda = strtoupper(trim($prenda['codigo_prenda']));
         $precioCosto = floatval($prenda['precio_costo']);
-        $precioVenta = floatval($prenda['precio_venta']);
 
-        // Validar formato del código (solo letras, números o guiones)
         if (!preg_match('/^[A-Z0-9\-]+$/', $codigoPrenda)) {
-            echo json_encode([
-                'success' => false,
-                'message' => "El código de prenda '$codigoPrenda' contiene caracteres no válidos (solo letras, números y guiones)"
-            ]);
+            echo json_encode(['success' => false, 'message' => "Código '$codigoPrenda' contiene caracteres inválidos"]);
             exit();
         }
 
-        // Validar código duplicado en la misma compra
+        // evitar duplicados en el lote enviado
         foreach ($prendasValidas as $p) {
             if ($p['codigo_prenda'] === $codigoPrenda) {
-                echo json_encode([
-                    'success' => false,
-                    'message' => "El código de prenda '$codigoPrenda' está repetido en la lista"
-                ]);
+                echo json_encode(['success' => false, 'message' => "El código '$codigoPrenda' está repetido"]);
                 exit();
             }
         }
 
-        // Validar precios
         if ($precioCosto <= 0) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'El precio de costo debe ser mayor a cero'
-            ]);
+            echo json_encode(['success' => false, 'message' => 'El precio de costo debe ser mayor a cero']);
             exit();
         }
 
-        if ($precioVenta <= $precioCosto) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'El precio de venta debe ser mayor al de costo'
-            ]);
-            exit();
-        }
+        // precio_venta opcional: si no viene, calculo un margen por defecto (ej. 50%)
+        $precioVenta = isset($prenda['precio_venta']) && $prenda['precio_venta'] > 0
+            ? floatval($prenda['precio_venta'])
+            : round($precioCosto * 1.5, 2);
 
-        // Agregar prenda válida
         $prendasValidas[] = [
             'codigo_prenda' => $codigoPrenda,
             'nombre' => trim($prenda['nombre']),
@@ -190,276 +165,310 @@ function handleAddAjax($purchaseModel, $supplierModel) {
         $montoTotal += $precioCosto;
     }
 
-    // Insertar compra
+    // Armar datos para el modelo
+    $datos = [
+        'proveedor_rif' => $proveedor_rif,
+        'factura_numero' => $factura_numero,
+        'fecha_compra' => $fecha_compra,
+        'tracking' => $tracking,
+        'monto_total' => $montoTotal,
+        'observaciones' => $observaciones,
+        'fecha_vencimiento' => $fecha_vencimiento,
+        'prendas' => $prendasValidas
+    ];
+
     try {
-        $datos = [
-            'proveedor_rif' => $_POST['proveedor_rif'],
-            'factura_numero' => $_POST['factura_numero'],
-            'fecha_compra' => $_POST['fecha_compra'],
-            'tracking' => $_POST['tracking'] ?? '',
-            'monto_total' => $montoTotal,
-            'observaciones' => trim($_POST['observaciones'] ?? ''),
-            'prendas' => $prendasValidas
-        ];
-
-        $result = $purchaseModel->add($datos);
-
-        if ($result) {
-            echo json_encode([
-                'success' => true,
-                'message' => 'Compra agregada exitosamente. Se registraron ' . count($prendasValidas) . ' prendas.',
-                'compra_id' => $result
-            ]);
-        } else {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Error al agregar la compra'
-            ]);
-        }
+        $compraId = $purchaseModel->add($datos);
+        echo json_encode(['success' => true, 'message' => 'Compra registrada', 'compra_id' => $compraId]);
     } catch (Exception $e) {
-        echo json_encode([
-            'success' => false,
-            'message' => $e->getMessage()
-        ]);
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
     }
     exit();
 }
 
-
+/**
+ * Maneja la edición vía AJAX (solo datos generales, no prendas)
+ */
 function handleEditAjax($purchaseModel, $supplierModel) {
-    if (empty($_POST['compra_id'])) {
-        echo json_encode(['success'=>false,'message'=>'ID de compra no proporcionado']);
+    $id = isset($_POST['compra_id']) ? intval($_POST['compra_id']) : null;
+    if (!$id) {
+        echo json_encode(['success' => false, 'message' => 'ID de compra inválido']);
         exit();
     }
 
-    // Validaciones base (como en add pero sin prendas)
+    // Verificar si puede editarse
+    if (!$purchaseModel->canEdit($id)) {
+        echo json_encode(['success' => false, 'message' => 'No se puede editar: la compra tiene prendas vendidas']);
+        exit();
+    }
+
     $required = ['proveedor_rif', 'factura_numero', 'fecha_compra'];
     $missing = [];
-    foreach ($required as $f) {
-        if (empty($_POST[$f])) $missing[] = str_replace('_',' ',$f);
+    foreach ($required as $r) {
+        if (empty($_POST[$r])) $missing[] = $r;
     }
-    if ($missing) {
-        echo json_encode(['success'=>false,'message'=>'Los siguientes campos son requeridos: '.implode(', ',$missing)]);
+    if (!empty($missing)) {
+        echo json_encode(['success' => false, 'message' => 'Faltan campos requeridos: ' . implode(', ', $missing)]);
         exit();
     }
 
-    if (!preg_match('/^\d{8}$/', $_POST['factura_numero'])) {
-        echo json_encode(['success'=>false,'message'=>'El número de factura debe tener exactamente 8 dígitos']);
+    $proveedor_rif = trim($_POST['proveedor_rif']);
+    $factura_numero = trim($_POST['factura_numero']);
+
+    // validar proveedor
+    if (!method_exists($supplierModel, 'getById') || !$supplierModel->getById($proveedor_rif)) {
+        echo json_encode(['success' => false, 'message' => 'Proveedor inválido']);
         exit();
     }
 
-    if (!empty($_POST['tracking']) && !preg_match('/^\d{8}$/', $_POST['tracking'])) {
-        echo json_encode(['success'=>false,'message'=>'El número de tracking debe tener exactamente 8 dígitos']);
+    // validar factura unica (excluir id actual)
+    if ($purchaseModel->facturaExiste($factura_numero, $id)) {
+        echo json_encode(['success' => false, 'message' => 'Ya existe otra compra con ese número de factura']);
         exit();
     }
 
-    // Recalcular monto desde DB (no desde POST)
-    $prendas = $purchaseModel->getPrendasByCompraId($_POST['compra_id']);
-    $montoTotal = 0;
-    foreach ($prendas as $p) {
-        $montoTotal += floatval($p['precio_costo']);
+    $datos = [
+        'proveedor_rif' => $proveedor_rif,
+        'factura_numero' => $factura_numero,
+        'fecha_compra' => trim($_POST['fecha_compra']),
+        'tracking' => trim($_POST['tracking'] ?? ''),
+        'monto_total' => floatval($_POST['monto_total'] ?? 0),
+        'observaciones' => trim($_POST['observaciones'] ?? '')
+    ];
+
+    try {
+        $purchaseModel->update($id, $datos);
+        echo json_encode(['success' => true, 'message' => 'Compra actualizada']);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
+    exit();
+}
+
+/**
+ * Maneja la eliminación vía AJAX (soft delete)
+ */
+function handleDeleteAjax($purchaseModel) {
+    $id = isset($_POST['compra_id']) ? intval($_POST['compra_id']) : null;
+    if (!$id) {
+        echo json_encode(['success' => false, 'message' => 'ID inválido']);
+        exit();
     }
 
     try {
-        $datos = [
-            'proveedor_rif'   => $_POST['proveedor_rif'],
-            'factura_numero'  => $_POST['factura_numero'],
-            'fecha_compra'    => $_POST['fecha_compra'],
-            'tracking'        => $_POST['tracking'] ?? '',
-            'monto_total'     => $montoTotal,
-            'observaciones'   => trim($_POST['observaciones'] ?? '')
-            // NO SE PASAN PRENDAS
-        ];
-
-        $result = $purchaseModel->update($_POST['compra_id'], $datos);
-
-        echo json_encode([
-            'success' => $result,
-            'message' => $result ? 'Compra actualizada exitosamente' : 'Error al actualizar la compra'
-        ]);
+        $purchaseModel->delete($id);
+        echo json_encode(['success' => true, 'message' => 'Compra eliminada']);
     } catch (Exception $e) {
-        echo json_encode(['success'=>false,'message'=>$e->getMessage()]);
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
     }
     exit();
 }
 
 
-function handleDeleteAjax($purchaseModel) {
-    if (empty($_POST['compra_id'])) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'ID de compra no proporcionado'
-        ]);
+/**
+ * Devuelve detalle de una compra (compra + prendas + pagos)
+ */
+function getPurchaseDetailAjax($purchaseModel) {
+    // Aceptar tanto ?compra_id= como ?id=
+    $id = isset($_GET['compra_id']) ? intval($_GET['compra_id']) : (isset($_GET['id']) ? intval($_GET['id']) : null);
+
+    if (!$id) {
+        echo json_encode(['success' => false, 'message' => 'ID inválido']);
         exit();
     }
 
     try {
-        $result = $purchaseModel->delete($_POST['compra_id']);
-
-        if ($result) {
-            echo json_encode([
-                'success' => true,
-                'message' => 'Compra eliminada exitosamente'
-            ]);
-        } else {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Error al eliminar la compra'
-            ]);
+        $compra = $purchaseModel->getById($id);
+        if (!$compra) {
+            echo json_encode(['success' => false, 'message' => 'Compra no encontrada']);
+            exit();
         }
-    } catch (Exception $e) {
+
+        // Obtener prendas asociadas a la compra
+        $prendas = $purchaseModel->getPrendasByCompraId($id);
+
+        // Obtener pagos registrados (si aplica)
+        $pagos = $purchaseModel->getPagosByCompraId($id);
+
+        // 🧮 Calcular totales de apoyo (por si deseas mostrarlos)
+        $totalPrendas = count($prendas);
+        $totalPagos = array_sum(array_column($pagos, 'monto')) ?? 0;
+        $saldoPendiente = max(0, $compra['monto_total'] - $totalPagos);
+
+        // ✅ Estructura compatible con tu JS actual
         echo json_encode([
-            'success' => false,
-            'message' => $e->getMessage()
+            'success' => true,
+            'data' => [
+                'compra' => $compra,
+                'prendas' => $prendas,
+                'pagos' => $pagos,
+                'totales' => [
+                    'total_prendas' => $totalPrendas,
+                    'total_pagado' => $totalPagos,
+                    'saldo_pendiente' => $saldoPendiente
+                ]
+            ]
         ]);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
+    exit();
+}
+
+
+/**
+ * Busca proveedor por término
+ */
+function searchSupplierAjax($supplierModel) {
+    error_log("🔎 Búsqueda AJAX: " . json_encode($_GET));
+    $q = trim($_GET['search'] ?? $_GET['q'] ?? '');
+    if ($q === '') {
+        echo json_encode(['success' => true, 'results' => []]);
+        exit();
+    }
+
+    try {
+        $results = [];
+
+        // si existe método "search" en el modelo, lo usamos
+        if (method_exists($supplierModel, 'search')) {
+            $results = $supplierModel->search($q);
+        } elseif (method_exists($supplierModel, 'getById')) {
+            // fallback: buscar por rif exacto o por nombre (si getById soporta rif)
+            $byId = $supplierModel->getById($q);
+            if ($byId) $results = [$byId];
+        }
+
+        echo json_encode(['success' => true, 'results' => $results]);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
+    exit();
+}
+
+/**
+ * Estadísticas
+ */
+function getStatsAjax($purchaseModel) {
+    try {
+        $stats = $purchaseModel->getEstadisticas();
+        echo json_encode(['success' => true, 'stats' => $stats]);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
     }
     exit();
 }
 
 function getPurchasesAjax($purchaseModel) {
-    try {
-        $purchases = $purchaseModel->getAll();
+    $purchases = $purchaseModel->getAll();
 
-        $data = [];
-        foreach ($purchases as $purchase) {
-            $data[] = [
-                'compra_id' => $purchase['compra_id'],
-                'factura_numero' => $purchase['factura_numero'],
-                'nombre_proveedor' => $purchase['nombre_proveedor'],
-                'fecha_compra' => date('d/m/Y', strtotime($purchase['fecha_compra'])),
-                'monto_total' => '$' . number_format($purchase['monto_total'], 2),
-                'total_prendas' => $purchase['total_prendas'],
-                'tracking' => $purchase['tracking'] ?: 'N/A',
-                'proveedor_rif' => $purchase['proveedor_rif'],
-                'pdf_generado' => $purchase['pdf_generado']
-            ];
-        }
-
-        echo json_encode([
-            'success' => true,
-            'data' => $data
-        ]);
-    } catch (Exception $e) {
-        echo json_encode([
-            'success' => false,
-            'message' => $e->getMessage()
-        ]);
-    }
+    echo json_encode([
+        'success' => true,
+        'data' => $purchases
+    ]);
     exit();
 }
 
-function getPurchaseDetailAjax($purchaseModel) {
-    if (empty($_GET['compra_id'])) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'ID de compra no proporcionado'
-        ]);
-        exit();
-    }
 
-    try {
-        $purchase = $purchaseModel->getById($_GET['compra_id']);
-        $prendas = $purchaseModel->getPrendasByCompraId($_GET['compra_id']);
 
-        echo json_encode([
-            'success' => true,
-            'data' => [
-                'compra' => $purchase,
-                'prendas' => $prendas
-            ]
-        ]);
-    } catch (Exception $e) {
-        echo json_encode([
-            'success' => false,
-            'message' => $e->getMessage()
-        ]);
-    }
-    exit();
-}
-
-function searchSupplierAjax($supplierModel) {
-    $search = $_GET['search'] ?? '';
-
-    if (strlen($search) < 2) {
-        echo json_encode(['success' => true, 'data' => []]);
-        exit();
-    }
-
-    try {
-        $suppliers = $supplierModel->getAll();
-        $results = [];
-
-        foreach ($suppliers as $supplier) {
-            if (stripos($supplier['nombre_empresa'], $search) !== false ||
-                stripos($supplier['nombre_contacto'], $search) !== false ||
-                stripos($supplier['proveedor_rif'], $search) !== false) {
-                $results[] = [
-                    'id' => $supplier['proveedor_rif'],
-                    'nombre_empresa' => $supplier['nombre_empresa'],
-                    'nombre_contacto' => $supplier['nombre_contacto'],
-                    'rif' => $supplier['proveedor_rif']
-                ];
-            }
-        }
-
-        echo json_encode([
-            'success' => true,
-            'data' => $results
-        ]);
-    } catch (Exception $e) {
-        echo json_encode([
-            'success' => false,
-            'message' => $e->getMessage()
-        ]);
-    }
-    exit();
-}
-
-use Dompdf\Dompdf;
-use Dompdf\Options;
-
+/**
+ * Generar PDF (no-AJAX)
+ * URL ejemplo: index.php?action=generate_pdf&id=123
+ */
 function generatePdf($purchaseModel) {
-
-    if (empty($_GET['compra_id'])) {
-        die("ID de compra no proporcionado");
+    $id = isset($_GET['compra_id']) ? intval($_GET['compra_id']) : (isset($_GET['id']) ? intval($_GET['id']) : null);
+    if (!$id) {
+        die('ID de compra inválido');
     }
 
-    $id = $_GET['compra_id'];
-    $purchase = $purchaseModel->getById($id);
-    $prendas  = $purchaseModel->getPrendasByCompraId($id);
-
-    if (!$purchase) {
-        die("Compra no encontrada");
+    $compra = $purchaseModel->getById($id);
+    if (!$compra) {
+        die('Compra no encontrada');
     }
 
-    require __DIR__ . '/../../../vendor/autoload.php';
+    $prendas = $purchaseModel->getPrendasByCompraId($id);
 
+    // Construir HTML simple para el PDF
+    $html = '<!doctype html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Compra #' . htmlspecialchars($compra['compra_id']) . '</title>
+      <style>
+        body { font-family: DejaVu Sans, Helvetica, Arial, sans-serif; font-size: 12px; }
+        .header { text-align: center; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+        th { background: #f5f5f5; }
+        .right { text-align: right; }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h2>Detalle de Compra</h2>
+        <div>Factura: ' . htmlspecialchars($compra['factura_numero']) . ' | Compra ID: ' . htmlspecialchars($compra['compra_id']) . '</div>
+        <div>Proveedor: ' . htmlspecialchars($compra['nombre_proveedor'] ?? $compra['proveedor_rif']) . '</div>
+        <div>Fecha: ' . date('d/m/Y', strtotime($compra['fecha_compra'])) . '</div>
+      </div>
+
+      <h4>Prendas</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Categoría</th>
+            <th>Tipo</th>
+            <th class="right">Precio costo</th>
+          </tr>
+        </thead>
+        <tbody>';
+
+    foreach ($prendas as $p) {
+        $html .= '<tr>
+            <td>' . htmlspecialchars($p['codigo_prenda']) . '</td>
+            <td>' . htmlspecialchars($p['nombre']) . '</td>
+            <td>' . htmlspecialchars($p['categoria']) . '</td>
+            <td>' . htmlspecialchars($p['tipo']) . '</td>
+            <td class="right">' . number_format($p['precio_costo'], 2, ',', '.') . '</td>
+        </tr>';
+    }
+
+    $html .= '</tbody></table>';
+
+    $html .= '<div style="margin-top:10px;">
+        <strong>Monto total:</strong> ' . number_format($compra['monto_total'], 2, ',', '.') . '
+        <br><strong>Observaciones:</strong> ' . htmlspecialchars($compra['observaciones'] ?? '') . '
+    </div>';
+
+    $html .= '</body></html>';
+
+    // Configurar Dompdf
     $options = new Options();
     $options->set('isRemoteEnabled', true);
     $dompdf = new Dompdf($options);
-
-    // HTML simple (luego lo estilizamos)
-    $html = "<h2>Factura #{$purchase['factura_numero']}</h2>";
-    $html .= "<p><b>Proveedor:</b> {$purchase['nombre_proveedor']}</p>";
-    $html .= "<p><b>Fecha:</b> {$purchase['fecha_compra']}</p>";
-    $html .= "<p><b>Total:</b> {$purchase['monto_total']}</p>";
-
-    $html .= "<hr><h3>Prendas</h3>";
-    $html .= "<table width='100%' border='1' cellspacing='0' cellpadding='4'>
-        <tr><th>Código</th><th>Nombre</th><th>Costo</th></tr>";
-    foreach ($prendas as $p) {
-        $html .= "<tr>
-            <td>{$p['codigo_prenda']}</td>
-            <td>{$p['nombre']}</td>
-            <td>{$p['precio_costo']}</td>
-        </tr>";
-    }
-    $html .= "</table>";
-
     $dompdf->loadHtml($html);
     $dompdf->setPaper('A4', 'portrait');
     $dompdf->render();
 
-    $dompdf->stream("compra_$id.pdf", ["Attachment" => true]);
-    exit;
+    // Marcar PDF como generado
+    try {
+        $purchaseModel->markPdfGenerated($id);
+    } catch (Exception $e) {
+        // no detengo el flujo por un fallo al marcar, solo logueo
+        error_log('No se pudo marcar pdf generado: ' . $e->getMessage());
+    }
+
+    // Enviar PDF al navegador (inline)
+    $filename = 'compra_' . $compra['compra_id'] . '.pdf';
+    header('Content-Type: application/pdf');
+    header('Content-Disposition: inline; filename="' . $filename . '"');
+    echo $dompdf->output();
+    exit();
 }
