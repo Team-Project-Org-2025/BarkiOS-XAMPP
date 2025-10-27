@@ -100,7 +100,7 @@
             <?php endif; ?>
             
             <a class="nav-link mx-3 mb-2 mt-2 rounded logout-link" 
-               href="#" 
+               href="/BarkiOS/admin/login/logout" 
                id="logoutBtn">
                 <i class="fas fa-sign-out-alt me-2"></i>
                 Cerrar Sesión
