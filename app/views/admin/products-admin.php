@@ -22,7 +22,7 @@ require_once __DIR__ . '/../partials/header-admin.php';
 
         <!-- Tabla de Productos -->
         <div class="card mt-3">
-            <div class="card-body p-0">
+            <div class="card-body p-3">
                 <div class="table-responsive">
                     <table id="productsTable" class="table table-hover align-middle text-center">
                         <thead>
@@ -69,6 +69,8 @@ require_once __DIR__ . '/../partials/header-admin.php';
                             id="productId"
                             name="prenda_id" 
                             placeholder="Ingrese código del producto"
+                            pattern="^\d{9}$"
+                            maxlength="9"
                             required>
                         <div class="invalid-feedback">Por favor ingrese un código válido</div>
                     </div>

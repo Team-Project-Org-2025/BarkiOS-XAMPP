@@ -512,3 +512,309 @@
 [27-Oct-2025 19:09:26 Europe/Berlin] ExchangeRateService [Primary API]: HTTP 403 - Response: <!DOCTYPE html><html lang="en-US"><head><title>Just a moment...</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=Edge"><meta nam
 [27-Oct-2025 19:09:26 Europe/Berlin] ExchangeRateService [Backup API]: Error. cURL: Could not resolve host: pydolarve.org, HTTP: 0
 [27-Oct-2025 19:09:26 Europe/Berlin] ExchangeRateService: Todas las APIs fallaron. Usando FALLBACK_RATE.
+[28-Oct-2025 03:53:02 Europe/Berlin] ImageUploader - Directorio: C:\xampp\htdocs\BarkiOS\public\uploads\products\
+[28-Oct-2025 03:53:02 Europe/Berlin] ImageUploader - Existe: SI
+[28-Oct-2025 03:53:02 Europe/Berlin] ImageUploader - Inicializado correctamente
+[28-Oct-2025 03:53:02 Europe/Berlin] === ImageUploader::upload INICIO ===
+[28-Oct-2025 03:53:02 Europe/Berlin] Product ID: 454897897
+[28-Oct-2025 03:53:02 Europe/Berlin] ✓ Archivo temporal existe: C:\xampp\tmp\php3FF4.tmp
+[28-Oct-2025 03:53:02 Europe/Berlin] ✓ Tamaño válido: 101417 bytes
+[28-Oct-2025 03:53:02 Europe/Berlin] Extensión detectada: jpg
+[28-Oct-2025 03:53:02 Europe/Berlin] ✓ Extensión válida
+[28-Oct-2025 03:53:02 Europe/Berlin] ✓ Imagen válida: image/jpeg
+[28-Oct-2025 03:53:02 Europe/Berlin] Nombre archivo: product_454897897_1761619982.jpg
+[28-Oct-2025 03:53:02 Europe/Berlin] Ruta destino: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_454897897_1761619982.jpg
+[28-Oct-2025 03:53:02 Europe/Berlin] Directorio escribible: SI
+[28-Oct-2025 03:53:02 Europe/Berlin] ✓ Archivo movido exitosamente a: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_454897897_1761619982.jpg
+[28-Oct-2025 03:53:02 Europe/Berlin] Archivo existe después de mover: SI
+[28-Oct-2025 03:53:02 Europe/Berlin] Ruta relativa para BD: public/uploads/products/product_454897897_1761619982.jpg
+[28-Oct-2025 03:53:02 Europe/Berlin] === ImageUploader::upload FIN ===
+[28-Oct-2025 03:53:03 Europe/Berlin] ImageUploader - Directorio: C:\xampp\htdocs\BarkiOS\public\uploads\products\
+[28-Oct-2025 03:53:03 Europe/Berlin] ImageUploader - Existe: SI
+[28-Oct-2025 03:53:03 Europe/Berlin] ImageUploader - Inicializado correctamente
+[28-Oct-2025 03:53:03 Europe/Berlin] === ImageUploader::upload INICIO ===
+[28-Oct-2025 03:53:03 Europe/Berlin] Product ID: 454897897
+[28-Oct-2025 03:53:03 Europe/Berlin] ✓ Archivo temporal existe: C:\xampp\tmp\php44A8.tmp
+[28-Oct-2025 03:53:03 Europe/Berlin] ✓ Tamaño válido: 101417 bytes
+[28-Oct-2025 03:53:03 Europe/Berlin] Extensión detectada: jpg
+[28-Oct-2025 03:53:03 Europe/Berlin] ✓ Extensión válida
+[28-Oct-2025 03:53:03 Europe/Berlin] ✓ Imagen válida: image/jpeg
+[28-Oct-2025 03:53:03 Europe/Berlin] Nombre archivo: product_454897897_1761619983.jpg
+[28-Oct-2025 03:53:03 Europe/Berlin] Ruta destino: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_454897897_1761619983.jpg
+[28-Oct-2025 03:53:03 Europe/Berlin] Directorio escribible: SI
+[28-Oct-2025 03:53:03 Europe/Berlin] ✓ Archivo movido exitosamente a: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_454897897_1761619983.jpg
+[28-Oct-2025 03:53:03 Europe/Berlin] Archivo existe después de mover: SI
+[28-Oct-2025 03:53:03 Europe/Berlin] Ruta relativa para BD: public/uploads/products/product_454897897_1761619983.jpg
+[28-Oct-2025 03:53:03 Europe/Berlin] === ImageUploader::upload FIN ===
+[28-Oct-2025 03:53:04 Europe/Berlin] ImageUploader - Directorio: C:\xampp\htdocs\BarkiOS\public\uploads\products\
+[28-Oct-2025 03:53:04 Europe/Berlin] ImageUploader - Existe: SI
+[28-Oct-2025 03:53:04 Europe/Berlin] ImageUploader - Inicializado correctamente
+[28-Oct-2025 03:53:04 Europe/Berlin] === ImageUploader::upload INICIO ===
+[28-Oct-2025 03:53:04 Europe/Berlin] Product ID: 454897897
+[28-Oct-2025 03:53:04 Europe/Berlin] ✓ Archivo temporal existe: C:\xampp\tmp\php47F5.tmp
+[28-Oct-2025 03:53:04 Europe/Berlin] ✓ Tamaño válido: 101417 bytes
+[28-Oct-2025 03:53:04 Europe/Berlin] Extensión detectada: jpg
+[28-Oct-2025 03:53:04 Europe/Berlin] ✓ Extensión válida
+[28-Oct-2025 03:53:04 Europe/Berlin] ✓ Imagen válida: image/jpeg
+[28-Oct-2025 03:53:04 Europe/Berlin] Nombre archivo: product_454897897_1761619984.jpg
+[28-Oct-2025 03:53:04 Europe/Berlin] Ruta destino: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_454897897_1761619984.jpg
+[28-Oct-2025 03:53:04 Europe/Berlin] Directorio escribible: SI
+[28-Oct-2025 03:53:04 Europe/Berlin] ✓ Archivo movido exitosamente a: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_454897897_1761619984.jpg
+[28-Oct-2025 03:53:04 Europe/Berlin] Archivo existe después de mover: SI
+[28-Oct-2025 03:53:04 Europe/Berlin] Ruta relativa para BD: public/uploads/products/product_454897897_1761619984.jpg
+[28-Oct-2025 03:53:04 Europe/Berlin] === ImageUploader::upload FIN ===
+[28-Oct-2025 03:53:04 Europe/Berlin] ImageUploader - Directorio: C:\xampp\htdocs\BarkiOS\public\uploads\products\
+[28-Oct-2025 03:53:04 Europe/Berlin] ImageUploader - Existe: SI
+[28-Oct-2025 03:53:04 Europe/Berlin] ImageUploader - Inicializado correctamente
+[28-Oct-2025 03:53:04 Europe/Berlin] === ImageUploader::upload INICIO ===
+[28-Oct-2025 03:53:04 Europe/Berlin] Product ID: 454897897
+[28-Oct-2025 03:53:04 Europe/Berlin] ✓ Archivo temporal existe: C:\xampp\tmp\php498C.tmp
+[28-Oct-2025 03:53:04 Europe/Berlin] ✓ Tamaño válido: 101417 bytes
+[28-Oct-2025 03:53:04 Europe/Berlin] Extensión detectada: jpg
+[28-Oct-2025 03:53:04 Europe/Berlin] ✓ Extensión válida
+[28-Oct-2025 03:53:04 Europe/Berlin] ✓ Imagen válida: image/jpeg
+[28-Oct-2025 03:53:04 Europe/Berlin] Nombre archivo: product_454897897_1761619984.jpg
+[28-Oct-2025 03:53:04 Europe/Berlin] Ruta destino: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_454897897_1761619984.jpg
+[28-Oct-2025 03:53:04 Europe/Berlin] Directorio escribible: SI
+[28-Oct-2025 03:53:04 Europe/Berlin] ✓ Archivo movido exitosamente a: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_454897897_1761619984.jpg
+[28-Oct-2025 03:53:04 Europe/Berlin] Archivo existe después de mover: SI
+[28-Oct-2025 03:53:04 Europe/Berlin] Ruta relativa para BD: public/uploads/products/product_454897897_1761619984.jpg
+[28-Oct-2025 03:53:04 Europe/Berlin] === ImageUploader::upload FIN ===
+[28-Oct-2025 03:53:04 Europe/Berlin] ImageUploader - Directorio: C:\xampp\htdocs\BarkiOS\public\uploads\products\
+[28-Oct-2025 03:53:04 Europe/Berlin] ImageUploader - Existe: SI
+[28-Oct-2025 03:53:04 Europe/Berlin] ImageUploader - Inicializado correctamente
+[28-Oct-2025 03:53:04 Europe/Berlin] === ImageUploader::upload INICIO ===
+[28-Oct-2025 03:53:04 Europe/Berlin] Product ID: 454897897
+[28-Oct-2025 03:53:04 Europe/Berlin] ✓ Archivo temporal existe: C:\xampp\tmp\php4A77.tmp
+[28-Oct-2025 03:53:04 Europe/Berlin] ✓ Tamaño válido: 101417 bytes
+[28-Oct-2025 03:53:04 Europe/Berlin] Extensión detectada: jpg
+[28-Oct-2025 03:53:04 Europe/Berlin] ✓ Extensión válida
+[28-Oct-2025 03:53:04 Europe/Berlin] ✓ Imagen válida: image/jpeg
+[28-Oct-2025 03:53:04 Europe/Berlin] Nombre archivo: product_454897897_1761619984.jpg
+[28-Oct-2025 03:53:04 Europe/Berlin] Ruta destino: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_454897897_1761619984.jpg
+[28-Oct-2025 03:53:04 Europe/Berlin] Directorio escribible: SI
+[28-Oct-2025 03:53:04 Europe/Berlin] ✓ Archivo movido exitosamente a: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_454897897_1761619984.jpg
+[28-Oct-2025 03:53:04 Europe/Berlin] Archivo existe después de mover: SI
+[28-Oct-2025 03:53:04 Europe/Berlin] Ruta relativa para BD: public/uploads/products/product_454897897_1761619984.jpg
+[28-Oct-2025 03:53:04 Europe/Berlin] === ImageUploader::upload FIN ===
+[28-Oct-2025 03:53:04 Europe/Berlin] ImageUploader - Directorio: C:\xampp\htdocs\BarkiOS\public\uploads\products\
+[28-Oct-2025 03:53:04 Europe/Berlin] ImageUploader - Existe: SI
+[28-Oct-2025 03:53:04 Europe/Berlin] ImageUploader - Inicializado correctamente
+[28-Oct-2025 03:53:04 Europe/Berlin] === ImageUploader::upload INICIO ===
+[28-Oct-2025 03:53:04 Europe/Berlin] Product ID: 454897897
+[28-Oct-2025 03:53:04 Europe/Berlin] ✓ Archivo temporal existe: C:\xampp\tmp\php4B43.tmp
+[28-Oct-2025 03:53:04 Europe/Berlin] ✓ Tamaño válido: 101417 bytes
+[28-Oct-2025 03:53:04 Europe/Berlin] Extensión detectada: jpg
+[28-Oct-2025 03:53:04 Europe/Berlin] ✓ Extensión válida
+[28-Oct-2025 03:53:04 Europe/Berlin] ✓ Imagen válida: image/jpeg
+[28-Oct-2025 03:53:04 Europe/Berlin] Nombre archivo: product_454897897_1761619984.jpg
+[28-Oct-2025 03:53:04 Europe/Berlin] Ruta destino: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_454897897_1761619984.jpg
+[28-Oct-2025 03:53:04 Europe/Berlin] Directorio escribible: SI
+[28-Oct-2025 03:53:04 Europe/Berlin] ✓ Archivo movido exitosamente a: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_454897897_1761619984.jpg
+[28-Oct-2025 03:53:04 Europe/Berlin] Archivo existe después de mover: SI
+[28-Oct-2025 03:53:04 Europe/Berlin] Ruta relativa para BD: public/uploads/products/product_454897897_1761619984.jpg
+[28-Oct-2025 03:53:04 Europe/Berlin] === ImageUploader::upload FIN ===
+[28-Oct-2025 03:53:05 Europe/Berlin] ImageUploader - Directorio: C:\xampp\htdocs\BarkiOS\public\uploads\products\
+[28-Oct-2025 03:53:05 Europe/Berlin] ImageUploader - Existe: SI
+[28-Oct-2025 03:53:05 Europe/Berlin] ImageUploader - Inicializado correctamente
+[28-Oct-2025 03:53:05 Europe/Berlin] === ImageUploader::upload INICIO ===
+[28-Oct-2025 03:53:05 Europe/Berlin] Product ID: 454897897
+[28-Oct-2025 03:53:05 Europe/Berlin] ✓ Archivo temporal existe: C:\xampp\tmp\php4C1F.tmp
+[28-Oct-2025 03:53:05 Europe/Berlin] ✓ Tamaño válido: 101417 bytes
+[28-Oct-2025 03:53:05 Europe/Berlin] Extensión detectada: jpg
+[28-Oct-2025 03:53:05 Europe/Berlin] ✓ Extensión válida
+[28-Oct-2025 03:53:05 Europe/Berlin] ✓ Imagen válida: image/jpeg
+[28-Oct-2025 03:53:05 Europe/Berlin] Nombre archivo: product_454897897_1761619985.jpg
+[28-Oct-2025 03:53:05 Europe/Berlin] Ruta destino: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_454897897_1761619985.jpg
+[28-Oct-2025 03:53:05 Europe/Berlin] Directorio escribible: SI
+[28-Oct-2025 03:53:05 Europe/Berlin] ✓ Archivo movido exitosamente a: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_454897897_1761619985.jpg
+[28-Oct-2025 03:53:05 Europe/Berlin] Archivo existe después de mover: SI
+[28-Oct-2025 03:53:05 Europe/Berlin] Ruta relativa para BD: public/uploads/products/product_454897897_1761619985.jpg
+[28-Oct-2025 03:53:05 Europe/Berlin] === ImageUploader::upload FIN ===
+[28-Oct-2025 03:53:05 Europe/Berlin] ImageUploader - Directorio: C:\xampp\htdocs\BarkiOS\public\uploads\products\
+[28-Oct-2025 03:53:05 Europe/Berlin] ImageUploader - Existe: SI
+[28-Oct-2025 03:53:05 Europe/Berlin] ImageUploader - Inicializado correctamente
+[28-Oct-2025 03:53:05 Europe/Berlin] === ImageUploader::upload INICIO ===
+[28-Oct-2025 03:53:05 Europe/Berlin] Product ID: 454897897
+[28-Oct-2025 03:53:05 Europe/Berlin] ✓ Archivo temporal existe: C:\xampp\tmp\php4D0A.tmp
+[28-Oct-2025 03:53:05 Europe/Berlin] ✓ Tamaño válido: 101417 bytes
+[28-Oct-2025 03:53:05 Europe/Berlin] Extensión detectada: jpg
+[28-Oct-2025 03:53:05 Europe/Berlin] ✓ Extensión válida
+[28-Oct-2025 03:53:05 Europe/Berlin] ✓ Imagen válida: image/jpeg
+[28-Oct-2025 03:53:05 Europe/Berlin] Nombre archivo: product_454897897_1761619985.jpg
+[28-Oct-2025 03:53:05 Europe/Berlin] Ruta destino: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_454897897_1761619985.jpg
+[28-Oct-2025 03:53:05 Europe/Berlin] Directorio escribible: SI
+[28-Oct-2025 03:53:05 Europe/Berlin] ✓ Archivo movido exitosamente a: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_454897897_1761619985.jpg
+[28-Oct-2025 03:53:05 Europe/Berlin] Archivo existe después de mover: SI
+[28-Oct-2025 03:53:05 Europe/Berlin] Ruta relativa para BD: public/uploads/products/product_454897897_1761619985.jpg
+[28-Oct-2025 03:53:05 Europe/Berlin] === ImageUploader::upload FIN ===
+[28-Oct-2025 03:53:05 Europe/Berlin] ImageUploader - Directorio: C:\xampp\htdocs\BarkiOS\public\uploads\products\
+[28-Oct-2025 03:53:05 Europe/Berlin] ImageUploader - Existe: SI
+[28-Oct-2025 03:53:05 Europe/Berlin] ImageUploader - Inicializado correctamente
+[28-Oct-2025 03:53:05 Europe/Berlin] === ImageUploader::upload INICIO ===
+[28-Oct-2025 03:53:05 Europe/Berlin] Product ID: 454897897
+[28-Oct-2025 03:53:05 Europe/Berlin] ✓ Archivo temporal existe: C:\xampp\tmp\php4DD7.tmp
+[28-Oct-2025 03:53:05 Europe/Berlin] ✓ Tamaño válido: 101417 bytes
+[28-Oct-2025 03:53:05 Europe/Berlin] Extensión detectada: jpg
+[28-Oct-2025 03:53:05 Europe/Berlin] ✓ Extensión válida
+[28-Oct-2025 03:53:05 Europe/Berlin] ✓ Imagen válida: image/jpeg
+[28-Oct-2025 03:53:05 Europe/Berlin] Nombre archivo: product_454897897_1761619985.jpg
+[28-Oct-2025 03:53:05 Europe/Berlin] Ruta destino: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_454897897_1761619985.jpg
+[28-Oct-2025 03:53:05 Europe/Berlin] Directorio escribible: SI
+[28-Oct-2025 03:53:05 Europe/Berlin] ✓ Archivo movido exitosamente a: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_454897897_1761619985.jpg
+[28-Oct-2025 03:53:05 Europe/Berlin] Archivo existe después de mover: SI
+[28-Oct-2025 03:53:05 Europe/Berlin] Ruta relativa para BD: public/uploads/products/product_454897897_1761619985.jpg
+[28-Oct-2025 03:53:05 Europe/Berlin] === ImageUploader::upload FIN ===
+[28-Oct-2025 03:53:05 Europe/Berlin] ImageUploader - Directorio: C:\xampp\htdocs\BarkiOS\public\uploads\products\
+[28-Oct-2025 03:53:05 Europe/Berlin] ImageUploader - Existe: SI
+[28-Oct-2025 03:53:05 Europe/Berlin] ImageUploader - Inicializado correctamente
+[28-Oct-2025 03:53:05 Europe/Berlin] === ImageUploader::upload INICIO ===
+[28-Oct-2025 03:53:05 Europe/Berlin] Product ID: 454897897
+[28-Oct-2025 03:53:05 Europe/Berlin] ✓ Archivo temporal existe: C:\xampp\tmp\php4EA3.tmp
+[28-Oct-2025 03:53:05 Europe/Berlin] ✓ Tamaño válido: 101417 bytes
+[28-Oct-2025 03:53:05 Europe/Berlin] Extensión detectada: jpg
+[28-Oct-2025 03:53:05 Europe/Berlin] ✓ Extensión válida
+[28-Oct-2025 03:53:05 Europe/Berlin] ✓ Imagen válida: image/jpeg
+[28-Oct-2025 03:53:05 Europe/Berlin] Nombre archivo: product_454897897_1761619985.jpg
+[28-Oct-2025 03:53:05 Europe/Berlin] Ruta destino: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_454897897_1761619985.jpg
+[28-Oct-2025 03:53:05 Europe/Berlin] Directorio escribible: SI
+[28-Oct-2025 03:53:05 Europe/Berlin] ✓ Archivo movido exitosamente a: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_454897897_1761619985.jpg
+[28-Oct-2025 03:53:05 Europe/Berlin] Archivo existe después de mover: SI
+[28-Oct-2025 03:53:05 Europe/Berlin] Ruta relativa para BD: public/uploads/products/product_454897897_1761619985.jpg
+[28-Oct-2025 03:53:05 Europe/Berlin] === ImageUploader::upload FIN ===
+[28-Oct-2025 03:53:06 Europe/Berlin] ImageUploader - Directorio: C:\xampp\htdocs\BarkiOS\public\uploads\products\
+[28-Oct-2025 03:53:06 Europe/Berlin] ImageUploader - Existe: SI
+[28-Oct-2025 03:53:06 Europe/Berlin] ImageUploader - Inicializado correctamente
+[28-Oct-2025 03:53:06 Europe/Berlin] === ImageUploader::upload INICIO ===
+[28-Oct-2025 03:53:06 Europe/Berlin] Product ID: 454897897
+[28-Oct-2025 03:53:06 Europe/Berlin] ✓ Archivo temporal existe: C:\xampp\tmp\php4F6F.tmp
+[28-Oct-2025 03:53:06 Europe/Berlin] ✓ Tamaño válido: 101417 bytes
+[28-Oct-2025 03:53:06 Europe/Berlin] Extensión detectada: jpg
+[28-Oct-2025 03:53:06 Europe/Berlin] ✓ Extensión válida
+[28-Oct-2025 03:53:06 Europe/Berlin] ✓ Imagen válida: image/jpeg
+[28-Oct-2025 03:53:06 Europe/Berlin] Nombre archivo: product_454897897_1761619986.jpg
+[28-Oct-2025 03:53:06 Europe/Berlin] Ruta destino: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_454897897_1761619986.jpg
+[28-Oct-2025 03:53:06 Europe/Berlin] Directorio escribible: SI
+[28-Oct-2025 03:53:06 Europe/Berlin] ✓ Archivo movido exitosamente a: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_454897897_1761619986.jpg
+[28-Oct-2025 03:53:06 Europe/Berlin] Archivo existe después de mover: SI
+[28-Oct-2025 03:53:06 Europe/Berlin] Ruta relativa para BD: public/uploads/products/product_454897897_1761619986.jpg
+[28-Oct-2025 03:53:06 Europe/Berlin] === ImageUploader::upload FIN ===
+[28-Oct-2025 03:53:06 Europe/Berlin] ImageUploader - Directorio: C:\xampp\htdocs\BarkiOS\public\uploads\products\
+[28-Oct-2025 03:53:06 Europe/Berlin] ImageUploader - Existe: SI
+[28-Oct-2025 03:53:06 Europe/Berlin] ImageUploader - Inicializado correctamente
+[28-Oct-2025 03:53:06 Europe/Berlin] === ImageUploader::upload INICIO ===
+[28-Oct-2025 03:53:06 Europe/Berlin] Product ID: 454897897
+[28-Oct-2025 03:53:06 Europe/Berlin] ✓ Archivo temporal existe: C:\xampp\tmp\php503B.tmp
+[28-Oct-2025 03:53:06 Europe/Berlin] ✓ Tamaño válido: 101417 bytes
+[28-Oct-2025 03:53:06 Europe/Berlin] Extensión detectada: jpg
+[28-Oct-2025 03:53:06 Europe/Berlin] ✓ Extensión válida
+[28-Oct-2025 03:53:06 Europe/Berlin] ✓ Imagen válida: image/jpeg
+[28-Oct-2025 03:53:06 Europe/Berlin] Nombre archivo: product_454897897_1761619986.jpg
+[28-Oct-2025 03:53:06 Europe/Berlin] Ruta destino: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_454897897_1761619986.jpg
+[28-Oct-2025 03:53:06 Europe/Berlin] Directorio escribible: SI
+[28-Oct-2025 03:53:06 Europe/Berlin] ✓ Archivo movido exitosamente a: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_454897897_1761619986.jpg
+[28-Oct-2025 03:53:06 Europe/Berlin] Archivo existe después de mover: SI
+[28-Oct-2025 03:53:06 Europe/Berlin] Ruta relativa para BD: public/uploads/products/product_454897897_1761619986.jpg
+[28-Oct-2025 03:53:06 Europe/Berlin] === ImageUploader::upload FIN ===
+[28-Oct-2025 03:53:06 Europe/Berlin] ImageUploader - Directorio: C:\xampp\htdocs\BarkiOS\public\uploads\products\
+[28-Oct-2025 03:53:06 Europe/Berlin] ImageUploader - Existe: SI
+[28-Oct-2025 03:53:06 Europe/Berlin] ImageUploader - Inicializado correctamente
+[28-Oct-2025 03:53:06 Europe/Berlin] === ImageUploader::upload INICIO ===
+[28-Oct-2025 03:53:06 Europe/Berlin] Product ID: 454897897
+[28-Oct-2025 03:53:06 Europe/Berlin] ✓ Archivo temporal existe: C:\xampp\tmp\php5107.tmp
+[28-Oct-2025 03:53:06 Europe/Berlin] ✓ Tamaño válido: 101417 bytes
+[28-Oct-2025 03:53:06 Europe/Berlin] Extensión detectada: jpg
+[28-Oct-2025 03:53:06 Europe/Berlin] ✓ Extensión válida
+[28-Oct-2025 03:53:06 Europe/Berlin] ✓ Imagen válida: image/jpeg
+[28-Oct-2025 03:53:06 Europe/Berlin] Nombre archivo: product_454897897_1761619986.jpg
+[28-Oct-2025 03:53:06 Europe/Berlin] Ruta destino: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_454897897_1761619986.jpg
+[28-Oct-2025 03:53:06 Europe/Berlin] Directorio escribible: SI
+[28-Oct-2025 03:53:06 Europe/Berlin] ✓ Archivo movido exitosamente a: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_454897897_1761619986.jpg
+[28-Oct-2025 03:53:06 Europe/Berlin] Archivo existe después de mover: SI
+[28-Oct-2025 03:53:06 Europe/Berlin] Ruta relativa para BD: public/uploads/products/product_454897897_1761619986.jpg
+[28-Oct-2025 03:53:06 Europe/Berlin] === ImageUploader::upload FIN ===
+[28-Oct-2025 03:53:06 Europe/Berlin] ImageUploader - Directorio: C:\xampp\htdocs\BarkiOS\public\uploads\products\
+[28-Oct-2025 03:53:06 Europe/Berlin] ImageUploader - Existe: SI
+[28-Oct-2025 03:53:06 Europe/Berlin] ImageUploader - Inicializado correctamente
+[28-Oct-2025 03:53:06 Europe/Berlin] === ImageUploader::upload INICIO ===
+[28-Oct-2025 03:53:06 Europe/Berlin] Product ID: 454897897
+[28-Oct-2025 03:53:06 Europe/Berlin] ✓ Archivo temporal existe: C:\xampp\tmp\php51F2.tmp
+[28-Oct-2025 03:53:06 Europe/Berlin] ✓ Tamaño válido: 101417 bytes
+[28-Oct-2025 03:53:06 Europe/Berlin] Extensión detectada: jpg
+[28-Oct-2025 03:53:06 Europe/Berlin] ✓ Extensión válida
+[28-Oct-2025 03:53:06 Europe/Berlin] ✓ Imagen válida: image/jpeg
+[28-Oct-2025 03:53:06 Europe/Berlin] Nombre archivo: product_454897897_1761619986.jpg
+[28-Oct-2025 03:53:06 Europe/Berlin] Ruta destino: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_454897897_1761619986.jpg
+[28-Oct-2025 03:53:06 Europe/Berlin] Directorio escribible: SI
+[28-Oct-2025 03:53:06 Europe/Berlin] ✓ Archivo movido exitosamente a: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_454897897_1761619986.jpg
+[28-Oct-2025 03:53:06 Europe/Berlin] Archivo existe después de mover: SI
+[28-Oct-2025 03:53:06 Europe/Berlin] Ruta relativa para BD: public/uploads/products/product_454897897_1761619986.jpg
+[28-Oct-2025 03:53:06 Europe/Berlin] === ImageUploader::upload FIN ===
+[28-Oct-2025 03:54:03 Europe/Berlin] ImageUploader - Directorio: C:\xampp\htdocs\BarkiOS\public\uploads\products\
+[28-Oct-2025 03:54:03 Europe/Berlin] ImageUploader - Existe: SI
+[28-Oct-2025 03:54:03 Europe/Berlin] ImageUploader - Inicializado correctamente
+[28-Oct-2025 03:54:03 Europe/Berlin] === ImageUploader::upload INICIO ===
+[28-Oct-2025 03:54:03 Europe/Berlin] Product ID: 545645489
+[28-Oct-2025 03:54:03 Europe/Berlin] ✓ Archivo temporal existe: C:\xampp\tmp\php3128.tmp
+[28-Oct-2025 03:54:03 Europe/Berlin] ✓ Tamaño válido: 2454993 bytes
+[28-Oct-2025 03:54:03 Europe/Berlin] Extensión detectada: png
+[28-Oct-2025 03:54:03 Europe/Berlin] ✓ Extensión válida
+[28-Oct-2025 03:54:03 Europe/Berlin] ✓ Imagen válida: image/png
+[28-Oct-2025 03:54:03 Europe/Berlin] Nombre archivo: product_545645489_1761620043.png
+[28-Oct-2025 03:54:03 Europe/Berlin] Ruta destino: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_545645489_1761620043.png
+[28-Oct-2025 03:54:03 Europe/Berlin] Directorio escribible: SI
+[28-Oct-2025 03:54:03 Europe/Berlin] ✓ Archivo movido exitosamente a: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_545645489_1761620043.png
+[28-Oct-2025 03:54:03 Europe/Berlin] Archivo existe después de mover: SI
+[28-Oct-2025 03:54:03 Europe/Berlin] Ruta relativa para BD: public/uploads/products/product_545645489_1761620043.png
+[28-Oct-2025 03:54:03 Europe/Berlin] === ImageUploader::upload FIN ===
+[28-Oct-2025 03:54:48 Europe/Berlin] ImageUploader - Directorio: C:\xampp\htdocs\BarkiOS\public\uploads\products\
+[28-Oct-2025 03:54:48 Europe/Berlin] ImageUploader - Existe: SI
+[28-Oct-2025 03:54:48 Europe/Berlin] ImageUploader - Inicializado correctamente
+[28-Oct-2025 03:54:48 Europe/Berlin] === ImageUploader::upload INICIO ===
+[28-Oct-2025 03:54:48 Europe/Berlin] Product ID: 789787897
+[28-Oct-2025 03:54:48 Europe/Berlin] ✓ Archivo temporal existe: C:\xampp\tmp\phpDF2C.tmp
+[28-Oct-2025 03:54:48 Europe/Berlin] ✓ Tamaño válido: 14096 bytes
+[28-Oct-2025 03:54:48 Europe/Berlin] Extensión detectada: jpg
+[28-Oct-2025 03:54:48 Europe/Berlin] ✓ Extensión válida
+[28-Oct-2025 03:54:48 Europe/Berlin] ✓ Imagen válida: image/jpeg
+[28-Oct-2025 03:54:48 Europe/Berlin] Nombre archivo: product_789787897_1761620088.jpg
+[28-Oct-2025 03:54:48 Europe/Berlin] Ruta destino: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_789787897_1761620088.jpg
+[28-Oct-2025 03:54:48 Europe/Berlin] Directorio escribible: SI
+[28-Oct-2025 03:54:48 Europe/Berlin] ✓ Archivo movido exitosamente a: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_789787897_1761620088.jpg
+[28-Oct-2025 03:54:48 Europe/Berlin] Archivo existe después de mover: SI
+[28-Oct-2025 03:54:48 Europe/Berlin] Ruta relativa para BD: public/uploads/products/product_789787897_1761620088.jpg
+[28-Oct-2025 03:54:48 Europe/Berlin] === ImageUploader::upload FIN ===
+[28-Oct-2025 03:56:46 Europe/Berlin] ImageUploader - Directorio: C:\xampp\htdocs\BarkiOS\public\uploads\products\
+[28-Oct-2025 03:56:46 Europe/Berlin] ImageUploader - Existe: SI
+[28-Oct-2025 03:56:46 Europe/Berlin] ImageUploader - Inicializado correctamente
+[28-Oct-2025 03:56:46 Europe/Berlin] === ImageUploader::upload INICIO ===
+[28-Oct-2025 03:56:46 Europe/Berlin] Product ID: 456454889
+[28-Oct-2025 03:56:46 Europe/Berlin] ✓ Archivo temporal existe: C:\xampp\tmp\phpAC7B.tmp
+[28-Oct-2025 03:56:46 Europe/Berlin] ✓ Tamaño válido: 101417 bytes
+[28-Oct-2025 03:56:46 Europe/Berlin] Extensión detectada: jpg
+[28-Oct-2025 03:56:46 Europe/Berlin] ✓ Extensión válida
+[28-Oct-2025 03:56:46 Europe/Berlin] ✓ Imagen válida: image/jpeg
+[28-Oct-2025 03:56:46 Europe/Berlin] Nombre archivo: product_456454889_1761620206.jpg
+[28-Oct-2025 03:56:46 Europe/Berlin] Ruta destino: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_456454889_1761620206.jpg
+[28-Oct-2025 03:56:46 Europe/Berlin] Directorio escribible: SI
+[28-Oct-2025 03:56:46 Europe/Berlin] ✓ Archivo movido exitosamente a: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_456454889_1761620206.jpg
+[28-Oct-2025 03:56:46 Europe/Berlin] Archivo existe después de mover: SI
+[28-Oct-2025 03:56:46 Europe/Berlin] Ruta relativa para BD: public/uploads/products/product_456454889_1761620206.jpg
+[28-Oct-2025 03:56:46 Europe/Berlin] === ImageUploader::upload FIN ===
+[28-Oct-2025 04:00:27 Europe/Berlin] ImageUploader - Directorio: C:\xampp\htdocs\BarkiOS\public\uploads\products\
+[28-Oct-2025 04:00:27 Europe/Berlin] ImageUploader - Existe: SI
+[28-Oct-2025 04:00:27 Europe/Berlin] ImageUploader - Inicializado correctamente
+[28-Oct-2025 04:00:27 Europe/Berlin] === ImageUploader::upload INICIO ===
+[28-Oct-2025 04:00:27 Europe/Berlin] Product ID: 458489789
+[28-Oct-2025 04:00:27 Europe/Berlin] ✓ Archivo temporal existe: C:\xampp\tmp\phpAD9.tmp
+[28-Oct-2025 04:00:27 Europe/Berlin] ✓ Tamaño válido: 1549607 bytes
+[28-Oct-2025 04:00:27 Europe/Berlin] Extensión detectada: png
+[28-Oct-2025 04:00:27 Europe/Berlin] ✓ Extensión válida
+[28-Oct-2025 04:00:27 Europe/Berlin] ✓ Imagen válida: image/png
+[28-Oct-2025 04:00:27 Europe/Berlin] Nombre archivo: product_458489789_1761620427.png
+[28-Oct-2025 04:00:27 Europe/Berlin] Ruta destino: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_458489789_1761620427.png
+[28-Oct-2025 04:00:27 Europe/Berlin] Directorio escribible: SI
+[28-Oct-2025 04:00:27 Europe/Berlin] ✓ Archivo movido exitosamente a: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_458489789_1761620427.png
+[28-Oct-2025 04:00:27 Europe/Berlin] Archivo existe después de mover: SI
+[28-Oct-2025 04:00:27 Europe/Berlin] Ruta relativa para BD: public/uploads/products/product_458489789_1761620427.png
+[28-Oct-2025 04:00:27 Europe/Berlin] === ImageUploader::upload FIN ===

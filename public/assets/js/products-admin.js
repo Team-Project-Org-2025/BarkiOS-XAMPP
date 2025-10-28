@@ -208,11 +208,17 @@ function AjaxProducts() {
             dataType: 'json'
         }).done(function(data) {
             if (data.success) {
-                showAlert('Producto agregado correctamente', 'success');
-                $addProductForm.trigger('reset');
-                $('#addProductModal').modal('hide');
-                AjaxProducts();
-            } else {
+    showAlert('Producto agregado correctamente', 'success');
+    $addProductForm.trigger('reset');
+    $('#addProductModal').modal('hide');
+
+            const table = $('#productsTable').DataTable();
+            if (table) {
+                table.destroy();
+            }
+            AjaxProducts();
+        }
+        else {
                 showAlert(data.message, 'danger');
             }
         }).fail(function(xhr, status, error) {
@@ -285,7 +291,11 @@ function AjaxProducts() {
                 }).done(function(data) {
                     if (data.success) {
                         showAlert('Producto eliminado correctamente', 'success');
-                        AjaxProducts();
+
+                        const table = $('#productsTable').DataTable();
+                        const row = $(`#producto-${prenda_id}`);
+                        table.row(row).remove().draw(false);
+
                     } else {
                         showAlert(data.message, 'danger');
                     }
