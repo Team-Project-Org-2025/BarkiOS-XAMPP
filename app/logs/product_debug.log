@@ -5931,3 +5931,229 @@
 [2025-10-28 04:14:29] Ejecutando getProductsAjax
 [2025-10-28 04:14:29] === getProductsAjax ===
 [2025-10-28 04:14:29] Productos obtenidos | Data: 5
+[2025-10-28 04:39:54] === INICIO DE REQUEST ===
+[2025-10-28 04:39:54] GET | Data: Array
+(
+    [action] => add_ajax
+)
+
+[2025-10-28 04:39:54] POST | Data: Array
+(
+    [prenda_id] => 123458585
+    [nombre] => Prueba dos
+    [categoria] => Formal
+    [tipo] => Camisa
+    [precio] => 50
+)
+
+[2025-10-28 04:39:54] FILES | Data: Array
+(
+    [imagen] => Array
+        (
+            [name] => ryomen sukuna icon.jpg
+            [full_path] => ryomen sukuna icon.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\phpF744.tmp
+            [error] => 0
+            [size] => 54848
+        )
+
+)
+
+[2025-10-28 04:39:54] Ruta ImageUploader | Data: C:\xampp\htdocs\BarkiOS\app\controllers\Admin/../../helpers/ImageUploader.php
+[2025-10-28 04:39:54] ImageUploader cargado correctamente
+[2025-10-28 04:39:54] Modelo Product instanciado correctamente
+[2025-10-28 04:39:54] Entrando a handleRequest
+[2025-10-28 04:39:54] Action | Data: add_ajax
+[2025-10-28 04:39:54] Is AJAX | Data: YES
+[2025-10-28 04:39:54] Request Key | Data: POST_add_ajax
+[2025-10-28 04:39:54] Ejecutando handleAddEditAjax (ADD)
+[2025-10-28 04:39:54] === INICIO handleAddEditAjax === | Data: add
+[2025-10-28 04:39:54] Campos POST validados
+[2025-10-28 04:39:54] Datos procesados | Data: Array
+(
+    [id] => 123458585
+    [nombre] => Prueba dos
+    [tipo] => Camisa
+    [categoria] => Formal
+    [precio] => 50
+)
+
+[2025-10-28 04:39:54] Procesando imagen | Data: Array
+(
+    [name] => ryomen sukuna icon.jpg
+    [full_path] => ryomen sukuna icon.jpg
+    [type] => image/jpeg
+    [tmp_name] => C:\xampp\tmp\phpF744.tmp
+    [error] => 0
+    [size] => 54848
+)
+
+[2025-10-28 04:39:54] ImageUploader instanciado
+[2025-10-28 04:39:54] Resultado de upload | Data: Array
+(
+    [success] => 1
+    [data] => Array
+        (
+            [url] => public/uploads/products/product_123458585_1761622794.jpg
+            [filename] => product_123458585_1761622794.jpg
+            [size] => 54848
+            [mime] => image/jpeg
+            [absolute_path] => C:\xampp\htdocs\BarkiOS\public\uploads\products\product_123458585_1761622794.jpg
+        )
+
+    [errors] => Array
+        (
+        )
+
+)
+
+[2025-10-28 04:39:54] Imagen subida correctamente | Data: public/uploads/products/product_123458585_1761622794.jpg
+[2025-10-28 04:39:54] Verificando si existe producto | Data: 123458585
+[2025-10-28 04:39:54] Llamando a productModel->add()
+[2025-10-28 04:39:54] Resultado de add() | Data: 1
+[2025-10-28 04:39:54] Producto obtenido
+[2025-10-28 04:39:54] Respuesta final | Data: Array
+(
+    [success] => 1
+    [message] => Producto agregado correctamente
+    [product] => 
+)
+
+[2025-10-28 04:39:54] === INICIO DE REQUEST ===
+[2025-10-28 04:39:54] GET | Data: Array
+(
+    [action] => get_products
+)
+
+[2025-10-28 04:39:54] POST | Data: Array
+(
+)
+
+[2025-10-28 04:39:54] FILES | Data: Array
+(
+)
+
+[2025-10-28 04:39:54] Ruta ImageUploader | Data: C:\xampp\htdocs\BarkiOS\app\controllers\Admin/../../helpers/ImageUploader.php
+[2025-10-28 04:39:54] ImageUploader cargado correctamente
+[2025-10-28 04:39:54] Modelo Product instanciado correctamente
+[2025-10-28 04:39:54] Entrando a handleRequest
+[2025-10-28 04:39:54] Action | Data: get_products
+[2025-10-28 04:39:54] Is AJAX | Data: YES
+[2025-10-28 04:39:54] Request Key | Data: GET_get_products
+[2025-10-28 04:39:54] Ejecutando getProductsAjax
+[2025-10-28 04:39:54] === getProductsAjax ===
+[2025-10-28 04:39:54] Productos obtenidos | Data: 6
+[2025-10-28 04:44:32] === INICIO DE REQUEST ===
+[2025-10-28 04:44:32] GET | Data: Array
+(
+    [action] => add_ajax
+)
+
+[2025-10-28 04:44:32] POST | Data: Array
+(
+    [prenda_id] => 525252525
+    [nombre] => Prueba tres
+    [categoria] => Formal
+    [tipo] => Camisa
+    [precio] => 20
+)
+
+[2025-10-28 04:44:32] FILES | Data: Array
+(
+    [imagen] => Array
+        (
+            [name] => @lurkn999_.jpg
+            [full_path] => @lurkn999_.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\php36EB.tmp
+            [error] => 0
+            [size] => 153238
+        )
+
+)
+
+[2025-10-28 04:44:33] Ruta ImageUploader | Data: C:\xampp\htdocs\BarkiOS\app\controllers\Admin/../../helpers/ImageUploader.php
+[2025-10-28 04:44:33] ImageUploader cargado correctamente
+[2025-10-28 04:44:33] Modelo Product instanciado correctamente
+[2025-10-28 04:44:33] Entrando a handleRequest
+[2025-10-28 04:44:33] Action | Data: add_ajax
+[2025-10-28 04:44:33] Is AJAX | Data: YES
+[2025-10-28 04:44:33] Request Key | Data: POST_add_ajax
+[2025-10-28 04:44:33] Ejecutando handleAddEditAjax (ADD)
+[2025-10-28 04:44:33] === INICIO handleAddEditAjax === | Data: add
+[2025-10-28 04:44:33] Campos POST validados
+[2025-10-28 04:44:33] Datos procesados | Data: Array
+(
+    [id] => 525252525
+    [nombre] => Prueba tres
+    [tipo] => Camisa
+    [categoria] => Formal
+    [precio] => 20
+)
+
+[2025-10-28 04:44:33] Procesando imagen | Data: Array
+(
+    [name] => @lurkn999_.jpg
+    [full_path] => @lurkn999_.jpg
+    [type] => image/jpeg
+    [tmp_name] => C:\xampp\tmp\php36EB.tmp
+    [error] => 0
+    [size] => 153238
+)
+
+[2025-10-28 04:44:33] ImageUploader instanciado
+[2025-10-28 04:44:33] Resultado de upload | Data: Array
+(
+    [success] => 1
+    [data] => Array
+        (
+            [url] => public/uploads/products/product_525252525_1761623073.jpg
+            [filename] => product_525252525_1761623073.jpg
+            [size] => 153238
+            [mime] => image/jpeg
+            [absolute_path] => C:\xampp\htdocs\BarkiOS\public\uploads\products\product_525252525_1761623073.jpg
+        )
+
+    [errors] => Array
+        (
+        )
+
+)
+
+[2025-10-28 04:44:33] Imagen subida correctamente | Data: public/uploads/products/product_525252525_1761623073.jpg
+[2025-10-28 04:44:33] Verificando si existe producto | Data: 525252525
+[2025-10-28 04:44:33] Llamando a productModel->add()
+[2025-10-28 04:44:33] Resultado de add() | Data: 1
+[2025-10-28 04:44:33] Producto obtenido
+[2025-10-28 04:44:33] Respuesta final | Data: Array
+(
+    [success] => 1
+    [message] => Producto agregado correctamente
+    [product] => 
+)
+
+[2025-10-28 04:44:33] === INICIO DE REQUEST ===
+[2025-10-28 04:44:33] GET | Data: Array
+(
+    [action] => get_products
+)
+
+[2025-10-28 04:44:33] POST | Data: Array
+(
+)
+
+[2025-10-28 04:44:33] FILES | Data: Array
+(
+)
+
+[2025-10-28 04:44:33] Ruta ImageUploader | Data: C:\xampp\htdocs\BarkiOS\app\controllers\Admin/../../helpers/ImageUploader.php
+[2025-10-28 04:44:33] ImageUploader cargado correctamente
+[2025-10-28 04:44:33] Modelo Product instanciado correctamente
+[2025-10-28 04:44:33] Entrando a handleRequest
+[2025-10-28 04:44:33] Action | Data: get_products
+[2025-10-28 04:44:33] Is AJAX | Data: YES
+[2025-10-28 04:44:33] Request Key | Data: GET_get_products
+[2025-10-28 04:44:33] Ejecutando getProductsAjax
+[2025-10-28 04:44:33] === getProductsAjax ===
+[2025-10-28 04:44:33] Productos obtenidos | Data: 7
