@@ -27,7 +27,7 @@
                             <div class="carousel-caption text-start">
                                 <h2 class="display-3 fw-bold" data-aos="fade-up">EXCLUSIVIDAD EN CADA PRENDA</h2>
                                 <p class="lead" data-aos="fade-up" data-aos-delay="200">Descubre piezas únicas que nunca se repiten. Más de 14,000 unidades exclusivas.</p>
-                                <a href="views/productos.html" class="btn btn-lg btn-dark" data-aos="fade-up" data-aos-delay="400">Explorar Colección</a>
+                                <a href="/BarkiOS/productos" class="btn btn-lg btn-dark" data-aos="fade-up" data-aos-delay="400">Explorar Colección</a>
                             </div>
                         </div>
                     </div>
@@ -38,7 +38,7 @@
                             <div class="carousel-caption">
                                 <h2 class="display-3 fw-bold">ELEGANCIA PERSONALIZADA</h2>
                                 <p class="lead">Cada prenda cuenta una historia única. Encuentra la tuya.</p>
-                                <a href="views/novedades.html" class="btn btn-lg btn-dark">Ver Novedades</a>
+                                <a href="/BarkiOS/novedades" class="btn btn-lg btn-dark">Ver Novedades</a>
                             </div>
                         </div>
                     </div>
@@ -49,7 +49,7 @@
                             <div class="carousel-caption text-end">
                                 <h2 class="display-3 fw-bold">PARA TODAS LAS MUJERES</h2>
                                 <p class="lead">Sin importar edad o talla, tenemos la prenda perfecta para ti.</p>
-                                <a href="views/sobre-nosotros.html" class="btn btn-lg btn-dark">Conócenos</a>
+                                <a href="/BarkiOS/nosotros" class="btn btn-lg btn-dark">Conócenos</a>
                             </div>
                         </div>
                     </div>
@@ -106,33 +106,33 @@
                 <h2 class="text-center mb-5" data-aos="fade-up">CATEGORÍAS DESTACADAS</h2>
                 <div class="row g-4">
                     <div class="col-md-4" data-aos="fade-up">
-                        <a href="views/productos.html?categoria=vestidos" class="category-card">
+                        <a href="/BarkiOS/productos?categoria=Formal" class="category-card">
                             <div class="category-image">
                                 <img src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=783&q=80" alt="Vestidos">
                                 <div class="category-overlay">
-                                    <h3>Vestidos</h3>
+                                    <h3>Formal</h3>
                                     <p>Elegancia en cada diseño</p>
                                 </div>
                             </div>
                         </a>
                     </div>
                     <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
-                        <a href="views/productos.html?categoria=blusas" class="category-card">
+                        <a href="/BarkiOS/productos?categoria=Casual" class="category-card">
                             <div class="category-image">
                                 <img src="https://images.unsplash.com/photo-1564257631407-4deb1f99d992?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=774&q=80" alt="Blusas">
                                 <div class="category-overlay">
-                                    <h3>Blusas</h3>
+                                    <h3>Casual</h3>
                                     <p>Sofisticación para cada ocasión</p>
                                 </div>
                             </div>
                         </a>
                     </div>
                     <div class="col-md-4" data-aos="fade-up" data-aos-delay="400">
-                        <a href="views/productos.html?categoria=pantalones" class="category-card">
+                        <a href="/BarkiOS/productos?categoria=Deportivo" class="category-card">
                             <div class="category-image">
                                 <img src="https://images.unsplash.com/photo-1584370848010-d7fe6bc767ec?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=774&q=80" alt="Pantalones">
                                 <div class="category-overlay">
-                                    <h3>Pantalones</h3>
+                                    <h3>Deportivo</h3>
                                     <p>Comodidad y estilo en cada paso</p>
                                 </div>
                             </div>
@@ -140,7 +140,7 @@
                     </div>
                 </div>
                 <div class="text-center mt-5">
-                    <a href="views/productos.html" class="btn btn-outline-dark btn-lg">Ver Todas las Categorías</a>
+                    <a href="/BarkiOS/productos" class="btn btn-outline-dark btn-lg">Ver Todas las Categorías</a>
                 </div>
             </div>
         </section>
@@ -150,86 +150,10 @@
             <div class="container">
                 <div class="d-flex justify-content-between align-items-center mb-5">
                     <h2 data-aos="fade-right">PRENDAS DESTACADAS</h2>
-                    <a href="views/productos.html" class="btn btn-link text-dark text-decoration-none" data-aos="fade-left">Ver Todas <i class="fas fa-arrow-right ms-2"></i></a>
+                    <a href="/BarkiOS/productos" class="btn btn-link text-dark text-decoration-none" data-aos="fade-left">Ver Todas <i class="fas fa-arrow-right ms-2"></i></a>
                 </div>
-                <div class="row g-4 featured-products">
-                    <!-- Product 1 -->
-                    <div class="col-md-3" data-aos="fade-up">
-                        <div class="product-card">
-                            <div class="product-image">
-                                <span class="product-badge">Exclusivo</span>
-                                <img src="https://images.unsplash.com/photo-1551803091-e20673f15770?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=735&q=80" alt="Vestido Elegante">
-                                <div class="product-actions">
-                                    <button class="action-btn add-to-wishlist" data-product-id="1"><i class="far fa-heart"></i></button>
-                                    <button class="action-btn quick-view" data-product-id="1"><i class="far fa-eye"></i></button>
-                                </div>
-                            </div>
-                            <div class="product-info">
-                                <h4>Vestido Elegante</h4>
-                                <p class="product-category">Vestidos</p>
-                                <div class="product-price">$189.99</div>
-                                <button class="btn btn-dark w-100 add-to-cart" data-product-id="1">Agregar al Carrito</button>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Product 2 -->
-                    <div class="col-md-3" data-aos="fade-up" data-aos-delay="100">
-                        <div class="product-card">
-                            <div class="product-image">
-                                <span class="product-badge">Exclusivo</span>
-                                <img src="https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=735&q=80" alt="Blusa Sofisticada">
-                                <div class="product-actions">
-                                    <button class="action-btn add-to-wishlist" data-product-id="2"><i class="far fa-heart"></i></button>
-                                    <button class="action-btn quick-view" data-product-id="2"><i class="far fa-eye"></i></button>
-                                </div>
-                            </div>
-                            <div class="product-info">
-                                <h4>Blusa Sofisticada</h4>
-                                <p class="product-category">Blusas</p>
-                                <div class="product-price">$89.99</div>
-                                <button class="btn btn-dark w-100 add-to-cart" data-product-id="2">Agregar al Carrito</button>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Product 3 -->
-                    <div class="col-md-3" data-aos="fade-up" data-aos-delay="200">
-                        <div class="product-card">
-                            <div class="product-image">
-                                <span class="product-badge">Exclusivo</span>
-                                <img src="https://images.unsplash.com/photo-1509551388413-e18d0ac5d495?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80" alt="Pantalón de Vestir">
-                                <div class="product-actions">
-                                    <button class="action-btn add-to-wishlist" data-product-id="3"><i class="far fa-heart"></i></button>
-                                    <button class="action-btn quick-view" data-product-id="3"><i class="far fa-eye"></i></button>
-                                </div>
-                            </div>
-                            <div class="product-info">
-                                <h4>Pantalón de Vestir</h4>
-                                <p class="product-category">Pantalones</p>
-                                <div class="product-price">$129.99</div>
-                                <button class="btn btn-dark w-100 add-to-cart" data-product-id="3">Agregar al Carrito</button>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Product 4 -->
-                    <div class="col-md-3" data-aos="fade-up" data-aos-delay="300">
-                        <div class="product-card">
-                            <div class="product-image">
-                                <span class="product-badge">Exclusivo</span>
-                                <img src="https://images.unsplash.com/photo-1548624313-0396c75e4b1a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80" alt="Blazer Clásico">
-                                <div class="product-actions">
-                                    <button class="action-btn add-to-wishlist" data-product-id="4"><i class="far fa-heart"></i></button>
-                                    <button class="action-btn quick-view" data-product-id="4"><i class="far fa-eye"></i></button>
-                                </div>
-                            </div>
-                            <div class="product-info">
-                                <h4>Blazer Clásico</h4>
-                                <p class="product-category">Blazers</p>
-                                <div class="product-price">$159.99</div>
-                                <button class="btn btn-dark w-100 add-to-cart" data-product-id="4">Agregar al Carrito</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <div class="row g-4 featured-products" id="featuredProducts"></div>
+
             </div>
         </section>
 
@@ -245,7 +169,7 @@
                         <p class="lead mb-4">Donde la exclusividad se encuentra con la elegancia.</p>
                         <p>En Garage Barki, creemos que cada mujer merece sentirse única. Por eso, cada una de nuestras más de 14,000 prendas es completamente exclusiva, garantizando que nunca encontrarás a alguien con la misma prenda que tú.</p>
                         <p>Nuestro compromiso es ofrecer moda de alta calidad que celebre la individualidad de cada mujer, sin importar su edad o talla.</p>
-                        <a href="views/sobre-nosotros.html" class="btn btn-outline-dark mt-3">Conoce Nuestra Historia</a>
+                        <a href="/BarkiOS/nosotros" class="btn btn-outline-dark mt-3">Conoce Nuestra Historia</a>
                     </div>
                 </div>
             </div>
@@ -255,7 +179,7 @@
 <?php require_once __DIR__ . '/../partials/footer.php';?>
 
     <!-- Quick View Modal -->
-    <div class="modal fade" id="quickViewModal" tabindex="-1" aria-hidden="true">
+        <div class="modal fade" id="quickViewModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header border-0">
@@ -274,40 +198,11 @@
                                 <div class="product-price mb-3" id="quickViewPrice"></div>
                                 <p id="quickViewCategory" class="mb-3"></p>
                                 <p id="quickViewDescription" class="mb-4">Prenda exclusiva de Garage Barki. Cada pieza es única y no se repite, garantizando tu individualidad y estilo personal.</p>
-                                
-                                <div class="mb-4">
-                                    <h5 class="mb-3">Talla</h5>
-                                    <div class="d-flex size-options">
-                                        <button class="btn btn-outline-dark me-2">XS</button>
-                                        <button class="btn btn-outline-dark me-2">S</button>
-                                        <button class="btn btn-outline-dark me-2">M</button>
-                                        <button class="btn btn-outline-dark me-2">L</button>
-                                        <button class="btn btn-outline-dark">XL</button>
-                                    </div>
-                                </div>
-                                
-                                <div class="mb-4">
-                                    <h5 class="mb-3">Cantidad</h5>
-                                    <div class="input-group quantity-selector" style="width: 130px;">
-                                        <button class="btn btn-outline-dark" type="button" id="decrementBtn">-</button>
-                                        <input type="text" class="form-control text-center" value="1" id="quantityInput">
-                                        <button class="btn btn-outline-dark" type="button" id="incrementBtn">+</button>
-                                    </div>
-                                </div>
-                                
-                                <div class="d-grid gap-2 d-md-flex mb-4">
-                                    <button class="btn btn-dark btn-lg flex-grow-1" id="quickViewAddToCart">Agregar al Carrito</button>
-                                    <button class="btn btn-outline-dark btn-lg" id="quickViewAddToWishlist"><i class="far fa-heart"></i></button>
-                                </div>
+
                                 
                                 <div class="product-meta">
                                     <p class="mb-1"><strong>SKU:</strong> <span id="quickViewSku"></span></p>
                                     <p class="mb-1"><strong>Categoría:</strong> <span id="quickViewCategoryText"></span></p>
-                                    <p class="mb-0"><strong>Compartir:</strong> 
-                                        <a href="#" class="text-dark me-2"><i class="fab fa-facebook-f"></i></a>
-                                        <a href="#" class="text-dark me-2"><i class="fab fa-twitter"></i></a>
-                                        <a href="#" class="text-dark me-2"><i class="fab fa-pinterest"></i></a>
-                                        <a href="#" class="text-dark"><i class="fab fa-instagram"></i></a>
                                     </p>
                                 </div>
                             </div>

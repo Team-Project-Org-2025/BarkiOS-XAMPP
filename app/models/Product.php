@@ -224,4 +224,31 @@ class Product extends Database {
         ");
         return $stmt->execute([':id' => $id]);
     }
+    public function getLatest(int $limit = 8)
+{
+    $stmt = $this->db->prepare("
+        SELECT * FROM prendas
+        WHERE activo = 1 AND estado = 'DISPONIBLE'
+        ORDER BY fecha_creacion DESC
+        LIMIT :limit
+    ");
+    $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+public function getByCategoria(string $categoria, ?int $limit = null)
+{
+    $sql = "SELECT * FROM prendas
+            WHERE activo = 1 AND estado = 'DISPONIBLE'
+            AND categoria = :categoria
+            ORDER BY fecha_creacion DESC";
+    if ($limit) $sql .= " LIMIT :limit";
+
+    $stmt = $this->db->prepare($sql);
+    $stmt->bindValue(':categoria', $categoria, PDO::PARAM_STR);
+    if ($limit) $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 }
