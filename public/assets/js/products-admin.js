@@ -110,72 +110,86 @@ $(document).ready(function() {
     }
 
     // --- CARGAR PRODUCTOS ---
-    function AjaxProducts() {
-        $productsTableBody.html(`
-            <tr><td colspan="7" class="text-center" style="padding: 1.25rem 0;">
-                <div class="spinner-border text-primary"></div> Cargando...
-            </td></tr>
-        `);
+function AjaxProducts() {
+    $productsTableBody.html(`
+        <tr><td colspan="7" class="text-center" style="padding: 1.25rem 0;">
+            <div class="spinner-border text-primary"></div> Cargando...
+        </td></tr>
+    `);
 
-        $.ajax({
-            url: `${baseUrl}?action=get_products`,
-            method: 'GET',
-            headers: {'X-Requested-With': 'XMLHttpRequest'},
-            dataType: 'json'
-        }).done(function(data) {
-            if (!data.products?.length) {
-                $productsTableBody.html(`
-                    <tr><td colspan="7" class="text-center" style="padding: 1.5rem 0;">
-                        <i class="fa-solid fa-circle-info me-2 text-primary"></i>
-                        No hay productos disponibles
-                    </td></tr>
-                `);
-                return;
-            }
+    $.ajax({
+        url: `${baseUrl}?action=get_products`,
+        method: 'GET',
+        headers: {'X-Requested-With': 'XMLHttpRequest'},
+        dataType: 'json'
+    }).done(function(data) {
+        if (!data.products?.length) {
+            $productsTableBody.html(`
+                <tr><td colspan="7" class="text-center" style="padding: 1.5rem 0;">
+                    <i class="fa-solid fa-circle-info me-2 text-primary"></i>
+                    No hay productos disponibles
+                </td></tr>
+            `);
+            return;
+        }
 
-            const rows = data.products.map(p => {
-                const imagenHtml = p.imagen 
-                    ? `<img src="/BarkiOS/${escapeHtml(p.imagen)}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;" alt="${escapeHtml(p.nombre)}">`
-                    : `<i class="fas fa-image fa-2x text-muted"></i>`;
+        const rows = data.products.map(p => {
+            const imagenHtml = p.imagen 
+                ? `<img src="/BarkiOS/${escapeHtml(p.imagen)}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;" alt="${escapeHtml(p.nombre)}">`
+                : `<i class="fas fa-image fa-2x text-muted"></i>`;
 
-                return `
-                    <tr id="producto-${escapeHtml(p.prenda_id)}">
-                        <td>${imagenHtml}</td>
-                        <td>${escapeHtml(p.prenda_id)}</td>
-                        <td>${escapeHtml(p.nombre)}</td>
-                        <td>${escapeHtml(p.tipo)}</td>
-                        <td>${escapeHtml(p.categoria)}</td>
-                        <td>$${parseFloat(p.precio).toFixed(2)}</td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-primary btn-edit"
-                                data-id="${escapeHtml(p.prenda_id)}"
-                                data-nombre="${escapeHtml(p.nombre)}"
-                                data-tipo="${escapeHtml(p.tipo)}"
-                                data-categoria="${escapeHtml(p.categoria)}"
-                                data-precio="${p.precio}"
-                                data-imagen="${escapeHtml(p.imagen || '')}">
-                                <i class="fas fa-edit"></i> Editar
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger btn-delete"
-                                data-product-id="${escapeHtml(p.prenda_id)}"
-                                data-product-name="${escapeHtml(p.nombre)}">
-                                <i class="fas fa-trash"></i> Eliminar
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-            $productsTableBody.html(rows);
+            return `
+                <tr id="producto-${escapeHtml(p.prenda_id)}">
+                    <td>${imagenHtml}</td>
+                    <td>${escapeHtml(p.prenda_id)}</td>
+                    <td>${escapeHtml(p.nombre)}</td>
+                    <td>${escapeHtml(p.tipo)}</td>
+                    <td>${escapeHtml(p.categoria)}</td>
+                    <td>$${parseFloat(p.precio).toFixed(2)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary btn-edit"
+                            data-id="${escapeHtml(p.prenda_id)}"
+                            data-nombre="${escapeHtml(p.nombre)}"
+                            data-tipo="${escapeHtml(p.tipo)}"
+                            data-categoria="${escapeHtml(p.categoria)}"
+                            data-precio="${p.precio}"
+                            data-imagen="${escapeHtml(p.imagen || '')}">
+                            <i class="fas fa-edit"></i> Editar
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger btn-delete"
+                            data-product-id="${escapeHtml(p.prenda_id)}"
+                            data-product-name="${escapeHtml(p.nombre)}">
+                            <i class="fas fa-trash"></i> Eliminar
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+        $productsTableBody.html(rows);
 
-            $('.btn-delete').on('click', handleDelete);
-            $('.btn-edit').on('click', function() {
-                loadProductForEdit($(this));
-            });
-        }).fail(function(xhr, status, error) {
-            console.error('Error al cargar productos:', error);
-            showAlert('Error al cargar productos', 'danger');
+        $('.btn-delete').on('click', handleDelete);
+        $('.btn-edit').on('click', function() {
+            loadProductForEdit($(this));
         });
-    }
+
+        // 🔹 DataTable aquí (sin tocar nada más)
+        if ($.fn.DataTable.isDataTable('#productsTable')) {
+            $('#productsTable').DataTable().clear().destroy();
+        }
+        $('#productsTable').DataTable({
+            pageLength: 5,
+            responsive: true,
+            language: {
+                url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json"
+            }
+        });
+
+    }).fail(function(xhr, status, error) {
+        console.error('Error al cargar productos:', error);
+        showAlert('Error al cargar productos', 'danger');
+    });
+}
+
 
     // --- AGREGAR PRODUCTO ---
     function handleAdd(e) {
