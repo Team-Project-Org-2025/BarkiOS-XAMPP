@@ -1,7 +1,6 @@
 // ============================================
-// PURCHASE ADMIN JS - OPTIMIZADO
+// PURCHASE ADMIN JS - CON AGREGAR PRENDAS EN EDICIÓN
 // ============================================
-
 $(document).ready(function() {
     let prendaIndex = 0;
     let allPurchases = [];
@@ -28,67 +27,54 @@ $(document).ready(function() {
     // ============================================
     // GESTIÓN DE PRENDAS
     // ============================================
-    function addPrenda(containerId, data = null) {
+    function addPrenda(containerId, data = null, editable = true) {
         const container = $(`#${containerId}`);
         const template = $('#prendaTemplate').html();
         const newPrenda = $(template);
         
-        // Configurar nombres de inputs
-        newPrenda.find('.prenda-codigo').attr('name', `prendas[${prendaIndex}][codigo]`);
+        newPrenda.find('.prenda-codigo').attr('name', `prendas[${prendaIndex}][codigo_prenda]`);
         newPrenda.find('.prenda-nombre').attr('name', `prendas[${prendaIndex}][nombre]`);
         newPrenda.find('.prenda-categoria').attr('name', `prendas[${prendaIndex}][categoria]`);
         newPrenda.find('.prenda-tipo').attr('name', `prendas[${prendaIndex}][tipo]`);
         newPrenda.find('.prenda-costo').attr('name', `prendas[${prendaIndex}][precio_costo]`);
-        newPrenda.find('.prenda-venta').attr('name', `prendas[${prendaIndex}][precio_venta]`);
         newPrenda.find('.prenda-descripcion').attr('name', `prendas[${prendaIndex}][descripcion]`);
         newPrenda.find('.prenda-number').text(prendaIndex + 1);
-        
-        // Llenar datos si existen
+
         if (data) {
             newPrenda.find('.prenda-codigo').val(data.codigo_prenda || '');
             newPrenda.find('.prenda-nombre').val(data.nombre || '');
             newPrenda.find('.prenda-categoria').val(data.categoria || '');
             newPrenda.find('.prenda-tipo').val(data.tipo || '');
             newPrenda.find('.prenda-costo').val(data.precio_costo || '');
-            newPrenda.find('.prenda-venta').val(data.precio_venta || '');
             newPrenda.find('.prenda-descripcion').val(data.descripcion || '');
+            
+            // Marcar como prenda existente (no editable)
+            if (!editable) {
+                newPrenda.addClass('prenda-existente');
+                newPrenda.find('input, select, textarea').prop('disabled', true);
+                newPrenda.find('.remove-prenda').remove();
+                newPrenda.css('background-color', '#f8f9fa');
+            }
         }
         
         container.append(newPrenda);
         prendaIndex++;
         
-        // Eventos
-        newPrenda.find('.remove-prenda').on('click', function() {
-            $(this).closest('.prenda-row').fadeOut(300, function() {
-                $(this).remove();
-                updateSummary();
-                renumberPrendas(containerId);
+        if (editable) {
+            newPrenda.find('.remove-prenda').on('click', function() {
+                $(this).closest('.prenda-row').fadeOut(300, function() {
+                    $(this).remove();
+                    updateSummary();
+                    renumberPrendas(containerId);
+                });
             });
-        });
-        
-        newPrenda.find('input, select').on('input change', function() {
-            calcularMargen(newPrenda);
-            updateSummary();
-        });
-        
-        if (data) calcularMargen(newPrenda);
-        updateSummary();
-    }
-
-    function calcularMargen(row) {
-        const costo = parseFloat(row.find('.prenda-costo').val()) || 0;
-        const venta = parseFloat(row.find('.prenda-venta').val()) || 0;
-        const margenEl = row.find('.margen-display');
-        
-        if (costo > 0 && venta > costo) {
-            const ganancia = venta - costo;
-            const porcentaje = ((ganancia / costo) * 100).toFixed(1);
-            margenEl.val(`$${ganancia.toFixed(2)} (${porcentaje}%)`).css('color', '#28a745');
-            row.find('.prenda-venta').removeClass('is-invalid');
-        } else if (venta > 0) {
-            margenEl.val('Precio inválido').css('color', '#dc3545');
-            row.find('.prenda-venta').addClass('is-invalid');
+            
+            newPrenda.find('input, select').on('input change', function() {
+                updateSummary();
+            });
         }
+        
+        updateSummary();
     }
 
     function renumberPrendas(containerId) {
@@ -98,38 +84,17 @@ $(document).ready(function() {
     }
 
     function updateSummary() {
-        let total = 0, ganancia = 0;
+        let total = 0;
         $('.prenda-row').each(function() {
             const costo = parseFloat($(this).find('.prenda-costo').val()) || 0;
-            const venta = parseFloat($(this).find('.prenda-venta').val()) || 0;
             total += costo;
-            ganancia += (venta - costo);
         });
         
         const count = $('.prenda-row').length;
-        const pct = total > 0 ? ((ganancia / total) * 100).toFixed(1) : 0;
         
         $('#summaryTotalPrendas, #editSummaryTotalPrendas').text(count);
         $('#summaryMontoTotal, #editSummaryMontoTotal').text(total.toFixed(2));
         $('#montoTotal, #editMontoTotal').val(total.toFixed(2));
-        
-        if (count > 0 && !$('#summaryGanancia').length) {
-            $('#purchaseSummary').append(`
-                <div id="summaryGanancia" class="row mt-2">
-                    <div class="col-12 text-center">
-                        <small class="text-success">
-                            Ganancia estimada: <strong>$${ganancia.toFixed(2)}</strong> (${pct}%)
-                        </small>
-                    </div>
-                </div>
-            `);
-        } else if (count > 0) {
-            $('#summaryGanancia small').html(`
-                Ganancia estimada: <strong>$${ganancia.toFixed(2)}</strong> (${pct}%)
-            `);
-        } else {
-            $('#summaryGanancia').remove();
-        }
     }
 
     // ============================================
@@ -153,10 +118,11 @@ $(document).ready(function() {
                 $.ajax({
                     url: window.location.pathname + '?action=search_supplier',
                     data: { search: query },
+                    dataType: 'json',
                     headers: { 'X-Requested-With': 'XMLHttpRequest' },
                     success: function(data) {
-                        if (data.success && data.data.length) {
-                            let html = data.data.map(s => `
+                        if (data.success && data.results && data.results.length) {
+                            let html = data.results.map(s => `
                                 <button type="button" class="list-group-item list-group-item-action"
                                         data-id="${s.rif}" data-nombre="${s.nombre_empresa}">
                                     <strong>${s.nombre_empresa}</strong><br>
@@ -191,7 +157,6 @@ $(document).ready(function() {
         const tracking = $('#tracking').val();
         const proveedor = $('#proveedorId').val();
         
-        // Validaciones
         if (validar.factura(factura)) return showError(validar.factura(factura));
         if (tracking && validar.factura(tracking)) return showError('Tracking: ' + validar.factura(tracking));
         if (!proveedor) return showError('Seleccione un proveedor');
@@ -207,18 +172,17 @@ $(document).ready(function() {
                 categoria: row.find('.prenda-categoria').val(),
                 tipo: row.find('.prenda-tipo').val(),
                 precio_costo: row.find('.prenda-costo').val(),
-                precio_venta: row.find('.prenda-venta').val(),
                 descripcion: row.find('.prenda-descripcion').val().trim()
             };
             
-            if (!prenda.nombre || !prenda.categoria || !prenda.tipo) {
-                showError('Complete todos los campos obligatorios');
+            if (!prenda.codigo_prenda || !prenda.nombre || !prenda.categoria || !prenda.tipo || !prenda.precio_costo) {
+                showError('Complete todos los campos obligatorios de las prendas');
                 error = true;
                 return false;
             }
             
-            if (parseFloat(prenda.precio_venta) <= parseFloat(prenda.precio_costo)) {
-                showError('El precio de venta debe ser mayor al costo');
+            if (parseFloat(prenda.precio_costo) <= 0) {
+                showError('El precio de costo debe ser mayor a 0');
                 error = true;
                 return false;
             }
@@ -231,7 +195,6 @@ $(document).ready(function() {
             return;
         }
         
-        // Enviar
         const btn = $('#btnGuardar');
         btn.prop('disabled', true).find('.spinner-border').removeClass('d-none');
         btn.find('.btn-text').text('Guardando...');
@@ -248,60 +211,73 @@ $(document).ready(function() {
             data: formData,
             processData: false,
             contentType: false,
-            dataType: 'json', // 👈 MUY IMPORTANTE
+            dataType: 'json',
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
             success: function(res) {
-                console.log('Respuesta servidor:', res); // 👈 útil para depurar
                 if (res.success) {
-                    Swal.fire({ icon: 'success', title: '¡Éxito!', text: res.message, timer: 2000, showConfirmButton: false });
+                    Swal.fire({ 
+                        icon: 'success', 
+                        title: '¡Éxito!', 
+                        text: res.message, 
+                        timer: 2000, 
+                        showConfirmButton: false 
+                    });
                     $('#addPurchaseModal').modal('hide');
                     $('#addPurchaseForm')[0].reset();
                     $('#prendasContainer').empty();
                     fetchPurchases();
+                    loadStats();
                 } else {
                     showError(res.message);
                 }
             },
-            error: (xhr) => {
-                console.error(xhr.responseText);
-                showError('Error al guardar la compra');
+            error: function(xhr) {
+                // AGREGA ESTO PARA VER EL ERROR
+                console.error('Error completo:', xhr);
+                console.error('Respuesta:', xhr.responseText);
+                let errorMsg = 'Error desconocido';
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    errorMsg = response.message || errorMsg;
+                } catch(e) {
+                    errorMsg = xhr.responseText || errorMsg;
+                }
+                showError(errorMsg);
             },
-            complete: function() {
-                btn.prop('disabled', false).find('.spinner-border').addClass('d-none');
-                btn.find('.btn-text').html('<i class="fas fa-save me-1"></i>Guardar Compra');
-            }
+            complete: () => btn.prop('disabled', false).find('.spinner-border').addClass('d-none')
         });
-
     });
 
     // ============================================
-    // FORMULARIO: EDITAR COMPRA
+    // FORMULARIO: EDITAR COMPRA (CON AGREGAR PRENDAS)
     // ============================================
     $('#editPurchaseForm').on('submit', function(e) {
         e.preventDefault();
-        
-        const prendas = [];
-        $('.prenda-row').each(function() {
+
+        // Recopilar solo las prendas NUEVAS (editables)
+        const nuevasPrendas = [];
+        $('#editPrendasContainer .prenda-row:not(.prenda-existente)').each(function() {
             const row = $(this);
-            prendas.push({
+            nuevasPrendas.push({
+                codigo_prenda: row.find('.prenda-codigo').val().trim(),
                 nombre: row.find('.prenda-nombre').val().trim(),
                 categoria: row.find('.prenda-categoria').val(),
                 tipo: row.find('.prenda-tipo').val(),
                 precio_costo: row.find('.prenda-costo').val(),
-                precio_venta: row.find('.prenda-venta').val(),
                 descripcion: row.find('.prenda-descripcion').val().trim()
             });
         });
-        
+
         const btn = $('#btnGuardarEdit');
         btn.prop('disabled', true).find('.spinner-border').removeClass('d-none');
-        
+
         const formData = new FormData(this);
-        formData.delete('prendas');
-        prendas.forEach((p, i) => {
-            Object.keys(p).forEach(k => formData.append(`prendas[${i}][${k}]`, p[k]));
-        });
         
+        // Agregar las nuevas prendas al FormData
+        nuevasPrendas.forEach((p, i) => {
+            Object.keys(p).forEach(k => formData.append(`nuevas_prendas[${i}][${k}]`, p[k]));
+        });
+
         $.ajax({
             url: window.location.pathname + '?action=edit_ajax',
             method: 'POST',
@@ -314,19 +290,38 @@ $(document).ready(function() {
                     Swal.fire({ icon: 'success', title: 'Actualizado', timer: 2000, showConfirmButton: false });
                     $('#editPurchaseModal').modal('hide');
                     fetchPurchases();
+                    loadStats();
                 } else {
                     showError(res.message);
                 }
             },
+            error: function(xhr) {
+                // AGREGA ESTO PARA VER EL ERROR
+                console.error('Error completo:', xhr);
+                console.error('Respuesta:', xhr.responseText);
+                let errorMsg = 'Error desconocido';
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    errorMsg = response.message || errorMsg;
+                } catch(e) {
+                    errorMsg = xhr.responseText || errorMsg;
+                }
+                showError(errorMsg);
+            },
             complete: () => btn.prop('disabled', false).find('.spinner-border').addClass('d-none')
         });
+    });
+
+    // Botón para agregar nuevas prendas en edición
+    $('#addEditPrendaBtn').on('click', function() {
+        addPrenda('editPrendasContainer', null, true);
     });
 
     // ============================================
     // CARGAR Y RENDERIZAR COMPRAS
     // ============================================
     function fetchPurchases() {
-        $('#purchaseTableBody').html('<tr><td colspan="4" class="text-center py-4"><div class="spinner-border"></div></td></tr>');
+        $('#purchaseTableBody').html('<tr><td colspan="6" class="text-center py-4"><div class="spinner-border"></div></td></tr>');
         
         $.ajax({
             url: window.location.pathname + '?action=get_purchases',
@@ -335,31 +330,101 @@ $(document).ready(function() {
                 if (data.success && data.data.length) {
                     allPurchases = data.data;
                     renderPurchases(allPurchases);
+                    pintarMontoPagadoDashboard();
                 } else {
-                    $('#purchaseTableBody').html('<tr><td colspan="4" class="text-center py-4"><i class="fas fa-inbox fa-3x text-muted mb-3"></i><p>No hay compras</p></td></tr>');
+                    $('#purchaseTableBody').html('<tr><td colspan="6" class="text-center py-4"><i class="fas fa-inbox fa-3x text-muted mb-3"></i><p>No hay compras registradas</p></td></tr>');
                 }
             },
-            error: () => $('#purchaseTableBody').html('<tr><td colspan="4" class="text-center text-danger">Error al cargar</td></tr>')
+            error: () => $('#purchaseTableBody').html('<tr><td colspan="6" class="text-center text-danger">Error al cargar</td></tr>')
         });
     }
 
     function renderPurchases(purchases) {
         const html = purchases.map(p => `
             <tr class="purchase-row">
-                <td><strong>#${p.factura_numero}</strong> ${p.pdf_generado == 1 ? '<i class="fas fa-check-circle text-success"></i>' : ''}</td>
-                <td><div>${p.nombre_proveedor}</div><small class="text-muted">${p.total_prendas} prenda(s)</small></td>
-                <td><div>${p.fecha_compra}</div><small class="text-muted">${p.monto_total}</small></td>
+                <td class="px-4">
+                    <strong>#${p.factura_numero}</strong>
+                    ${p.pdf_generado == 1 ? '<i class="fas fa-check-circle text-success ms-2" title="PDF generado"></i>' : ''}
+                </td>
+                <td>
+                    <div><strong>${p.nombre_proveedor}</strong></div>
+                    <small class="text-muted">${p.total_prendas} prenda(s)</small>
+                </td>
+                <td>
+                    <div>${new Date(p.fecha_compra).toLocaleDateString('es-ES')}</div>
+                    ${p.tracking ? `<small class="text-muted">Tracking: ${p.tracking}</small>` : ''}
+                </td>
+                <td class="text-end">
+                    <strong class="text-success">$${p.monto_total}</strong>
+                </td>
+                <td class="text-center">
+                    <span class="badge bg-success">${p.prendas_disponibles || 0}</span>
+                    <span class="badge bg-secondary">${p.prendas_vendidas || 0}</span>
+                </td>
                 <td class="text-center">
                     <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-primary" onclick="viewPurchase(${p.compra_id})" title="Ver"><i class="fas fa-eye"></i></button>
-                        <button class="btn btn-outline-success" onclick="downloadPdf(${p.compra_id})" title="PDF"><i class="fas fa-file-pdf"></i></button>
-                        <button class="btn btn-outline-warning" onclick="editPurchase(${p.compra_id})" title="Editar"><i class="fas fa-edit"></i></button>
-                        <button class="btn btn-outline-danger" onclick="deletePurchase(${p.compra_id})" title="Eliminar"><i class="fas fa-trash"></i></button>
+                        <button class="btn btn-outline-primary" onclick="viewPurchase(${p.compra_id})" title="Ver detalle">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-outline-success" onclick="generarPdf(${p.compra_id})" title="Descargar PDF">
+                            <i class="fas fa-file-pdf"></i>
+                        </button>
+                        <button class="btn btn-outline-warning" onclick="editPurchase(${p.compra_id})" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="deletePurchase(${p.compra_id})" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </div>
                 </td>
             </tr>
         `).join('');
         $('#purchaseTableBody').html(html);
+    }
+
+    // ============================================
+    // CARGAR ESTADÍSTICAS
+    // ============================================
+    function pintarMontoPagadoDashboard() {
+        let totalPagado = 0;
+        let totalPendiente = 0;
+        let montoTotal = 0;
+
+        allPurchases.forEach(p => {
+            totalPagado    += parseFloat(p.total_pagado || 0);
+            totalPendiente += parseFloat(p.saldo_pendiente || 0);
+            montoTotal     += parseFloat(p.monto_total || 0);
+        });
+
+        // Actualizar textos
+        $('#statMontoPagado').text('Pagado: $' + totalPagado.toFixed(2));
+        $('#statSaldoPendiente').text('$' + totalPendiente.toFixed(2));
+        $('#statMontoTotal').text('$' + montoTotal.toFixed(2));
+
+        // Calcular porcentaje pagado
+        const porcentajePagado = montoTotal > 0 ? (totalPagado / montoTotal) * 100 : 0;
+
+        // Actualizar círculo SVG
+        const circunferencia = 220; // stroke-dasharray del círculo
+        const offset = circunferencia - (circunferencia * porcentajePagado / 100);
+
+        $('#progressBar').css('stroke-dashoffset', offset);
+        $('#progressPercent').text(Math.round(porcentajePagado) + '%');
+    }
+
+    function loadStats() {
+        $.ajax({
+            url: window.location.pathname + '?action=get_stats',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            success: function(data) {
+                if (data.success) {
+                    const stats = data.stats;
+                    $('#statTotalCompras').text(stats.total_compras || 0);
+                    $('#statMontoTotal').text('$' + parseFloat(stats.monto_total_compras || 0).toFixed(2));
+                    $('#statValorInventario').text('$' + parseFloat(stats.valor_inventario || 0).toFixed(2));
+                }
+            }
+        });
     }
 
     // ============================================
@@ -377,14 +442,63 @@ $(document).ready(function() {
                     const c = data.data.compra;
                     const p = data.data.prendas;
                     
-                    const prendasHtml = `<table class="table table-sm"><thead><tr><th>Código</th><th>Nombre</th><th>Categoría</th><th>P.Costo</th><th>P.Venta</th><th>Estado</th></tr></thead><tbody>
-                        ${p.map(pr => `<tr><td><code>${pr.codigo_prenda}</code></td><td>${pr.nombre}</td><td><span class="badge bg-info">${pr.categoria}</span></td><td>$${parseFloat(pr.precio_costo).toFixed(2)}</td><td>$${parseFloat(pr.precio_venta).toFixed(2)}</td><td>${pr.estado === 'DISPONIBLE' ? '<span class="badge bg-success">Disponible</span>' : '<span class="badge bg-secondary">Vendida</span>'}</td></tr>`).join('')}
-                    </tbody></table>`;
+                    const prendasHtml = `
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Código</th>
+                                        <th>Nombre</th>
+                                        <th>Categoría</th>
+                                        <th>Tipo</th>
+                                        <th class="text-end">P.Costo</th>
+                                        <th class="text-center">Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${p.map(pr => `
+                                        <tr>
+                                            <td><code>${pr.codigo_prenda}</code></td>
+                                            <td>${pr.nombre}</td>
+                                            <td><span class="badge bg-info">${pr.categoria}</span></td>
+                                            <td><span class="badge bg-secondary">${pr.tipo}</span></td>
+                                            <td class="text-end">$${parseFloat(pr.precio_costo).toFixed(2)}</td>
+                                            <td class="text-center">
+                                                ${pr.estado === 'DISPONIBLE' 
+                                                    ? '<span class="badge bg-success">Disponible</span>' 
+                                                    : '<span class="badge bg-secondary">Vendida</span>'}
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
                     
                     Swal.fire({
                         title: `Compra #${c.factura_numero}`,
-                        html: `<div class="text-start"><p><strong>Proveedor:</strong> ${c.nombre_proveedor}</p><p><strong>Fecha:</strong> ${new Date(c.fecha_compra).toLocaleDateString()}</p><p><strong>Monto:</strong> $${parseFloat(c.monto_total).toFixed(2)}</p><hr>${prendasHtml}</div>`,
-                        width: '800px',
+                        html: `
+                            <div class="text-start">
+                                <div class="row mb-3">
+                                    <div class="col-6">
+                                        <p class="mb-2"><strong>Proveedor:</strong><br>${c.nombre_proveedor}</p>
+                                        <p class="mb-2"><strong>RIF:</strong> ${c.tipo_rif}-${c.proveedor_rif}</p>
+                                    </div>
+                                    <div class="col-6">
+                                        <p class="mb-2"><strong>Fecha:</strong><br>${new Date(c.fecha_compra).toLocaleDateString('es-ES')}</p>
+                                        <p class="mb-2"><strong>Tracking:</strong> ${c.tracking || 'N/A'}</p>
+                                    </div>
+                                </div>
+                                <div class="alert alert-success">
+                                    <strong>Monto Total:</strong> $${parseFloat(c.monto_total).toFixed(2)}
+                                </div>
+                                ${c.observaciones ? `<p class="text-muted"><em>${c.observaciones}</em></p>` : ''}
+                                <hr>
+                                <h6>Prendas (${p.length})</h6>
+                                ${prendasHtml}
+                            </div>
+                        `,
+                        width: '900px',
                         showConfirmButton: false,
                         showCloseButton: true
                     });
@@ -411,8 +525,10 @@ $(document).ready(function() {
                     
                     $('#editPrendasContainer').empty();
                     prendaIndex = 0;
-                    data.data.prendas.forEach(p => addPrenda('editPrendasContainer', p));
                     
+                    // Agregar prendas existentes (no editables)
+                    data.data.prendas.forEach(p => addPrenda('editPrendasContainer', p, false));
+
                     $('#editPurchaseModal').modal('show');
                 }
             }
@@ -421,12 +537,12 @@ $(document).ready(function() {
 
     window.deletePurchase = (id) => {
         Swal.fire({
-            title: '¿Eliminar?',
-            text: 'Esta acción no se puede deshacer',
+            title: '¿Eliminar compra?',
+            text: 'Esta acción no se puede deshacer. Las prendas asociadas también se eliminarán.',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
-            confirmButtonText: 'Eliminar',
+            confirmButtonText: 'Sí, eliminar',
             cancelButtonText: 'Cancelar'
         }).then((result) => {
             if (result.isConfirmed) {
@@ -439,6 +555,7 @@ $(document).ready(function() {
                         if (data.success) {
                             Swal.fire({ icon: 'success', title: 'Eliminado', timer: 2000, showConfirmButton: false });
                             fetchPurchases();
+                            loadStats();
                         } else {
                             showError(data.message);
                         }
@@ -448,22 +565,9 @@ $(document).ready(function() {
         });
     };
 
-    window.downloadPdf = (id) => {
-        Swal.fire({ title: 'Generando PDF...', didOpen: () => Swal.showLoading() });
-        
-        $.ajax({
-            url: window.location.pathname + '?action=download_pdf',
-            data: { compra_id: id },
-            headers: { 'X-Requested-With': 'XMLHttpRequest' },
-            success: function(data) {
-                if (data.success) {
-                    Swal.fire({ icon: 'success', title: 'PDF Generado', timer: 2000, showConfirmButton: false });
-                    fetchPurchases();
-                } else {
-                    showError(data.message);
-                }
-            }
-        });
+    window.generarPdf = (compra_id) => {
+        const url = `?action=generate_pdf&compra_id=${compra_id}`;
+        window.location.href = url;
     };
 
     function showError(msg) {
@@ -474,7 +578,6 @@ $(document).ready(function() {
     // EVENTOS
     // ============================================
     $('#addPrendaBtn').on('click', () => addPrenda('prendasContainer'));
-    $('#editAddPrendaBtn').on('click', () => addPrenda('editPrendasContainer'));
     
     $('#searchInput').on('input', function() {
         const term = $(this).val().toLowerCase();
@@ -485,29 +588,20 @@ $(document).ready(function() {
         renderPurchases(filtered);
     });
     
-$('#addPurchaseModal').on('show.bs.modal', function() {
-    $('#addPurchaseForm')[0].reset();
-    $('#prendasContainer').empty();
-    prendaIndex = 0;
+    $('#addPurchaseModal').on('show.bs.modal', function() {
+        $('#addPurchaseForm')[0].reset();
+        $('#prendasContainer').empty();
+        prendaIndex = 0;
+        setTimeout(() => addPrenda('prendasContainer'), 100);
+    });
 
-    // Agregar la primera línea de prenda automáticamente
-    setTimeout(() => addPrenda('prendasContainer'), 100);
-});
+    $('#addPurchaseModal, #editPurchaseModal').on('hidden.bs.modal', function() {
+        $(this).find('.is-invalid').removeClass('is-invalid');
+    });
 
-$('#addPurchaseModal').on('hidden.bs.modal', function() {
-    $(this).find('.is-invalid').removeClass('is-invalid');
-});
-
-// ============================================
-// MODAL EDITAR COMPRA
-// ============================================
-$('#editPurchaseModal').on('hidden.bs.modal', function() {
-    $('#editPrendasContainer').empty();
-    prendaIndex = 0;
-});
-
-// ============================================
-// INICIALIZAR LISTADO DE COMPRAS
-// ============================================
-fetchPurchases();
+    // ============================================
+    // INICIALIZAR
+    // ============================================
+    fetchPurchases();
+    loadStats();
 });
