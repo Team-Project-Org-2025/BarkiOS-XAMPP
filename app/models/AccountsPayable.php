@@ -6,29 +6,75 @@ use Exception;
 
 /**
  * Modelo Cuentas por Pagar
- * 
- * Proporciona métodos para gestionar cuentas_pagar en la base de datos.
- * Representa el crédito que los distribuidores/proveedores otorgan a la empresa.
- * Este módulo concatena información de compras y proveedores.
+ * Gestiona las deudas con proveedores y pagos
  */
 class AccountsPayable extends Database {
+    
     /**
-     * Obtiene todas las cuentas por pagar activas con información del proveedor.
-     * 
-     * @return array Lista de cuentas por pagar (cada una es un array asociativo).
+     * Obtiene todas las cuentas por pagar con información completa
      */
     public function getAll() {
         try {
             $stmt = $this->db->query("
-                SELECT cp.*, 
-                       p.nombre_empresa as nombre_proveedor,
-                       p.nombre_contacto
+                SELECT 
+                    cp.*,
+                    c.factura_numero,
+                    c.fecha_compra,
+                    c.tracking,
+                    p.nombre_empresa as nombre_proveedor,
+                    p.nombre_contacto,
+                    p.tipo_rif,
+                    COALESCE(
+                        (SELECT SUM(pc.monto) 
+                         FROM pagos_compras pc 
+                         WHERE pc.cuenta_pagar_id = cp.cuenta_pagar_id 
+                         AND pc.estado_pago = 'CONFIRMADO'),
+                        0
+                    ) as total_pagado,
+                    (cp.monto - COALESCE(
+                        (SELECT SUM(pc.monto) 
+                         FROM pagos_compras pc 
+                         WHERE pc.cuenta_pagar_id = cp.cuenta_pagar_id 
+                         AND pc.estado_pago = 'CONFIRMADO'),
+                        0
+                    )) as saldo_pendiente,
+                    CASE 
+                        WHEN cp.fecha_vencimiento < CURDATE() 
+                            AND cp.estado = 'pendiente' THEN 1
+                        ELSE 0
+                    END as vencida,
+                    c.monto_total
                 FROM cuentas_pagar cp
-                JOIN proveedores p ON cp.proveedor_id = p.id
-                WHERE cp.activo = 1 
-                ORDER BY cp.fecha_vencimiento ASC
+                JOIN compras c ON cp.compra_id = c.compra_id
+                JOIN proveedores p ON cp.proveedor_rif = p.proveedor_rif
+                WHERE c.activo = 1
+                ORDER BY 
+                    CASE 
+                        WHEN cp.fecha_vencimiento < CURDATE() AND cp.estado = 'pendiente' THEN 1
+                        WHEN cp.estado = 'pendiente' THEN 2
+                        ELSE 3
+                    END,
+                    cp.fecha_vencimiento ASC
             ");
-            return $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
+            
+            $cuentas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Actualizar estado de vencidas automáticamente
+            foreach ($cuentas as &$cuenta) {
+                if ($cuenta['vencida'] == 1 && $cuenta['estado'] == 'pendiente') {
+                    $this->updateEstado($cuenta['cuenta_pagar_id'], 'vencido');
+                    $cuenta['estado'] = 'vencido';
+                }
+                
+                // Si está completamente pagada, marcar como pagado
+                $saldo = floatval($cuenta['saldo_pendiente']);
+                if ($saldo <= 0 && $cuenta['estado'] != 'pagado') {
+                    $this->updateEstado($cuenta['cuenta_pagar_id'], 'pagado');
+                    $cuenta['estado'] = 'pagado';
+                }
+            }
+            
+            return $cuentas;
         } catch (\Throwable $e) {
             error_log('Error en AccountsPayable::getAll - ' . $e->getMessage());
             return [];
@@ -36,20 +82,42 @@ class AccountsPayable extends Database {
     }
 
     /**
-     * Obtiene una cuenta por pagar específica por su ID.
-     * 
-     * @param int $id ID de la cuenta por pagar.
-     * @return array|null Array asociativo con los datos o null si no existe.
+     * Obtiene una cuenta por pagar específica
      */
     public function getById($id) {
         try {
             $stmt = $this->db->prepare("
-                SELECT cp.*, 
-                       p.nombre_empresa as nombre_proveedor,
-                       p.nombre_contacto
+                SELECT 
+                    cp.*,
+                    c.factura_numero,
+                    c.fecha_compra,
+                    c.tracking,
+                    c.monto_total,
+                    c.observaciones as observaciones_compra,
+                    p.nombre_empresa as nombre_proveedor,
+                    p.nombre_contacto,
+                    p.direccion as direccion_proveedor,
+                    p.telefono as telefono_proveedor,
+                    p.correo as correo_proveedor,
+                    p.tipo_rif,
+                    COALESCE(
+                        (SELECT SUM(pc.monto) 
+                         FROM pagos_compras pc 
+                         WHERE pc.cuenta_pagar_id = cp.cuenta_pagar_id 
+                         AND pc.estado_pago = 'CONFIRMADO'),
+                        0
+                    ) as total_pagado,
+                    (cp.monto - COALESCE(
+                        (SELECT SUM(pc.monto) 
+                         FROM pagos_compras pc 
+                         WHERE pc.cuenta_pagar_id = cp.cuenta_pagar_id 
+                         AND pc.estado_pago = 'CONFIRMADO'),
+                        0
+                    )) as saldo_pendiente
                 FROM cuentas_pagar cp
-                JOIN proveedores p ON cp.proveedor_id = p.id
-                WHERE cp.id = :id AND cp.activo = 1
+                JOIN compras c ON cp.compra_id = c.compra_id
+                JOIN proveedores p ON cp.proveedor_rif = p.proveedor_rif
+                WHERE cp.cuenta_pagar_id = :id
             ");
             $stmt->execute([':id' => $id]);
             return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
@@ -60,164 +128,180 @@ class AccountsPayable extends Database {
     }
 
     /**
-     * Obtiene cuentas por pagar de un proveedor específico.
-     * 
-     * @param string $proveedorId ID del proveedor.
-     * @return array Lista de cuentas por pagar del proveedor.
+     * Obtiene los pagos de una cuenta por pagar
      */
-    public function getByProveedor($proveedorId) {
+    public function getPagosByCuentaId($cuentaId) {
         try {
             $stmt = $this->db->prepare("
-                SELECT cp.*, 
-                       p.nombre_empresa as nombre_proveedor
-                FROM cuentas_pagar cp
-                JOIN proveedores p ON cp.proveedor_id = p.id
-                WHERE cp.proveedor_id = :proveedor_id 
-                  AND cp.activo = 1
-                ORDER BY cp.fecha_vencimiento ASC
+                SELECT 
+                    pc.*
+                FROM pagos_compras pc
+                WHERE pc.cuenta_pagar_id = :cuenta_id
+                AND pc.estado_pago != 'ANULADO'
+                ORDER BY pc.fecha_pago DESC
             ");
-            $stmt->execute([':proveedor_id' => $proveedorId]);
+            $stmt->execute([':cuenta_id' => $cuentaId]);
             return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
         } catch (\Throwable $e) {
-            error_log('Error en AccountsPayable::getByProveedor - ' . $e->getMessage());
+            error_log('Error en AccountsPayable::getPagosByCuentaId - ' . $e->getMessage());
             return [];
         }
     }
 
     /**
-     * Agrega una nueva cuenta por pagar.
-     * 
-     * @param array $datos Datos de la cuenta por pagar:
-     *   - proveedor_id: ID del proveedor
-     *   - factura_numero: Número de factura
-     *   - fecha_emision: Fecha de emisión
-     *   - fecha_vencimiento: Fecha de vencimiento
-     *   - monto_total: Monto total a pagar
-     *   - estado: Estado de la cuenta (Pendiente, Pagada, Vencida)
-     * @return bool True si se insertó correctamente.
+     * Registra un pago a una cuenta por pagar
      */
-    public function add($datos) {
+    public function addPago($datos) {
         try {
+            $this->db->beginTransaction();
+
+            // Insertar el pago
             $stmt = $this->db->prepare("
-                INSERT INTO cuentas_pagar (
-                    proveedor_id, factura_numero, fecha_emision, 
-                    fecha_vencimiento, monto_total, estado
-                ) VALUES (
-                    :proveedor_id, :factura_numero, :fecha_emision, 
-                    :fecha_vencimiento, :monto_total, :estado
+                INSERT INTO pagos_compras (
+                    cuenta_pagar_id, compra_id, fecha_pago, monto, 
+                    tipo_pago, moneda_pago, referencia_bancaria, 
+                    banco, estado_pago, observaciones
+                )
+                VALUES (
+                    :cuenta_pagar_id, :compra_id, :fecha_pago, :monto,
+                    :tipo_pago, :moneda_pago, :referencia_bancaria,
+                    :banco, :estado_pago, :observaciones
                 )
             ");
 
-            return $stmt->execute([
-                ':proveedor_id' => $datos['proveedor_id'],
-                ':factura_numero' => $datos['factura_numero'],
-                ':fecha_emision' => $datos['fecha_emision'],
-                ':fecha_vencimiento' => $datos['fecha_vencimiento'],
-                ':monto_total' => $datos['monto_total'],
-                ':estado' => $datos['estado'] ?? 'Pendiente'
+            $result = $stmt->execute([
+                ':cuenta_pagar_id' => $datos['cuenta_pagar_id'],
+                ':compra_id' => $datos['compra_id'],
+                ':fecha_pago' => $datos['fecha_pago'],
+                ':monto' => $datos['monto'],
+                ':tipo_pago' => $datos['tipo_pago'],
+                ':moneda_pago' => $datos['moneda_pago'],
+                ':referencia_bancaria' => $datos['referencia_bancaria'] ?? null,
+                ':banco' => $datos['banco'] ?? null,
+                ':estado_pago' => $datos['estado_pago'] ?? 'CONFIRMADO',
+                ':observaciones' => $datos['observaciones'] ?? null
             ]);
-        } catch (\Throwable $e) {
-            error_log('Error en AccountsPayable::add - ' . $e->getMessage());
-            throw new Exception('Error al agregar cuenta por pagar: ' . $e->getMessage());
-        }
-    }
 
-    /**
-     * Actualiza una cuenta por pagar existente.
-     * 
-     * @param int $id ID de la cuenta por pagar.
-     * @param array $datos Datos a actualizar.
-     * @return bool True si se actualizó correctamente.
-     */
-    public function update($id, $datos) {
-        try {
-            $stmt = $this->db->prepare("
-                UPDATE cuentas_pagar SET 
-                    proveedor_id = :proveedor_id,
-                    factura_numero = :factura_numero,
-                    fecha_emision = :fecha_emision,
-                    fecha_vencimiento = :fecha_vencimiento,
-                    monto_total = :monto_total,
-                    estado = :estado
-                WHERE id = :id AND activo = 1
-            ");
-
-            $datos['id'] = $id;
-            return $stmt->execute($datos);
-        } catch (\Throwable $e) {
-            error_log('Error en AccountsPayable::update - ' . $e->getMessage());
-            throw new Exception('Error al actualizar cuenta por pagar: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Registra un pago para una cuenta por pagar.
-     * 
-     * @param int $id ID de la cuenta por pagar.
-     * @param float $montoPagado Monto pagado.
-     * @return bool True si se registró correctamente.
-     */
-    public function registrarPago($id, $montoPagado) {
-        try {
-            // Obtener cuenta actual
-            $cuenta = $this->getById($id);
-            if (!$cuenta) {
-                throw new Exception('Cuenta por pagar no encontrada');
+            if (!$result) {
+                throw new Exception('Error al insertar el pago');
             }
 
-            // Actualizar estado si el pago cubre el total
-            $nuevoEstado = ($montoPagado >= $cuenta['monto_total']) ? 'Pagada' : 'Parcial';
-            
-            $stmt = $this->db->prepare("
-                UPDATE cuentas_pagar 
-                SET estado = :estado,
-                    fecha_pago = CURRENT_TIMESTAMP
-                WHERE id = :id
-            ");
+            $pagoId = $this->db->lastInsertId();
 
+            // Verificar si la cuenta está completamente pagada
+            $cuenta = $this->getById($datos['cuenta_pagar_id']);
+            $saldoPendiente = floatval($cuenta['saldo_pendiente']) - floatval($datos['monto']);
+
+            if ($saldoPendiente <= 0) {
+                // Marcar como pagada
+                $this->updateEstado($datos['cuenta_pagar_id'], 'pagado');
+            }
+
+            $this->db->commit();
+            return $pagoId;
+        } catch (\Throwable $e) {
+            $this->db->rollBack();
+            error_log('Error en AccountsPayable::addPago - ' . $e->getMessage());
+            throw new Exception('Error al registrar el pago: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Actualiza el estado de una cuenta por pagar
+     */
+    public function updateEstado($cuentaId, $nuevoEstado) {
+        try {
+            $stmt = $this->db->prepare("
+                UPDATE cuentas_pagar
+                SET estado = :estado,
+                    fec_actualizacion = CURRENT_TIMESTAMP
+                WHERE cuenta_pagar_id = :id
+            ");
             return $stmt->execute([
-                ':id' => $id,
+                ':id' => $cuentaId,
                 ':estado' => $nuevoEstado
             ]);
         } catch (\Throwable $e) {
-            error_log('Error en AccountsPayable::registrarPago - ' . $e->getMessage());
-            throw new Exception('Error al registrar pago: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Elimina lógicamente una cuenta por pagar (marcándola como inactiva).
-     * 
-     * @param int $id ID de la cuenta por pagar a eliminar.
-     * @return bool True si se eliminó correctamente.
-     */
-    public function delete($id) {
-        try {
-            $stmt = $this->db->prepare("UPDATE cuentas_pagar SET activo = 0 WHERE id = :id");
-            return $stmt->execute([':id' => $id]);
-        } catch (\Throwable $e) {
-            error_log('Error en AccountsPayable::delete - ' . $e->getMessage());
+            error_log('Error en AccountsPayable::updateEstado - ' . $e->getMessage());
             return false;
         }
     }
 
     /**
-     * Obtiene estadísticas de cuentas por pagar.
-     * 
-     * @return array Estadísticas con totales por estado.
+     * Anula un pago
+     */
+    public function anularPago($pagoId) {
+        try {
+            $this->db->beginTransaction();
+
+            // Obtener info del pago
+            $stmt = $this->db->prepare("
+                SELECT cuenta_pagar_id, monto 
+                FROM pagos_compras 
+                WHERE pago_compra_id = :id
+            ");
+            $stmt->execute([':id' => $pagoId]);
+            $pago = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$pago) {
+                throw new Exception('Pago no encontrado');
+            }
+
+            // Anular el pago
+            $stmt = $this->db->prepare("
+                UPDATE pagos_compras
+                SET estado_pago = 'ANULADO',
+                    fec_actualizacion = CURRENT_TIMESTAMP
+                WHERE pago_compra_id = :id
+            ");
+            $stmt->execute([':id' => $pagoId]);
+
+            // Verificar estado de la cuenta
+            $cuenta = $this->getById($pago['cuenta_pagar_id']);
+            $saldoPendiente = floatval($cuenta['saldo_pendiente']) + floatval($pago['monto']);
+
+            if ($saldoPendiente > 0 && $cuenta['estado'] == 'pagado') {
+                // Volver a pendiente o vencido
+                $estado = strtotime($cuenta['fecha_vencimiento']) < time() ? 'vencido' : 'pendiente';
+                $this->updateEstado($pago['cuenta_pagar_id'], $estado);
+            }
+
+            $this->db->commit();
+            return true;
+        } catch (\Throwable $e) {
+            $this->db->rollBack();
+            error_log('Error en AccountsPayable::anularPago - ' . $e->getMessage());
+            throw new Exception('Error al anular el pago: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Obtiene estadísticas de cuentas por pagar
      */
     public function getEstadisticas() {
         try {
             $stmt = $this->db->query("
                 SELECT 
-                    COUNT(*) as total_cuentas,
-                    SUM(CASE WHEN estado = 'Pendiente' THEN 1 ELSE 0 END) as pendientes,
-                    SUM(CASE WHEN estado = 'Pagada' THEN 1 ELSE 0 END) as pagadas,
-                    SUM(CASE WHEN estado = 'Vencida' THEN 1 ELSE 0 END) as vencidas,
-                    SUM(CASE WHEN estado = 'Pendiente' THEN monto_total ELSE 0 END) as total_pendiente,
-                    SUM(CASE WHEN estado = 'Pagada' THEN monto_total ELSE 0 END) as total_pagado
-                FROM cuentas_pagar
-                WHERE activo = 1
+                    COUNT(DISTINCT cp.cuenta_pagar_id) as total_cuentas,
+                    SUM(cp.monto) as deuda_original,
+                    SUM(
+                        cp.monto - COALESCE(
+                            (SELECT SUM(pc.monto) 
+                             FROM pagos_compras pc 
+                             WHERE pc.cuenta_pagar_id = cp.cuenta_pagar_id 
+                             AND pc.estado_pago = 'CONFIRMADO'),
+                            0
+                        )
+                    ) as deuda_pendiente,
+                    COUNT(DISTINCT CASE WHEN cp.estado = 'vencido' THEN cp.cuenta_pagar_id END) as cuentas_vencidas,
+                    COUNT(DISTINCT CASE 
+                        WHEN cp.estado = 'pendiente' 
+                        AND cp.fecha_vencimiento BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)
+                        THEN cp.cuenta_pagar_id 
+                    END) as por_vencer_7dias
+                FROM cuentas_pagar cp
+                JOIN compras c ON cp.compra_id = c.compra_id
+                WHERE c.activo = 1
             ");
             return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
         } catch (\Throwable $e) {
