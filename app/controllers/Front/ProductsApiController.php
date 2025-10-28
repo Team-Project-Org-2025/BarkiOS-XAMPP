@@ -1,38 +1,52 @@
 <?php
-// app/controllers/front/ProductsApiController.php
-
 use Barkios\models\Product;
 
 header('Content-Type: application/json; charset=utf-8');
 
-// Instanciar modelo
 try {
     $productModel = new Product();
 } catch (Exception $e) {
+    echo json_encode(['success' => false, 'message' => 'Error al conectar con la base de datos.']);
+    exit;
+}
+
+// ================================
+// PARÁMETROS (POST)
+// ================================
+$categoria = $_POST['categoria'] ?? null;
+$limit = isset($_POST['limit']) ? (int)$_POST['limit'] : null;
+
+// ================================
+// CONSULTA SEGÚN PARÁMETROS
+// ================================
+try {
+    if ($categoria) {
+        $products = $productModel->getByCategoria($categoria, $limit ?? 12);
+    } elseif ($limit) {
+        $products = $productModel->getLatest($limit);
+    } else {
+        $products = $productModel->getDisponibles();
+    }
+
+    foreach ($products as &$p) {
+        $p['id'] = (int)$p['prenda_id'];
+        unset($p['prenda_id']);
+
+        if (empty($p['imagen'])) {
+            $p['imagen'] = "public/assets/img/no-image.png";
+        }
+    }
+
+    echo json_encode([
+        'success' => true,
+        'count' => count($products),
+        'products' => $products
+    ]);
+    exit;
+} catch (Exception $e) {
     echo json_encode([
         'success' => false,
-        'message' => 'Error al conectar con la BD'
+        'message' => 'Error interno: ' . $e->getMessage()
     ]);
-    exit();
+    exit;
 }
-
-// Obtener productos disponibles al público
-$products = $productModel->getDisponibles(); // ✅ Solo los que se pueden mostrar
-
-// Transformar datos para el Front
-foreach ($products as &$p) {
-    $p['id'] = (int)$p['prenda_id'];
-    unset($p['prenda_id']); // No queremos esto en el front
-
-    // Imagen: si viene vacía, mandar un placeholder
-    if (empty($p['imagen'])) {
-        $p['imagen'] = "/assets/img/no-image.png";
-    }
-}
-
-echo json_encode([
-    'success' => true,
-    'products' => $products,
-    'count' => count($products)
-]);
-exit();

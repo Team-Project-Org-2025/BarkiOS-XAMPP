@@ -23,7 +23,7 @@ require_once __DIR__ . '/../partials/navbar.php';
                         <div class="info-card-icon">
                             <i class="fas fa-sparkles"></i>
                         </div>
-                        <h2 class="mb-4">NUEVA COLECCIÓN PRIMAVERA 2024</h2>
+                        <h2 class="mb-4">NUEVA COLECCIÓN NOVIEMBRE 2025</h2>
                         <p class="lead mb-4">Descubre las últimas tendencias en moda femenina.</p>
                         <p>Cada semana agregamos nuevas prendas exclusivas a nuestra colección. Recuerda que cada pieza es única y no se repite, así que si algo te encanta, ¡no lo dejes pasar!</p>
                         <a href="/BarkiOS/productos" class="btn btn-dark mt-3">Ver Toda la Colección</a>
@@ -40,7 +40,6 @@ require_once __DIR__ . '/../partials/navbar.php';
     <section class="py-5 bg-light">
         <div class="container">
             <h2 class="text-center mb-5" data-aos="fade-up">
-                <i class="fas fa-star me-2 text-warning"></i>
                 RECIÉN LLEGADOS
             </h2>
             
@@ -54,7 +53,6 @@ require_once __DIR__ . '/../partials/navbar.php';
 
             <!-- Products Grid -->
             <div class="row g-4" id="latest-products" style="display: none;">
-                <!-- Los productos se cargarán dinámicamente aquí -->
             </div>
 
             <!-- Error Message -->
@@ -155,6 +153,8 @@ require_once __DIR__ . '/../partials/navbar.php';
 <!-- AOS Animation Library -->
 <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 <!-- Main JS con funcionalidad de productos -->
-<script src="/BarkiOS/public/assets/js/main.js"></script>
+
+<script src="/BarkiOS/public/assets/js/novedades.js"></script>
+
 </body>
 </html>
