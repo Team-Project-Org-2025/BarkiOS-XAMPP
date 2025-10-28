@@ -10167,3 +10167,156 @@
 [2025-10-28 04:00:30] Request Key | Data: POST_delete_ajax
 [2025-10-28 04:00:30] Ejecutando handleDeleteAjax
 [2025-10-28 04:00:30] === handleDeleteAjax ===
+[2025-10-28 04:01:38] === INICIO DE REQUEST ===
+[2025-10-28 04:01:38] GET | Data: Array
+(
+)
+
+[2025-10-28 04:01:38] POST | Data: Array
+(
+)
+
+[2025-10-28 04:01:38] FILES | Data: Array
+(
+)
+
+[2025-10-28 04:01:38] Ruta ImageUploader | Data: C:\xampp\htdocs\BarkiOS\app\controllers\Admin/../../helpers/ImageUploader.php
+[2025-10-28 04:01:38] ImageUploader cargado correctamente
+[2025-10-28 04:01:38] Modelo Product instanciado correctamente
+[2025-10-28 04:01:38] Entrando a handleRequest
+[2025-10-28 04:01:38] Action | Data: 
+[2025-10-28 04:01:38] Is AJAX | Data: NO
+[2025-10-28 04:01:39] === INICIO DE REQUEST ===
+[2025-10-28 04:01:39] GET | Data: Array
+(
+    [action] => get_products
+)
+
+[2025-10-28 04:01:39] POST | Data: Array
+(
+)
+
+[2025-10-28 04:01:39] FILES | Data: Array
+(
+)
+
+[2025-10-28 04:01:39] Ruta ImageUploader | Data: C:\xampp\htdocs\BarkiOS\app\controllers\Admin/../../helpers/ImageUploader.php
+[2025-10-28 04:01:39] ImageUploader cargado correctamente
+[2025-10-28 04:01:39] Modelo Product instanciado correctamente
+[2025-10-28 04:01:39] Entrando a handleRequest
+[2025-10-28 04:01:39] Action | Data: get_products
+[2025-10-28 04:01:39] Is AJAX | Data: YES
+[2025-10-28 04:01:39] Request Key | Data: GET_get_products
+[2025-10-28 04:01:39] Ejecutando getProductsAjax
+[2025-10-28 04:01:39] === getProductsAjax ===
+[2025-10-28 04:01:39] Productos obtenidos | Data: 1
+[2025-10-28 04:01:39] === INICIO DE REQUEST ===
+[2025-10-28 04:01:39] GET | Data: Array
+(
+)
+
+[2025-10-28 04:01:39] POST | Data: Array
+(
+)
+
+[2025-10-28 04:01:39] FILES | Data: Array
+(
+)
+
+[2025-10-28 04:01:39] Ruta ImageUploader | Data: C:\xampp\htdocs\BarkiOS\app\controllers\Admin/../../helpers/ImageUploader.php
+[2025-10-28 04:01:39] ImageUploader cargado correctamente
+[2025-10-28 04:01:39] Modelo Product instanciado correctamente
+[2025-10-28 04:01:39] Entrando a handleRequest
+[2025-10-28 04:01:39] Action | Data: 
+[2025-10-28 04:01:39] Is AJAX | Data: NO
+[2025-10-28 04:01:39] === INICIO DE REQUEST ===
+[2025-10-28 04:01:39] GET | Data: Array
+(
+    [action] => get_products
+)
+
+[2025-10-28 04:01:39] POST | Data: Array
+(
+)
+
+[2025-10-28 04:01:39] FILES | Data: Array
+(
+)
+
+[2025-10-28 04:01:39] Ruta ImageUploader | Data: C:\xampp\htdocs\BarkiOS\app\controllers\Admin/../../helpers/ImageUploader.php
+[2025-10-28 04:01:39] ImageUploader cargado correctamente
+[2025-10-28 04:01:39] Modelo Product instanciado correctamente
+[2025-10-28 04:01:39] Entrando a handleRequest
+[2025-10-28 04:01:39] Action | Data: get_products
+[2025-10-28 04:01:39] Is AJAX | Data: YES
+[2025-10-28 04:01:39] Request Key | Data: GET_get_products
+[2025-10-28 04:01:39] Ejecutando getProductsAjax
+[2025-10-28 04:01:39] === getProductsAjax ===
+[2025-10-28 04:01:39] Productos obtenidos | Data: 1
+[2025-10-28 04:01:42] === INICIO DE REQUEST ===
+[2025-10-28 04:01:42] GET | Data: Array
+(
+    [action] => delete_ajax
+)
+
+[2025-10-28 04:01:42] POST | Data: Array
+(
+    [prenda_id] => 213123469
+)
+
+[2025-10-28 04:01:42] FILES | Data: Array
+(
+)
+
+[2025-10-28 04:01:42] Ruta ImageUploader | Data: C:\xampp\htdocs\BarkiOS\app\controllers\Admin/../../helpers/ImageUploader.php
+[2025-10-28 04:01:42] ImageUploader cargado correctamente
+[2025-10-28 04:01:42] Modelo Product instanciado correctamente
+[2025-10-28 04:01:42] Entrando a handleRequest
+[2025-10-28 04:01:42] Action | Data: delete_ajax
+[2025-10-28 04:01:42] Is AJAX | Data: YES
+[2025-10-28 04:01:42] Request Key | Data: POST_delete_ajax
+[2025-10-28 04:01:42] Ejecutando handleDeleteAjax
+[2025-10-28 04:01:42] === handleDeleteAjax ===
+[2025-10-28 04:01:47] === INICIO DE REQUEST ===
+[2025-10-28 04:01:47] GET | Data: Array
+(
+)
+
+[2025-10-28 04:01:47] POST | Data: Array
+(
+)
+
+[2025-10-28 04:01:47] FILES | Data: Array
+(
+)
+
+[2025-10-28 04:01:47] Ruta ImageUploader | Data: C:\xampp\htdocs\BarkiOS\app\controllers\Admin/../../helpers/ImageUploader.php
+[2025-10-28 04:01:47] ImageUploader cargado correctamente
+[2025-10-28 04:01:47] Modelo Product instanciado correctamente
+[2025-10-28 04:01:47] Entrando a handleRequest
+[2025-10-28 04:01:47] Action | Data: 
+[2025-10-28 04:01:47] Is AJAX | Data: NO
+[2025-10-28 04:01:47] === INICIO DE REQUEST ===
+[2025-10-28 04:01:47] GET | Data: Array
+(
+    [action] => get_products
+)
+
+[2025-10-28 04:01:47] POST | Data: Array
+(
+)
+
+[2025-10-28 04:01:47] FILES | Data: Array
+(
+)
+
+[2025-10-28 04:01:47] Ruta ImageUploader | Data: C:\xampp\htdocs\BarkiOS\app\controllers\Admin/../../helpers/ImageUploader.php
+[2025-10-28 04:01:47] ImageUploader cargado correctamente
+[2025-10-28 04:01:47] Modelo Product instanciado correctamente
+[2025-10-28 04:01:47] Entrando a handleRequest
+[2025-10-28 04:01:47] Action | Data: get_products
+[2025-10-28 04:01:47] Is AJAX | Data: YES
+[2025-10-28 04:01:47] Request Key | Data: GET_get_products
+[2025-10-28 04:01:47] Ejecutando getProductsAjax
+[2025-10-28 04:01:47] === getProductsAjax ===
+[2025-10-28 04:01:47] Productos obtenidos | Data: 0
