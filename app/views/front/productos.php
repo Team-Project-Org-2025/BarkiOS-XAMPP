@@ -28,118 +28,58 @@
                     <!-- Sidebar Filters -->
                     <div class="col-lg-3 mb-4 mb-lg-0">
                         <div class="filters-sidebar" data-aos="fade-right">
-                            <div class="filter-section mb-4">
-                                <h4 class="mb-3">Categorías</h4>
-                                <div class="category-filters">
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input category-filter" type="checkbox" value="todos" id="category-todos" checked>
-                                        <label class="form-check-label" for="category-todos">
-                                            Todos los productos
-                                        </label>
+                                    <div class="filter-widget mb-4" data-aos="fade-up">
+                                        <h5 class="fw-bold mb-3">Categorías</h5>
+
+                                        <div class="form-check">
+                                            <input class="form-check-input category-filter" type="checkbox" id="category-todos" value="todos" checked>
+                                            <label class="form-check-label" for="category-todos">
+                                                Todas las categorías
+                                            </label>
+                                        </div>
+
+                                        <div class="form-check">
+                                            <input class="form-check-input category-filter" type="checkbox" id="category-formal" value="Formal">
+                                            <label class="form-check-label" for="category-formal">Formal</label>
+                                        </div>
+
+                                        <div class="form-check">
+                                            <input class="form-check-input category-filter" type="checkbox" id="category-casual" value="Casual">
+                                            <label class="form-check-label" for="category-casual">Casual</label>
+                                        </div>
+
+                                        <div class="form-check">
+                                            <input class="form-check-input category-filter" type="checkbox" id="category-deportivo" value="Deportivo">
+                                            <label class="form-check-label" for="category-deportivo">Deportivo</label>
+                                        </div>
+
+                                        <div class="form-check">
+                                            <input class="form-check-input category-filter" type="checkbox" id="category-invierno" value="Invierno">
+                                            <label class="form-check-label" for="category-invierno">Invierno</label>
+                                        </div>
+
+                                        <div class="form-check">
+                                            <input class="form-check-input category-filter" type="checkbox" id="category-verano" value="Verano">
+                                            <label class="form-check-label" for="category-verano">Verano</label>
+                                        </div>
+
+                                        <div class="form-check">
+                                            <input class="form-check-input category-filter" type="checkbox" id="category-fiesta" value="Fiesta">
+                                            <label class="form-check-label" for="category-fiesta">Fiesta</label>
+                                        </div>
                                     </div>
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input category-filter" type="checkbox" value="blusas" id="category-blusas">
-                                        <label class="form-check-label" for="category-blusas">
-                                            Blusas
-                                        </label>
-                                    </div>
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input category-filter" type="checkbox" value="camisas" id="category-camisas">
-                                        <label class="form-check-label" for="category-camisas">
-                                            Camisas
-                                        </label>
-                                    </div>
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input category-filter" type="checkbox" value="tshirt" id="category-tshirt">
-                                        <label class="form-check-label" for="category-tshirt">
-                                            T-shirt
-                                        </label>
-                                    </div>
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input category-filter" type="checkbox" value="bodys" id="category-bodys">
-                                        <label class="form-check-label" for="category-bodys">
-                                            Bodys
-                                        </label>
-                                    </div>
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input category-filter" type="checkbox" value="chaquetas" id="category-chaquetas">
-                                        <label class="form-check-label" for="category-chaquetas">
-                                            Chaquetas
-                                        </label>
-                                    </div>
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input category-filter" type="checkbox" value="cardigans" id="category-cardigans">
-                                        <label class="form-check-label" for="category-cardigans">
-                                            Cardigans
-                                        </label>
-                                    </div>
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input category-filter" type="checkbox" value="blazer" id="category-blazer">
-                                        <label class="form-check-label" for="category-blazer">
-                                            Blazer
-                                        </label>
-                                    </div>
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input category-filter" type="checkbox" value="jeans" id="category-jeans">
-                                        <label class="form-check-label" for="category-jeans">
-                                            Pantalones de jeans
-                                        </label>
-                                    </div>
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input category-filter" type="checkbox" value="pantalones" id="category-pantalones">
-                                        <label class="form-check-label" for="category-pantalones">
-                                            Pantalones de vestir
-                                        </label>
-                                    </div>
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input category-filter" type="checkbox" value="traje-bano" id="category-traje-bano">
-                                        <label class="form-check-label" for="category-traje-bano">
-                                            Traje de baño
-                                        </label>
-                                    </div>
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input category-filter" type="checkbox" value="ropa-playera" id="category-ropa-playera">
-                                        <label class="form-check-label" for="category-ropa-playera">
-                                            Ropa playera
-                                        </label>
-                                    </div>
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input category-filter" type="checkbox" value="sets" id="category-sets">
-                                        <label class="form-check-label" for="category-sets">
-                                            Sets
-                                        </label>
-                                    </div>
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input category-filter" type="checkbox" value="vestidos" id="category-vestidos">
-                                        <label class="form-check-label" for="category-vestidos">
-                                            Vestidos
-                                        </label>
-                                    </div>
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input category-filter" type="checkbox" value="bragas" id="category-bragas">
-                                        <label class="form-check-label" for="category-bragas">
-                                            Bragas
-                                        </label>
-                                    </div>
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input category-filter" type="checkbox" value="deportivo" id="category-deportivo">
-                                        <label class="form-check-label" for="category-deportivo">
-                                            Deportivo
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
+
 
                             <div class="filter-section mb-4">
                                 <h4 class="mb-3">Precio</h4>
                                 <div class="price-range">
                                     <div class="d-flex justify-content-between mb-2">
                                         <span>$0</span>
-                                        <span>$500</span>
+                                        <span>$100</span>
                                     </div>
-                                    <input type="range" class="form-range" min="0" max="500" step="10" id="price-range">
+                                    <input type="range" class="form-range" min="0" max="100" step="2" id="price-range">
                                     <div class="mt-2">
-                                        <span>Precio máximo: $<span id="price-value">500</span></span>
+                                        <span>Precio máximo: $<span id="price-value">100</span></span>
                                     </div>
                                 </div>
                             </div>
@@ -219,11 +159,6 @@
                                 <div class="product-meta">
                                     <p class="mb-1"><strong>SKU:</strong> <span id="quickViewSku"></span></p>
                                     <p class="mb-1"><strong>Categoría:</strong> <span id="quickViewCategoryText"></span></p>
-                                    <p class="mb-0"><strong>Compartir:</strong> 
-                                        <a href="#" class="text-dark me-2"><i class="fab fa-facebook-f"></i></a>
-                                        <a href="#" class="text-dark me-2"><i class="fab fa-twitter"></i></a>
-                                        <a href="#" class="text-dark me-2"><i class="fab fa-pinterest"></i></a>
-                                        <a href="#" class="text-dark"><i class="fab fa-instagram"></i></a>
                                     </p>
                                 </div>
                             </div>
