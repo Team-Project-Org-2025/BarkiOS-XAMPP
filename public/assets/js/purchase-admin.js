@@ -231,11 +231,20 @@ $(document).ready(function() {
                     showError(res.message);
                 }
             },
-            error: () => showError('Error al guardar la compra'),
-            complete: function() {
-                btn.prop('disabled', false).find('.spinner-border').addClass('d-none');
-                btn.find('.btn-text').html('<i class="fas fa-save me-1"></i>Guardar Compra');
-            }
+            error: function(xhr) {
+                // AGREGA ESTO PARA VER EL ERROR
+                console.error('Error completo:', xhr);
+                console.error('Respuesta:', xhr.responseText);
+                let errorMsg = 'Error desconocido';
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    errorMsg = response.message || errorMsg;
+                } catch(e) {
+                    errorMsg = xhr.responseText || errorMsg;
+                }
+                showError(errorMsg);
+            },
+            complete: () => btn.prop('disabled', false).find('.spinner-border').addClass('d-none')
         });
     });
 
@@ -285,6 +294,19 @@ $(document).ready(function() {
                 } else {
                     showError(res.message);
                 }
+            },
+            error: function(xhr) {
+                // AGREGA ESTO PARA VER EL ERROR
+                console.error('Error completo:', xhr);
+                console.error('Respuesta:', xhr.responseText);
+                let errorMsg = 'Error desconocido';
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    errorMsg = response.message || errorMsg;
+                } catch(e) {
+                    errorMsg = xhr.responseText || errorMsg;
+                }
+                showError(errorMsg);
             },
             complete: () => btn.prop('disabled', false).find('.spinner-border').addClass('d-none')
         });
@@ -366,14 +388,28 @@ $(document).ready(function() {
     function pintarMontoPagadoDashboard() {
         let totalPagado = 0;
         let totalPendiente = 0;
+        let montoTotal = 0;
 
         allPurchases.forEach(p => {
             totalPagado    += parseFloat(p.total_pagado || 0);
             totalPendiente += parseFloat(p.saldo_pendiente || 0);
+            montoTotal     += parseFloat(p.monto_total || 0);
         });
 
+        // Actualizar textos
         $('#statMontoPagado').text('Pagado: $' + totalPagado.toFixed(2));
         $('#statSaldoPendiente').text('$' + totalPendiente.toFixed(2));
+        $('#statMontoTotal').text('$' + montoTotal.toFixed(2));
+
+        // Calcular porcentaje pagado
+        const porcentajePagado = montoTotal > 0 ? (totalPagado / montoTotal) * 100 : 0;
+
+        // Actualizar círculo SVG
+        const circunferencia = 220; // stroke-dasharray del círculo
+        const offset = circunferencia - (circunferencia * porcentajePagado / 100);
+
+        $('#progressBar').css('stroke-dashoffset', offset);
+        $('#progressPercent').text(Math.round(porcentajePagado) + '%');
     }
 
     function loadStats() {
