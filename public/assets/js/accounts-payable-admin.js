@@ -1,5 +1,6 @@
 // ============================================
-// ACCOUNTS PAYABLE ADMIN JS
+// ACCOUNTS PAYABLE ADMIN JS - MEJORADO
+// Incluye: USD/BS, validaciones regex, filtrado de cuentas pagadas
 // ============================================
 $(document).ready(function() {
     let allAccounts = [];
@@ -7,7 +8,7 @@ $(document).ready(function() {
     
     // Constantes de monedas
     const METODOS_USD = ["EFECTIVO", "TRANSFERENCIA"];
-    const METODOS_BS = ["EFECTIVO", "PAGOMOVIL", "TRANSFERENCIA"];
+    const METODOS_BS = ["EFECTIVO", "PAGO MOVIL", "TRANSFERENCIA"];
     const MARGEN_ERROR_BS = 10; // Margen de ±10 Bs
 
     // ============================================
@@ -21,9 +22,15 @@ $(document).ready(function() {
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
             success: function(data) {
                 if (data.success && data.data.length) {
-                    allAccounts = data.data;
-                    renderAccounts(allAccounts);
-                    updateStats();
+                    // ✅ FILTRAR CUENTAS PAGADAS (saldo_pendiente <= 0)
+                    allAccounts = data.data.filter(c => parseFloat(c.saldo_pendiente || 0) > 0);
+                    
+                    if (allAccounts.length > 0) {
+                        renderAccounts(allAccounts);
+                        updateStats();
+                    } else {
+                        $('#accountsTableBody').html('<tr><td colspan="9" class="text-center py-4"><i class="fas fa-inbox fa-3x text-muted mb-3"></i><p>No hay cuentas por pagar pendientes</p></td></tr>');
+                    }
                 } else {
                     $('#accountsTableBody').html('<tr><td colspan="9" class="text-center py-4"><i class="fas fa-inbox fa-3x text-muted mb-3"></i><p>No hay cuentas por pagar</p></td></tr>');
                 }
@@ -49,7 +56,7 @@ $(document).ready(function() {
                 estadoClass = 'vencida';
                 estadoBadge = '<span class="badge bg-danger badge-estado">Vencida</span>';
             } else if (c.estado === 'pagado') {
-                estadoBadge = '<span class="badge bg-secondary badge-estado">Pagada</span>';
+                estadoBadge = '<span class="badge bg-secondary badge-estado">Pagando</span>';
             } else {
                 const diasVencer = Math.ceil((new Date(c.fecha_vencimiento) - new Date()) / (1000 * 60 * 60 * 24));
                 if (diasVencer <= 7 && diasVencer > 0) {
@@ -136,42 +143,243 @@ $(document).ready(function() {
     }
 
     // ============================================
-    // REGISTRAR PAGO
+    // REGISTRAR PAGO - MEJORADO CON USD/BS
     // ============================================
     window.addPayment = function(cuentaId, proveedor, factura, montoTotal, saldo) {
         $('#paymentCuentaId').val(cuentaId);
         $('#paymentProveedor').text(proveedor);
         $('#paymentFactura').text(factura);
         $('#paymentMontoTotal').text(montoTotal.toFixed(2));
-        $('#paymentSaldo').text(saldo.toFixed(2));
-        $('#paymentMonto').attr('max', saldo).val('');
+        $('#paymentSaldo').html(`
+            <strong>$${saldo.toFixed(2)}</strong>
+            <br><small class="text-muted">≈ Bs ${(saldo * DOLAR_BCV_RATE).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</small>
+        `);
+        
         currentSaldo = saldo;
         
+        $('#addPaymentForm')[0].reset();
+        $('#paymentMontoGeneral').val('').removeClass('is-valid is-invalid');
+        $('#paymentMonto').val('');
+        $('#equivInfo').html('').hide();
+        $('#paymentTipo').empty().removeClass('is-valid is-invalid');
+        
+        cambiarMoneda("USD");
         $('#addPaymentModal').modal('show');
     };
 
-    // Mostrar/ocultar campos según tipo de pago
-    $('#paymentTipo').on('change', function() {
-        const tipo = $(this).val();
-        if (tipo === 'TRANSFERENCIA' || tipo === 'PAGO_MOVIL' || tipo === 'CHEQUE' || tipo === 'ZELLE') {
-            $('#referenciaField, #bancoField').show();
-        } else {
-            $('#referenciaField, #bancoField').hide();
+    // ============================================
+    // CAMBIO DE MONEDA
+    // ============================================
+    $('#paymentMoneda').on('change', function() {
+        const moneda = $(this).val();
+        cambiarMoneda(moneda);
+        
+        if ($('#paymentMontoGeneral').val()) {
+            $('#paymentMontoGeneral').trigger('input');
         }
     });
 
-    // Submit pago
+    function cambiarMoneda(moneda) {
+        const $tipoPago = $('#paymentTipo');
+        $tipoPago.empty().removeClass('is-valid is-invalid');
+        $tipoPago.append(`<option value="" disabled selected>Seleccione un método de pago</option>`);
+
+        const metodos = moneda === "USD" ? METODOS_USD : METODOS_BS;
+        metodos.forEach(m => $tipoPago.append(`<option value="${m}">${m}</option>`));
+        
+        $('#referenciaField, #bancoField').hide();
+        $('#paymentReferencia, #paymentBanco').val('').removeClass('is-valid is-invalid');
+
+        const $symbol = $('#currency-symbol');
+        if (moneda === "BS") {
+            $symbol.text('Bs');
+            $('#equivInfo').show();
+        } else {
+            $symbol.text('$');
+            $('#equivInfo').hide().html('');
+        }
+    }
+
+    // ============================================
+    // VALIDACIÓN EN TIEMPO REAL
+    // ============================================
+    $('#paymentMontoGeneral').on('input', function() {
+        const moneda = $('#paymentMoneda').val();
+        const valorIngresado = parseFloat($(this).val());
+
+        $(this).siblings('.invalid-feedback').remove();
+
+        if (!valorIngresado || valorIngresado <= 0 || isNaN(valorIngresado)) {
+            $(this).addClass('is-invalid').removeClass('is-valid');
+            $(this).after('<div class="invalid-feedback">Ingrese un monto válido</div>');
+            $('#paymentMonto').val('');
+            $('#equivInfo').html('').hide();
+            return;
+        }
+
+        let montoUSD = 0;
+        let esValido = false;
+
+        if (moneda === "USD") {
+            montoUSD = valorIngresado;
+            
+            if (montoUSD > currentSaldo) {
+                $(this).addClass('is-invalid').removeClass('is-valid');
+                $(this).after(`<div class="invalid-feedback">El monto excede el saldo pendiente ($${currentSaldo.toFixed(2)})</div>`);
+            } else {
+                esValido = true;
+            }
+
+        } else if (moneda === "BS") {
+            montoUSD = valorIngresado / DOLAR_BCV_RATE;
+            const diferenciaBs = (montoUSD - currentSaldo) * DOLAR_BCV_RATE;
+
+            if (Math.abs(diferenciaBs) <= MARGEN_ERROR_BS) {
+                montoUSD = currentSaldo;
+                esValido = true;
+                
+                $('#equivInfo').html(`
+                    <span class="text-success">
+                        <i class="fas fa-check-circle me-1"></i>
+                        Equivale a: <strong>$${montoUSD.toFixed(2)}</strong>
+                        ${Math.abs(diferenciaBs) > 0.01 ? '<small class="d-block">Se ajustará al saldo exacto</small>' : ''}
+                    </span>
+                `).show();
+                
+            } else if (diferenciaBs > MARGEN_ERROR_BS) {
+                $(this).addClass('is-invalid').removeClass('is-valid');
+                $(this).after(`<div class="invalid-feedback">El monto excede el saldo pendiente</div>`);
+                $('#equivInfo').html(`<span class="text-danger">Equivale a: $${montoUSD.toFixed(2)}</span>`).show();
+                
+            } else {
+                esValido = true;
+                $('#equivInfo').html(`<span class="text-info">Equivale a: <strong>$${montoUSD.toFixed(2)}</strong></span>`).show();
+            }
+        }
+
+        if (esValido) {
+            $(this).addClass('is-valid').removeClass('is-invalid');
+            $('#paymentMonto').val(montoUSD.toFixed(4));
+        } else {
+            $('#paymentMonto').val('');
+        }
+    });
+
+    // ============================================
+    // VALIDACIONES DE TIPO DE PAGO
+    // ============================================
+    $('#paymentTipo').on('change', function() {
+        const tipo = $(this).val();
+        const $refBancaria = $('#referenciaField');
+        const $banco = $('#bancoField');
+        const $refInput = $('#paymentReferencia');
+        const $bancoInput = $('#paymentBanco');
+
+        if (!tipo) {
+            $(this).addClass('is-invalid').removeClass('is-valid');
+        } else {
+            $(this).addClass('is-valid').removeClass('is-invalid');
+        }
+
+        if (tipo === 'EFECTIVO' || !tipo) {
+            $refBancaria.hide();
+            $banco.hide();
+            $refInput.val('').removeClass('is-valid is-invalid');
+            $bancoInput.val('').removeClass('is-valid is-invalid');
+        } else {
+            $refBancaria.show();
+            $banco.show();
+        }
+    });
+
+    // ============================================
+    // VALIDACIONES CON REGEX
+    // ============================================
+    const REGEX_REFERENCIA = /^\d{8,10}$/;
+    const REGEX_BANCO = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s\-\.]{3,30}$/;
+
+    $('#paymentReferencia').on('input', function() {
+        if (!$(this).is(':visible')) return;
+
+        const valor = $(this).val().trim();
+        $(this).siblings('.invalid-feedback').remove();
+
+        if (valor.length === 0) {
+            $(this).addClass('is-invalid').removeClass('is-valid');
+            $(this).after('<div class="invalid-feedback">La referencia bancaria es requerida</div>');
+        } else if (!REGEX_REFERENCIA.test(valor)) {
+            $(this).addClass('is-invalid').removeClass('is-valid');
+            if (!/^\d+$/.test(valor)) {
+                $(this).after('<div class="invalid-feedback">Solo se permiten números</div>');
+            } else if (valor.length < 8) {
+                $(this).after('<div class="invalid-feedback">Mínimo 8 dígitos</div>');
+            } else {
+                $(this).after('<div class="invalid-feedback">Máximo 10 dígitos</div>');
+            }
+        } else {
+            $(this).addClass('is-valid').removeClass('is-invalid');
+        }
+    });
+
+    $('#paymentBanco').on('input', function() {
+        if (!$(this).is(':visible')) return;
+
+        const valor = $(this).val().trim();
+        $(this).siblings('.invalid-feedback').remove();
+
+        if (valor.length === 0) {
+            $(this).addClass('is-invalid').removeClass('is-valid');
+            $(this).after('<div class="invalid-feedback">El nombre del banco es requerido</div>');
+        } else if (!REGEX_BANCO.test(valor)) {
+            $(this).addClass('is-invalid').removeClass('is-valid');
+            if (valor.length < 3) {
+                $(this).after('<div class="invalid-feedback">Mínimo 3 caracteres</div>');
+            } else if (valor.length > 30) {
+                $(this).after('<div class="invalid-feedback">Máximo 30 caracteres (actual: ' + valor.length + ')</div>');
+            } else {
+                $(this).after('<div class="invalid-feedback">Solo se permiten letras, números, espacios, guiones y puntos</div>');
+            }
+        } else {
+            $(this).addClass('is-valid').removeClass('is-invalid');
+        }
+    });
+
+    // ============================================
+    // SUBMIT CON CONVERSIÓN A USD
+    // ============================================
     $('#addPaymentForm').on('submit', function(e) {
         e.preventDefault();
         
-        const monto = parseFloat($('#paymentMonto').val());
+        const montoUSD = parseFloat($('#paymentMonto').val());
         
-        if (monto <= 0) {
-            return Swal.fire({ icon: 'error', title: 'Error', text: 'El monto debe ser mayor a 0' });
+        if (!montoUSD || montoUSD <= 0) {
+            return Swal.fire({ icon: 'error', title: 'Error', text: 'El monto debe ser al acorde al saldo pendiente' });
         }
         
-        if (monto > currentSaldo) {
-            return Swal.fire({ icon: 'error', title: 'Error', text: 'El monto no puede ser mayor al saldo pendiente' });
+        if (!$('#paymentTipo').val()) {
+            return Swal.fire({ icon: 'error', title: 'Error', text: 'Seleccione un método de pago' });
+        }
+
+        // Validar campos bancarios si son visibles
+        const tipoPago = $('#paymentTipo').val();
+        if (tipoPago !== 'EFECTIVO') {
+            const refBancaria = $('#paymentReferencia').val().trim();
+            const banco = $('#paymentBanco').val();
+
+            if (!refBancaria || !REGEX_REFERENCIA.test(refBancaria)) {
+                $('#paymentReferencia').addClass('is-invalid');
+                return Swal.fire({ icon: 'error', title: 'Error', text: 'Referencia bancaria inválida (8-10 dígitos)' });
+            }
+
+            if (!banco || banco.trim().length < 4 || !REGEX_BANCO.test(banco.trim())) {
+                $('#paymentBanco').addClass('is-invalid');
+                return Swal.fire({ 
+                    icon: 'error', 
+                    title: 'Error', 
+                    text: 'El nombre del banco debe tener al menos 4 caracteres válidos' 
+                });
+            }
+
         }
         
         const btn = $('#btnGuardarPago');
@@ -237,7 +445,7 @@ $(document).ready(function() {
                                     </div>
                                     <div class="col-md-3">
                                         <small class="text-muted">Monto</small>
-                                        <br><strong class="text-success">${parseFloat(p.monto).toFixed(2)}</strong>
+                                        <br><strong class="text-success">$${parseFloat(p.monto).toFixed(2)}</strong>
                                     </div>
                                     <div class="col-md-3">
                                         <small class="text-muted">Tipo</small>
@@ -276,7 +484,7 @@ $(document).ready(function() {
                                                 <td><code>${pr.codigo_prenda}</code></td>
                                                 <td>${pr.nombre}</td>
                                                 <td><span class="badge bg-info">${pr.categoria}</span></td>
-                                                <td class="text-end">${parseFloat(pr.precio_costo).toFixed(2)}</td>
+                                                <td class="text-end">$${parseFloat(pr.precio_costo).toFixed(2)}</td>
                                                 <td class="text-center">
                                                     ${pr.estado === 'DISPONIBLE' 
                                                         ? '<span class="badge bg-success">Disponible</span>' 
@@ -306,16 +514,16 @@ $(document).ready(function() {
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between mb-2">
                                             <span>Monto Total:</span>
-                                            <strong>${total.toFixed(2)}</strong>
+                                            <strong>$${total.toFixed(2)}</strong>
                                         </div>
                                         <div class="d-flex justify-content-between mb-2">
                                             <span>Total Pagado:</span>
-                                            <strong class="text-success">${pagado.toFixed(2)}</strong>
+                                            <strong class="text-success">$${pagado.toFixed(2)}</strong>
                                         </div>
                                         <hr>
                                         <div class="d-flex justify-content-between">
                                             <span><strong>Saldo Pendiente:</strong></span>
-                                            <strong class="${saldo > 0 ? 'text-danger' : 'text-success'} fs-5">${saldo.toFixed(2)}</strong>
+                                            <strong class="${saldo > 0 ? 'text-danger' : 'text-success'} fs-5">$${saldo.toFixed(2)}</strong>
                                         </div>
                                     </div>
                                 </div>
@@ -383,6 +591,15 @@ $(document).ready(function() {
             return c.estado === estado;
         });
         renderAccounts(filtered);
+    });
+
+    // Limpiar modales al cerrar
+    $('.modal').on('hidden.bs.modal', function() {
+        $(this).find('form').each(function() {
+            if (this.reset) this.reset();
+            $(this).find('.is-valid, .is-invalid').removeClass('is-valid is-invalid');
+            $(this).find('.invalid-feedback').remove();
+        });
     });
 
     // ============================================
