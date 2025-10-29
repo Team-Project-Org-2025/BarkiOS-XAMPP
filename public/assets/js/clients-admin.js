@@ -2,6 +2,46 @@ $(document).ready(function () {
     const $clientsTableBody = $('#clientesTableBody');
     const $addClientForm = $('#addClientForm');
     const $editClientForm = $('#editClientForm');
+        // delegación = no se re-bindea en cada recarga
+    $(document).on('click', '.btn-eliminar', handleDelete);
+    $(document).on('click', '.btn-editar', e => loadClientForEdit($(e.currentTarget)));
+
+    let dt = null; // instancia global datatable
+    
+        const renderSpinner = () => `
+    <tr><td colspan="6" class="text-center py-3">
+        <div class="spinner-border text-primary"></div> Cargando...
+    </td></tr>`;
+
+    const renderEmpty = () => `
+    <tr><td colspan="6" class="text-center py-3">
+        No hay clientes disponibles
+    </td></tr>`;
+
+    const buildRow = c => `
+    <tr id="cliente-${escapeHtml(c.cliente_ced)}">
+        <td class="text-center">${escapeHtml(c.cliente_ced)}</td>
+        <td>${escapeHtml(c.nombre_cliente)}</td>
+        <td>${escapeHtml(c.direccion)}</td>
+        <td class="text-end">${formatearTelefono(c.telefono)}</td>
+        <td class="text-center">${escapeHtml(c.tipo)}</td>
+        <td class="text-center">
+            <button class="btn btn-sm btn-outline-primary btn-editar"
+                data-cedula="${escapeHtml(c.cliente_ced)}"
+                data-nombre="${escapeHtml(c.nombre_cliente)}"
+                data-direccion="${escapeHtml(c.direccion)}"
+                data-telefono="${escapeHtml(c.telefono)}"
+                data-membresia="${escapeHtml(c.tipo)}">
+                <i class="fas fa-edit"></i> Editar
+            </button>
+            <button class="btn btn-sm btn-outline-danger btn-eliminar"
+                data-cedula='${escapeHtml(c.cliente_ced)}'
+                data-nombre='${escapeHtml(c.nombre_cliente)}'>
+                <i class="fas fa-trash"></i> Eliminar
+            </button>
+        </td>
+    </tr>`;
+
     
     // ✅ CORREGIDO: Base URL correcta
     const baseUrl = '/BarkiOS/admin/clients';
@@ -88,57 +128,37 @@ $(document).ready(function () {
 
     // --- CARGAR CLIENTES ---
     function AjaxClients() {
-        $clientsTableBody.html(`<tr><td colspan="6" class="text-center py-3">
-            <div class="spinner-border text-primary"></div> Cargando...
-        </td></tr>`);
 
-        $.ajax({
-            url: `${baseUrl}?action=get_clients`,
-            method: 'GET',
-            headers: { 'X-Requested-With': 'XMLHttpRequest' },
-            dataType: 'json'
-        }).done(data => {
-            if (!data.clients?.length) {
-                $clientsTableBody.html(`
-                    <tr><td colspan="6" class="text-center" style="padding: 1.5rem 0;">
-                        <i class="fa-solid fa-circle-info me-2 text-primary"></i>
-                        No hay clientes disponibles
-                    </td></tr>`);
-                return;
-            }
-
-            const rows = data.clients.map(c => `
-                <tr id="cliente-${escapeHtml(c.cliente_ced)}">
-                    <td class="text-center">${escapeHtml(c.cliente_ced)}</td>
-                    <td>${escapeHtml(c.nombre_cliente)}</td>
-                    <td>${escapeHtml(c.direccion)}</td>
-                    <td class="text-end">${formatearTelefono(c.telefono)}</td>
-                    <td class="text-center">${escapeHtml(c.tipo)}</td>
-                    <td class="text-center">
-                        <button class="btn btn-sm btn-outline-primary btn-editar"
-                            data-cedula="${escapeHtml(c.cliente_ced)}"
-                            data-nombre="${escapeHtml(c.nombre_cliente)}"
-                            data-direccion="${escapeHtml(c.direccion)}"
-                            data-telefono="${escapeHtml(c.telefono)}"
-                            data-membresia="${escapeHtml(c.tipo)}">
-                            <i class="fas fa-edit"></i> Editar
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger btn-eliminar"
-                            data-cedula='${escapeHtml(c.cliente_ced)}'
-                            data-nombre='${escapeHtml(c.nombre_cliente)}'>
-                            <i class="fas fa-trash"></i> Eliminar
-                        </button>
-                    </td>
-                </tr>`).join('');
-
-            $clientsTableBody.html(rows);
-            $('.btn-eliminar').on('click', handleDelete);
-            $('.btn-editar').on('click', e => loadClientForEdit($(e.currentTarget)));
-        }).fail((xhr, status, error) => {
-            console.error('Error al cargar clientes:', error);
-            showAlert('Error al cargar clientes', 'danger');
-        });
+    // si datatable ya existe, destruir antes de pintar
+    if (dt) {
+        dt.destroy();
+        dt = null;
     }
+
+    $clientsTableBody.html(renderSpinner());
+
+    $.ajax({
+        url: `${baseUrl}?action=get_clients`,
+        method: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        dataType: 'json'
+    }).done(data => {
+
+        if (!data.clients?.length) {
+            $clientsTableBody.html(renderEmpty());
+        } else {
+            $clientsTableBody.html(data.clients.map(buildRow).join(''));
+        }
+
+        // inicializar datatable después de pintar
+        dt = $('#clientsTable').DataTable({
+            responsive: true,
+            language: { url: '/ruta/a/Spanish.json' }
+        });
+
+    }).fail(() => showAlert('Error al cargar clientes','danger'));
+}
+
 
     // --- AGREGAR CLIENTE ---
     function handleAdd(e) {
