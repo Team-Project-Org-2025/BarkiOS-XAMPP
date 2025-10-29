@@ -1,5 +1,6 @@
 <?php
 use Barkios\models\Sale;
+use Barkios\helpers\PdfHelper;
 
 // Proteger el módulo (requiere autenticación)
 require_once __DIR__ . '/LoginController.php';
@@ -32,11 +33,14 @@ function handleRequest($model)
         if ($isAjax) {
             header('Content-Type: application/json; charset=utf-8');
             handleAjax($model, $action);
+        } elseif ($action === 'generate_pdf') {
+            // ✅ AGREGAR ESTA LÍNEA
+            generateSalePdf($model);
         } else {
             if (empty($action)) {
                return null;
             } else {
-                throw new Exception("Acción no válida");
+                throw new Exception("Acción no válida: " . $action);
             }
         }
     } catch (Exception $e) {
@@ -104,6 +108,47 @@ function handleAjax($model, $action)
     }
 
     exit();
+}
+
+function jsonResponse($data, $statusCode = 200) {
+    http_response_code($statusCode);
+    echo json_encode($data);
+}
+
+function sanitizeInput($data) {
+    return array_map(function($value) {
+        return is_string($value) ? trim($value) : $value;
+    }, $data);
+}
+
+function validarVenta($datos) {
+    $errores = [];
+
+    if (empty($datos['cliente_ced'])) {
+        $errores[] = 'El cliente es requerido';
+    }
+
+    if (empty($datos['empleado_ced'])) {
+        $errores[] = 'El empleado es requerido';
+    }
+
+    if (empty($datos['tipo_venta']) || !in_array($datos['tipo_venta'], ['contado', 'credito'])) {
+        $errores[] = 'Tipo de venta inválido';
+    }
+
+    // Validar fecha de vencimiento para crédito
+    if ($datos['tipo_venta'] === 'credito') {
+        if (empty($datos['fecha_vencimiento'])) {
+            $errores[] = 'Fecha de vencimiento requerida para crédito';
+        } else {
+            $fechaHoy = date('Y-m-d');
+            if ($datos['fecha_vencimiento'] <= $fechaHoy) {
+                $errores[] = 'La fecha de vencimiento debe ser posterior a hoy';
+            }
+        }
+    }
+
+    return $errores;
 }
 
 /* ============================================================
@@ -364,3 +409,156 @@ function index()
 }
 
 
+/* ============================================================
+   GENERACIÓN DE PDF
+============================================================ */
+
+function generateSalePdf($model) {
+    try {
+        $id = intval($_GET['venta_id'] ?? $_GET['id'] ?? 0);
+        
+        if ($id <= 0) {
+            throw new Exception("ID de venta inválido");
+        }
+
+        $venta = $model->getSaleWithDetails($id);
+        
+        if (!$venta) {
+            throw new Exception("Venta no encontrada");
+        }
+
+        // Construir HTML del PDF
+        $html = buildSalePdfHtml($venta);
+
+        // Generar PDF usando el helper
+        $pdfHelper = new PdfHelper();
+        $pdf = $pdfHelper->fromHtml($html);
+
+        // Enviar PDF al navegador
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: inline; filename="venta_' . $id . '.pdf"');
+        echo $pdf;
+        exit();
+        
+    } catch (Exception $e) {
+        die('Error al generar PDF: ' . htmlspecialchars($e->getMessage()));
+    }
+}
+
+function buildSalePdfHtml($venta) {
+    $html = '<!doctype html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Venta #' . htmlspecialchars($venta['venta_id']) . '</title>
+      <style>
+        body { font-family: DejaVu Sans, Helvetica, Arial, sans-serif; font-size: 12px; }
+        .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
+        .info-section { margin-bottom: 15px; }
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        th { background: #f5f5f5; font-weight: bold; }
+        .right { text-align: right; }
+        .total-section { margin-top: 20px; border-top: 2px solid #333; padding-top: 10px; }
+        .badge { padding: 3px 8px; border-radius: 3px; font-size: 10px; }
+        .badge-success { background: #d4edda; color: #155724; }
+        .badge-warning { background: #fff3cd; color: #856404; }
+        .badge-info { background: #d1ecf1; color: #0c5460; }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h2>COMPROBANTE DE VENTA</h2>
+        <p><strong>Referencia:</strong> ' . htmlspecialchars($venta['referencia'] ?? 'N/A') . '</p>
+        <p><strong>Fecha:</strong> ' . date('d/m/Y H:i', strtotime($venta['fecha'])) . '</p>
+      </div>
+
+      <div class="info-section">
+        <h4>Información del Cliente</h4>
+        <p><strong>Nombre:</strong> ' . htmlspecialchars($venta['nombre_cliente']) . '</p>
+        <p><strong>Cédula:</strong> ' . htmlspecialchars($venta['cliente_ced']) . '</p>
+        ' . (isset($venta['cliente_telefono']) ? '<p><strong>Teléfono:</strong> ' . htmlspecialchars($venta['cliente_telefono']) . '</p>' : '') . '
+      </div>
+
+      <div class="info-section">
+        <h4>Información de la Venta</h4>
+        <p><strong>Vendedor:</strong> ' . htmlspecialchars($venta['nombre_empleado']) . '</p>
+        <p><strong>Tipo de Venta:</strong> <span class="badge badge-info">' . strtoupper(htmlspecialchars($venta['tipo_venta'])) . '</span></p>
+        <p><strong>Estado:</strong> <span class="badge badge-' . (strtolower($venta['estado_venta']) === 'completada' ? 'success' : 'warning') . '">' . strtoupper(htmlspecialchars($venta['estado_venta'])) . '</span></p>
+      </div>
+
+      <h4>Productos</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Producto</th>
+            <th>Tipo</th>
+            <th>Categoría</th>
+            <th class="right">Precio</th>
+          </tr>
+        </thead>
+        <tbody>';
+
+    foreach (($venta['prendas'] ?? $venta['items'] ?? []) as $item) {
+        $html .= '<tr>
+            <td><code>' . htmlspecialchars($item['codigo_prenda'] ?? $item['codigo'] ?? 'N/A') . '</code></td>
+            <td>' . htmlspecialchars($item['nombre_prenda'] ?? $item['nombre'] ?? '') . '</td>
+            <td>' . htmlspecialchars($item['tipo'] ?? $item['tipo_prenda'] ?? '') . '</td>
+            <td>' . htmlspecialchars($item['categoria'] ?? $item['categoria_prenda'] ?? '') . '</td>
+            <td class="right">$' . number_format(floatval($item['precio_unitario'] ?? $item['subtotal'] ?? $item['precio'] ?? 0), 2, '.', ',') . '</td>
+        </tr>';
+    }
+
+    $html .= '</tbody></table>';
+
+    // Totales
+    $subtotal = floatval($venta['monto_subtotal'] ?? $venta['subtotal'] ?? 0);
+    $iva = floatval($venta['monto_iva'] ?? $venta['iva'] ?? 0);
+    $total = floatval($venta['monto_total'] ?? $venta['total'] ?? 0);
+    $pagado = floatval($venta['total_pagado'] ?? $venta['pagado'] ?? 0);
+    $saldo = floatval($venta['saldo_pendiente'] ?? $venta['saldo'] ?? 0);
+
+    $html .= '<div class="total-section">
+        <table style="width: 50%; margin-left: auto;">
+          <tr><td>Subtotal:</td><td class="right">$' . number_format($subtotal, 2, '.', ',') . '</td></tr>
+          <tr><td>IVA (' . ($venta['iva_porcentaje'] ?? 16) . '%):</td><td class="right">$' . number_format($iva, 2, '.', ',') . '</td></tr>
+          <tr style="font-weight: bold; background: #f5f5f5;">
+            <td>TOTAL:</td>
+            <td class="right">$' . number_format($total, 2, '.', ',') . '</td>
+          </tr>';
+
+    if ($pagado > 0) {
+        $html .= '<tr style="color: #155724;">
+            <td>Pagado:</td>
+            <td class="right">$' . number_format($pagado, 2, '.', ',') . '</td>
+          </tr>';
+    }
+
+    if ($saldo > 0) {
+        $html .= '<tr style="color: #856404; font-weight: bold;">
+            <td>Saldo Pendiente:</td>
+            <td class="right">$' . number_format($saldo, 2, '.', ',') . '</td>
+          </tr>';
+    }
+
+    $html .= '</table></div>';
+
+    // Observaciones
+    if (!empty($venta['observaciones'])) {
+        $html .= '<div style="margin-top: 20px; padding: 10px; background: #f8f9fa; border-left: 4px solid #007bff;">
+            <strong>Observaciones:</strong><br>
+            ' . nl2br(htmlspecialchars($venta['observaciones'])) . '
+        </div>';
+    }
+
+    $html .= '<div style="margin-top: 30px; text-align: center; font-size: 10px; color: #666;">
+        <p>Documento generado automáticamente - Garage Barki</p>
+        <p>' . date('d/m/Y H:i:s') . '</p>
+    </div>';
+
+    $html .= '</body></html>';
+
+    return $html;
+}

@@ -271,12 +271,15 @@ $(document).ready(function () {
                     <span class="badge bg-${estadoBadge}">${esc(s.estado_venta ?? '')}</span>
                 </td>
                 <td class="text-center">
-                    <div class="btn-group btn-group-sm d-flex align-items-center justify-content-center">
-                        <button class="btn btn-info btn-sm" onclick="window.viewSale(${ventaId})" title="Ver">
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-info" onclick="window.viewSale(${ventaId})" title="Ver detalle">
                             <i class="fas fa-eye"></i>
                         </button>
+                        <button class="btn btn-outline-success" onclick="window.generateSalePdf(${ventaId})" title="Descargar PDF">
+                            <i class="fas fa-file-pdf"></i>
+                        </button>
                         ${ (s.estado_venta || '').toLowerCase() !== 'cancelada' ? `
-                            <button class="btn btn-danger btn-sm" onclick="window.cancelSale(${ventaId})" title="Anular">
+                            <button class="btn btn-outline-danger" onclick="window.cancelSale(${ventaId})" title="Anular venta">
                                 <i class="fas fa-ban"></i>
                             </button>` : '' }
                     </div>
@@ -566,6 +569,11 @@ $(document).ready(function () {
 
     function renderSaleDetails(s) {
         let html = `
+        <div class="text-end mb-3">
+            <button class="btn btn-sm btn-success" onclick="window.generateSalePdf(${s.venta_id ?? s.id})">
+                <i class="fas fa-file-pdf me-1"></i> Descargar PDF
+            </button>
+        </div>
             <div class="row mb-3">
                 <div class="col-md-6">
                     <h5>Venta #${esc(s.venta_id ?? '')}</h5>
@@ -684,6 +692,16 @@ $(document).ready(function () {
                 }
             );
         });
+    };
+
+    /**
+     * Generar PDF de venta
+     */
+    window.generateSalePdf = function(ventaId) {
+        if (!ventaId) return;
+        
+        const url = `${baseUrl}?action=generate_pdf&venta_id=${ventaId}`;
+        window.open(url, '_blank');
     };
 
     // =============================================================
