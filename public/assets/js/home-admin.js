@@ -625,4 +625,80 @@ $(document).ready(function() {
     // Auto-refresh cada 5 minutos
     setInterval(loadDashboard, 5 * 60 * 1000);
 
+    // Agregar esta función al final de home-admin.js
+
+/**
+ * ✅ NUEVA FUNCIÓN: Genera y descarga reporte PDF del dashboard
+ */
+window.generateDashboardPdf = function() {
+    // Obtener el filtro actual
+    const activeFilter = $('.filter-btn-group .btn.active').data('filter');
+    
+    let url = '/BarkiOS/admin/home?action=generate_pdf_report&filter=' + activeFilter;
+    
+    // Si es filtro personalizado, agregar fechas
+    if (activeFilter === 'custom') {
+        const dateFrom = $('#dateFrom').val();
+        const dateTo = $('#dateTo').val();
+        
+        if (!dateFrom || !dateTo) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Fechas requeridas',
+                text: 'Por favor seleccione el rango de fechas personalizado',
+                confirmButtonColor: '#007bff'
+            });
+            return;
+        }
+        
+        url += '&date_from=' + encodeURIComponent(dateFrom) + '&date_to=' + encodeURIComponent(dateTo);
+    }
+    
+    // Mostrar mensaje de generación
+    Swal.fire({
+        title: 'Generando PDF',
+        html: 'Por favor espere...',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    // Abrir en nueva ventana
+    setTimeout(() => {
+        window.open(url, '_blank');
+        Swal.close();
+    }, 500);
+};
+
+/**
+ * Agregar botón de descarga CSV al documento
+ * (Si no existe ya en tu código)
+ */
+window.downloadCsvReport = function() {
+    const activeFilter = $('.filter-btn-group .btn.active').data('filter');
+    
+    let url = '/BarkiOS/admin/home?action=export_report&filter=' + activeFilter;
+    
+    if (activeFilter === 'custom') {
+        const dateFrom = $('#dateFrom').val();
+        const dateTo = $('#dateTo').val();
+        
+        if (!dateFrom || !dateTo) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Fechas requeridas',
+                text: 'Por favor seleccione el rango de fechas personalizado',
+                confirmButtonColor: '#007bff'
+            });
+            return;
+        }
+        
+        url += '&date_from=' + encodeURIComponent(dateFrom) + '&date_to=' + encodeURIComponent(dateTo);
+    }
+    
+    window.location.href = url;
+};
+
 });

@@ -97,27 +97,6 @@ html, body {
     font-weight: 500;
 }
 
-/* Widget de Tasa BCV */
-.bcv-widget {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 12px;
-    padding: 1rem 1.5rem;
-    color: white;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    transition: transform 0.2s;
-}
-
-.bcv-widget:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-}
-
-.bcv-rate {
-    font-size: 1.75rem;
-    font-weight: 700;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-
 @media (max-width: 768px) {
     .filter-btn-group {
         display: flex;
@@ -129,17 +108,14 @@ html, body {
         flex: 1 1 auto;
         min-width: calc(50% - 0.25rem);
     }
-    
-    .bcv-widget {
-        margin-top: 1rem;
-    }
 }
 </style>
 
 <div class="main-content">
     <div class="container-fluid py-4">
+        <!-- Header con filtros y botones de exportación -->
         <div class="row mb-4 align-items-center">
-            <div class="col-lg-5 mb-3 mb-lg-0">
+            <div class="col-lg-4 mb-3 mb-lg-0">
                 <h3 class="mb-2">
                     <i class="fas fa-chart-line me-2 text-primary"></i>
                     Dashboard
@@ -151,8 +127,8 @@ html, body {
             </div>
             
             <!-- Filtros de período -->
-            <div class="col-lg-4">
-                <div class="d-flex justify-content-lg-end">
+            <div class="col-lg-5 mb-3 mb-lg-0">
+                <div class="d-flex justify-content-lg-center">
                     <div class="btn-group filter-btn-group" role="group">
                         <button type="button" class="btn btn-outline-primary active" data-filter="today">
                             Hoy
@@ -172,11 +148,26 @@ html, body {
                     </div>
                 </div>
             </div>
+
+            <!-- Botones de exportación -->
+            <div class="col-lg-3">
+                <div class="d-flex justify-content-lg-end gap-2">
+                    <button class="btn btn-success btn-sm" onclick="window.generateDashboardPdf()" title="Descargar PDF">
+                        <i class="fas fa-file-pdf me-1"></i> Generar PDF
+                    </button>
+                </div>
+            </div>
         </div>
-        <div class="ml-auto widget-container">
-            <?php include __DIR__ . '/../partials/exchange-rate-widget.php'; ?>
+
+        <!-- Widget de tasa BCV y Alertas -->
+        <div class="row mb-4">
+            <div class="col-lg-6">
+                <?php include __DIR__ . '/../partials/exchange-rate-widget.php'; ?>
+            </div>
+            <div class="col-lg-6">
+            </div>
         </div>
-                        <div class="card border-0 shadow-sm mt-3">
+                <div class="card border-0 shadow-sm">
                     <div class="card-header bg-white border-bottom py-3">
                         <h6 class="mb-0 fw-semibold">
                             <i class="fas fa-bell me-2 text-danger"></i>
@@ -189,7 +180,6 @@ html, body {
                         </div>
                     </div>
                 </div>
-
         <!-- Rango de fechas personalizado -->
         <div class="row mb-3 d-none" id="customDateRange">
             <div class="col-12">
@@ -420,11 +410,11 @@ html, body {
                     </div>
                     <div class="card-body">
                         <div class="d-grid gap-2">
-                            <a href="/BarkiOS/admin/sales" class="btn btn-outline-success btn-sm text-start">
+                            <a href="/BarkiOS/admin/sale" class="btn btn-outline-success btn-sm text-start">
                                 <i class="fas fa-plus-circle me-2"></i>
                                 Nueva Venta
                             </a>
-                            <a href="/BarkiOS/admin/purchases" class="btn btn-outline-danger btn-sm text-start">
+                            <a href="/BarkiOS/admin/purchase" class="btn btn-outline-danger btn-sm text-start">
                                 <i class="fas fa-shopping-cart me-2"></i>
                                 Nueva Compra
                             </a>
@@ -493,11 +483,9 @@ html, body {
 </div>
 
 <?php 
-// Variable JavaScript para la tasa del dólar
 $dolarRate = getDolarRate();
 ?>
 <script>
-    // Variable global para uso en JavaScript
     const DOLAR_BCV_RATE = <?php echo $dolarRate; ?>;
 </script>
 
