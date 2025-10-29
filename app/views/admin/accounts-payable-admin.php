@@ -159,7 +159,6 @@ html, body {
                 <select class="form-select" id="filterEstado">
                     <option value="">Todos los estados</option>
                     <option value="pendiente">Pendientes</option>
-                    <option value="pagado">Pagadas</option>
                     <option value="vencido">Vencidas</option>
                 </select>
             </div>
@@ -198,11 +197,15 @@ html, body {
     </div>
 </div>
 
-<!-- MODAL: REGISTRAR PAGO -->
+<!-- MODAL: REGISTRAR PAGO - VERSIÓN MEJORADA -->
 <div class="modal fade" id="addPaymentModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <form id="addPaymentForm" autocomplete="off">
+                <!-- ✅ Input oculto para enviar monto en USD -->
+                <input type="hidden" id="paymentMonto" name="monto">
+                <input type="hidden" id="paymentCuentaId" name="cuenta_pagar_id">
+
                 <div class="modal-header bg-success text-white">
                     <h5 class="modal-title">
                         <i class="fas fa-money-bill-wave me-2"></i>Registrar Pago
@@ -211,10 +214,8 @@ html, body {
                 </div>
 
                 <div class="modal-body">
-                    <input type="hidden" id="paymentCuentaId" name="cuenta_pagar_id">
-                    
                     <!-- Información de la cuenta -->
-                    <div class="alert alert-info">
+                    <div class="alert alert-info mb-3">
                         <div class="row">
                             <div class="col-md-6">
                                 <p class="mb-1"><strong>Proveedor:</strong> <span id="paymentProveedor"></span></p>
@@ -222,26 +223,22 @@ html, body {
                             </div>
                             <div class="col-md-6">
                                 <p class="mb-1"><strong>Monto Total:</strong> $<span id="paymentMontoTotal"></span></p>
-                                <p class="mb-1"><strong>Saldo Pendiente:</strong> <span class="text-danger fw-bold">$<span id="paymentSaldo"></span></span></p>
+                                <p class="mb-1"><strong>Saldo Pendiente:</strong> <span class="text-danger fw-bold" id="paymentSaldo"></span></p>
                             </div>
                         </div>
                     </div>
 
                     <div class="row g-3">
+                        <!-- Moneda -->
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">Monto a Pagar <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="number" 
-                                       class="form-control" 
-                                       id="paymentMonto" 
-                                       name="monto"
-                                       min="0.01" 
-                                       step="0.01" 
-                                       required>
-                            </div>
+                            <label class="form-label fw-bold">Moneda <span class="text-danger">*</span></label>
+                            <select id="paymentMoneda" name="moneda_pago" class="form-select" required>
+                                <option value="USD" selected>Dólares (USD)</option>
+                                <option value="BS">Bolívares (Bs)</option>
+                            </select>
                         </div>
 
+                        <!-- Fecha de Pago -->
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Fecha de Pago <span class="text-danger">*</span></label>
                             <input type="date" 
@@ -253,51 +250,64 @@ html, body {
                                    required>
                         </div>
 
+                        <!-- Monto con validación visual -->
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Monto a Pagar <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text" id="currency-symbol">$</span>
+                                <input type="number" 
+                                       id="paymentMontoGeneral"
+                                       step="0.01" 
+                                       class="form-control"
+                                       min="0.01" 
+                                       placeholder="0.00" 
+                                       required
+                                       aria-describedby="equivInfo">
+                            </div>
+                            <!-- ✅ Área de conversión/equivalencia -->
+                            <div id="equivInfo" class="mt-2" style="display: none;"></div>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <!-- Tipo de pago -->
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Tipo de Pago <span class="text-danger">*</span></label>
                             <select class="form-select" id="paymentTipo" name="tipo_pago" required>
                                 <option value="">Seleccionar...</option>
-                                <option value="EFECTIVO">Efectivo</option>
-                                <option value="TRANSFERENCIA">Transferencia</option>
-                                <option value="PAGO_MOVIL">Pago Móvil</option>
-                                <option value="ZELLE">Zelle</option>
-                                <option value="CHEQUE">Cheque</option>
-                                <option value="OTRO">Otro</option>
                             </select>
+                            <div class="invalid-feedback">Seleccione un método de pago</div>
                         </div>
 
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Moneda <span class="text-danger">*</span></label>
-                            <select class="form-select" name="moneda_pago" required>
-                                <option value="USD" selected>USD ($)</option>
-                                <option value="BS">Bolívares (Bs)</option>
-                            </select>
-                        </div>
-
+                        <!-- Referencia Bancaria (oculto inicialmente) -->
                         <div class="col-md-6" id="referenciaField" style="display: none;">
-                            <label class="form-label fw-bold">Referencia Bancaria</label>
+                            <label class="form-label fw-bold">Referencia Bancaria <span class="text-danger">*</span></label>
                             <input type="text" 
                                    class="form-control" 
                                    id="paymentReferencia" 
                                    name="referencia_bancaria"
-                                   maxlength="50">
+                                   maxlength="10"
+                                   pattern="\d{8,10}"
+                                   placeholder="8-10 dígitos">
+                            <small class="form-text text-muted">8 a 10 dígitos numéricos</small>
+                            <div class="invalid-feedback">Ingrese una referencia válida (8-10 dígitos)</div>
                         </div>
 
+                        <!-- Banco (oculto inicialmente) -->
                         <div class="col-md-6" id="bancoField" style="display: none;">
-                            <label class="form-label fw-bold">Banco</label>
-                            <select class="form-select" id="paymentBanco" name="banco">
-                                <option value="">Seleccionar...</option>
-                                <option value="Banesco">Banesco</option>
-                                <option value="Mercantil">Mercantil</option>
-                                <option value="Venezuela">Venezuela</option>
-                                <option value="Provincial">Provincial</option>
-                                <option value="Bicentenario">Bicentenario</option>
-                                <option value="Otro">Otro</option>
-                            </select>
+                            <label class="form-label fw-bold">Banco <span class="text-danger">*</span></label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="paymentBanco" 
+                                   name="banco"
+                                   maxlength="30"
+                                   placeholder="Ej: Banco Provincial">
+                            <small class="form-text text-muted">Hasta 30 caracteres</small>
+                            <div class="invalid-feedback">Ingrese el nombre del banco (3-30 caracteres)</div>
                         </div>
 
+                        <!-- Observaciones -->
                         <div class="col-12">
-                            <label class="form-label fw-bold">Observaciones</label>
+                            <label class="form-label fw-bold">Observaciones (opcional)</label>
                             <textarea class="form-control" 
                                       name="observaciones" 
                                       rows="2" 
@@ -343,6 +353,16 @@ html, body {
         </div>
     </div>
 </div>
+
+<?php 
+if (!function_exists('getDolarRate')) {
+    require_once __DIR__ . '/../../core/AdminContext.php';
+}
+?>
+
+<script>
+    const DOLAR_BCV_RATE = <?php echo getDolarRate(); ?>;
+</script>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

@@ -559,8 +559,21 @@ $(document).ready(function() {
                         } else {
                             showError(data.message);
                         }
-                    }
-                });
+                    }, error: function(xhr) {
+                        // AGREGA ESTO PARA VER EL ERROR
+                        console.error('Error completo:', xhr);
+                        console.error('Respuesta:', xhr.responseText);
+                        let errorMsg = 'Error desconocido';
+                        try {
+                            const response = JSON.parse(xhr.responseText);
+                            errorMsg = response.message || errorMsg;
+                        } catch(e) {
+                            errorMsg = xhr.responseText || errorMsg;
+                        }
+                        showError(errorMsg);
+                    },
+                    complete: () => btn.prop('disabled', false).find('.spinner-border').addClass('d-none')            
+                })
             }
         });
     };
