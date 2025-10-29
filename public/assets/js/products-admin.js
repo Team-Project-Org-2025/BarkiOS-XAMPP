@@ -3,6 +3,9 @@ $(document).ready(function() {
     const $addProductForm = $('#addProductForm');
     const $editProductForm = $('#editProductForm');
 
+    // ✅ CORREGIDO: Base URL para las peticiones AJAX
+    const baseUrl = '/BarkiOS/admin/products';
+
     // --- Tipos de prenda por categoría ---
     const tiposPorCategoria = {
         Formal:    ["Vestido", "Camisa", "Pantalon", "Chaqueta"],
@@ -106,72 +109,89 @@ $(document).ready(function() {
         return valido;
     }
 
-    // --- CRUD AJAX (tu código intacto) ---
+    // --- CARGAR PRODUCTOS ---
     function AjaxProducts() {
         $productsTableBody.html(`
-            <tr><td colspan="6" class="text-center" style="padding: 1.25rem 0;">
+            <tr><td colspan="7" class="text-center" style="padding: 1.25rem 0;">
                 <div class="spinner-border text-primary"></div> Cargando...
             </td></tr>
         `);
 
         $.ajax({
-            url: window.location.pathname + '?action=get_products',
+            url: `${baseUrl}?action=get_products`,
+            method: 'GET',
             headers: {'X-Requested-With': 'XMLHttpRequest'},
             dataType: 'json'
         }).done(function(data) {
             if (!data.products?.length) {
                 $productsTableBody.html(`
-                    <td colspan="6" class="text-center" style="padding: 1.5rem 0;">
+                    <tr><td colspan="7" class="text-center" style="padding: 1.5rem 0;">
                         <i class="fa-solid fa-circle-info me-2 text-primary"></i>
                         No hay productos disponibles
-                    </td>
+                    </td></tr>
                 `);
                 return;
             }
 
-            const rows = data.products.map(p => `
-                <tr id="producto-${escapeHtml(p.prenda_id)}">
-                    <td>${escapeHtml(p.prenda_id)}</td>
-                    <td>${escapeHtml(p.nombre)}</td>
-                    <td>${escapeHtml(p.tipo)}</td>
-                    <td>${escapeHtml(p.categoria)}</td>
-                    <td>$${parseFloat(p.precio).toFixed(2)}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary btn-edit"
-                            data-id="${escapeHtml(p.prenda_id)}"
-                            data-nombre="${escapeHtml(p.nombre)}"
-                            data-tipo="${escapeHtml(p.tipo)}"
-                            data-categoria="${escapeHtml(p.categoria)}"
-                            data-precio="${p.precio}">
-                            <i class="fas fa-edit"></i> Editar
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger btn-delete"
-                            data-product-id="${escapeHtml(p.prenda_id)}"
-                            data-product-name="${escapeHtml(p.nombre)}">
-                            <i class="fas fa-trash"></i> Eliminar
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
+            const rows = data.products.map(p => {
+                const imagenHtml = p.imagen 
+                    ? `<img src="/BarkiOS/${escapeHtml(p.imagen)}" style="width: 50px; height: 50px; ob
+                    ject-fit: cover; border-radius: 5px;" alt="${escapeHtml(p.nombre)}">`
+                    : `<i class="fas fa-image fa-2x text-muted"></i>`;
+
+                return `
+                    <tr id="producto-${escapeHtml(p.prenda_id)}">
+                        <td>${imagenHtml}</td>
+                        <td>${escapeHtml(p.prenda_id)}</td>
+                        <td>${escapeHtml(p.nombre)}</td>
+                        <td>${escapeHtml(p.tipo)}</td>
+                        <td>${escapeHtml(p.categoria)}</td>
+                        <td>$${parseFloat(p.precio).toFixed(2)}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary btn-edit"
+                                data-id="${escapeHtml(p.prenda_id)}"
+                                data-nombre="${escapeHtml(p.nombre)}"
+                                data-tipo="${escapeHtml(p.tipo)}"
+                                data-categoria="${escapeHtml(p.categoria)}"
+                                data-precio="${p.precio}"
+                                data-imagen="${escapeHtml(p.imagen || '')}">
+                                <i class="fas fa-edit"></i> Editar
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger btn-delete"
+                                data-product-id="${escapeHtml(p.prenda_id)}"
+                                data-product-name="${escapeHtml(p.nombre)}">
+                                <i class="fas fa-trash"></i> Eliminar
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
             $productsTableBody.html(rows);
 
             $('.btn-delete').on('click', handleDelete);
             $('.btn-edit').on('click', function() {
                 loadProductForEdit($(this));
             });
-        }).fail(() => showAlert('Error al cargar productos', 'danger'));
+        }).fail(function(xhr, status, error) {
+            console.error('Error al cargar productos:', error);
+            showAlert('Error al cargar productos', 'danger');
+        });
     }
 
+    // --- AGREGAR PRODUCTO ---
     function handleAdd(e) {
         e.preventDefault();
         if (!validarProducto($addProductForm)) return;
 
-        const fd = $addProductForm.serialize();
+        const formData = new FormData($addProductForm[0]);
+
         $.ajax({
-            url: 'index.php?controller=products&action=add_ajax',
+            url: `${baseUrl}?action=add_ajax`,
             method: 'POST',
             headers: {'X-Requested-With': 'XMLHttpRequest'},
-            data: fd,
+            data: formData,
+            processData: false,
+            contentType: false,
             dataType: 'json'
         }).done(function(data) {
             if (data.success) {
@@ -179,10 +199,16 @@ $(document).ready(function() {
                 $addProductForm.trigger('reset');
                 $('#addProductModal').modal('hide');
                 AjaxProducts();
-            } else showAlert(data.message, 'danger');
-        }).fail(() => showAlert('Error al agregar', 'danger'));
+            } else {
+                showAlert(data.message, 'danger');
+            }
+        }).fail(function(xhr, status, error) {
+            console.error('Error al agregar:', error);
+            showAlert('Error al agregar producto', 'danger');
+        });
     }
 
+    // --- CARGAR PRODUCTO PARA EDITAR ---
     function loadProductForEdit($btn) {
         $('#editProductId').val($btn.data('id'));
         $('#editProductIdHidden').val($btn.data('id'));
@@ -194,28 +220,40 @@ $(document).ready(function() {
         $('#editProductModal').modal('show');
     }
 
+    // --- EDITAR PRODUCTO ---
     function handleEdit(e) {
         e.preventDefault();
         if (!validarProducto($editProductForm, false)) return;
+        
+        const formData = new FormData($editProductForm[0]);
+
         $.ajax({
-            url: 'index.php?controller=products&action=edit_ajax',
+            url: `${baseUrl}?action=edit_ajax`,
             method: 'POST',
-            data: $editProductForm.serialize(),
-            dataType: 'json',
-            success: function (data) {
-                if (data.success) {
-                    showAlert('Producto actualizado', 'success');
-                    $('#editProductModal').modal('hide');
-                    AjaxProducts();
-                } else showAlert(data.message, 'danger');
-            },
-            error: function () { showAlert('Error al actualizar', 'danger'); }
+            headers: {'X-Requested-With': 'XMLHttpRequest'},
+            data: formData,
+            processData: false,
+            contentType: false,
+            dataType: 'json'
+        }).done(function(data) {
+            if (data.success) {
+                showAlert('Producto actualizado', 'success');
+                $('#editProductModal').modal('hide');
+                AjaxProducts();
+            } else {
+                showAlert(data.message, 'danger');
+            }
+        }).fail(function(xhr, status, error) {
+            console.error('Error al actualizar:', error);
+            showAlert('Error al actualizar producto', 'danger');
         });
     }
 
+    // --- ELIMINAR PRODUCTO ---
     function handleDelete() {
         const prenda_id = $(this).data('product-id');
         const name = $(this).data('product-name');
+        
         Swal.fire({
             title: '¿Eliminar producto?',
             html: `¿Deseas eliminar <strong>${escapeHtml(name)}</strong>?`,
@@ -226,7 +264,7 @@ $(document).ready(function() {
         }).then(res => {
             if (res.isConfirmed) {
                 $.ajax({
-                    url: 'index.php?controller=products&action=delete_ajax',
+                    url: `${baseUrl}?action=delete_ajax`,
                     method: 'POST',
                     headers: {'X-Requested-With': 'XMLHttpRequest'},
                     data: { prenda_id },
@@ -235,13 +273,18 @@ $(document).ready(function() {
                     if (data.success) {
                         showAlert('Producto eliminado correctamente', 'success');
                         AjaxProducts();
-                    } else showAlert(data.message, 'danger');
-                }).fail(() => showAlert('Error al eliminar', 'danger'));
+                    } else {
+                        showAlert(data.message, 'danger');
+                    }
+                }).fail(function(xhr, status, error) {
+                    console.error('Error al eliminar:', error);
+                    showAlert('Error al eliminar producto', 'danger');
+                });
             }
         });
     }
 
-    // --- Validación en tiempo real (incluye selects) ---
+    // --- Validación en tiempo real ---
     function aplicarValidacionEnTiempoReal($form) {
         const $codigo = $form.find('[name="prenda_id"]');
         const $nombre = $form.find('[name="nombre"]');
@@ -285,27 +328,26 @@ $(document).ready(function() {
     aplicarValidacionEnTiempoReal($addProductForm);
     aplicarValidacionEnTiempoReal($editProductForm);
 
+    // Limpiar modales
+    $('#addProductModal').on('hidden.bs.modal', function () {
+        const $form = $('#addProductForm');
+        $form.trigger('reset');
+        $form.find('.is-valid, .is-invalid').removeClass('is-valid is-invalid');
+    });
+
+    $('#editProductModal').on('hidden.bs.modal', function () {
+        const $form = $('#editProductForm');
+        $form.trigger('reset');
+        $form.find('.is-valid, .is-invalid').removeClass('is-valid is-invalid');
+    });
+
+    $('#addProductModal').on('show.bs.modal', function () {
+        const $form = $('#addProductForm');
+        $form.find('.is-valid, .is-invalid').removeClass('is-valid is-invalid');
+    });
+
     // Inicialización
     if ($addProductForm.length) $addProductForm.on('submit', handleAdd);
     if ($editProductForm.length) $editProductForm.on('submit', handleEdit);
     AjaxProducts();
-
-    $('#addProductModal').on('hidden.bs.modal', function () {
-    const $form = $('#addProductForm');
-    $form.trigger('reset');
-    $form.find('.is-valid, .is-invalid').removeClass('is-valid is-invalid');
 });
-
-$('#editProductModal').on('hidden.bs.modal', function () {
-    const $form = $('#editProductForm');
-    $form.trigger('reset');
-    $form.find('.is-valid, .is-invalid').removeClass('is-valid is-invalid');
-});
-
-$('#addProductModal').on('show.bs.modal', function () {
-    const $form = $('#addProductForm');
-    $form.find('.is-valid, .is-invalid').removeClass('is-valid is-invalid');
-});
-
-});
-

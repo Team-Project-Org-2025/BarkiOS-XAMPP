@@ -3,12 +3,15 @@
 
 use Barkios\models\User;
 
+
 // ✅ Importa el controlador de login (para usar checkAuth)
 require_once __DIR__ . '/LoginController.php';
 
 // ✅ Protege todo el módulo
 checkAuth();
 
+
+require_once __DIR__ . '/../../core/AdminContext.php';
 // ✅ Inicializa el modelo
 // NOTA: Asumo que la clase User está correctamente configurada en tu sistema de autoloading/namespacing.
 $userModel = new User();
@@ -17,9 +20,12 @@ $userModel = new User();
 // 🔹 Acción principal (vista)
 // =================================================================
 function index() {
+    global $dolarBCVRate;
     // Esta función solo carga la plantilla de la vista
     require __DIR__ . '/../../views/admin/users-admin.php';
 }
+
+
 
 // 🚀 Enrutamiento principal (DEBE IR AL FINAL PARA QUE LAS FUNCIONES ESTÉN DISPONIBLES)
 handleRequest($userModel);

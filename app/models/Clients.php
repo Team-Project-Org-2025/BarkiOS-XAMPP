@@ -111,4 +111,31 @@ class Clients extends Database {
         $stmt = $this->db->prepare("UPDATE clientes SET activo = 0 WHERE cliente_ced = :cliente_ced");
         return $stmt->execute([':cliente_ced' => $cedula]);
     }
+
+    /**
+     * Busca clientes VIP por nombre (autocompletado).
+     * Realiza búsqueda incremental filtrando solo clientes VIP activos.
+     * 
+     * @param string $query Texto de búsqueda para filtrar por nombre.
+     * @return array Lista de clientes VIP que coinciden con la búsqueda.
+     */
+    public function searchVipClients($query) {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT cliente_ced, nombre_cliente, telefono, correo, tipo
+                FROM clientes 
+                WHERE tipo = 'vip' 
+                  AND activo = 1 
+                  AND nombre_cliente LIKE :query
+                ORDER BY nombre_cliente ASC
+                LIMIT 20
+            ");
+            $searchTerm = $query . '%';
+            $stmt->execute([':query' => $searchTerm]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (\Throwable $e) {
+            error_log("Error en searchVipClients: " . $e->getMessage());
+            return [];
+        }
+    }
 }

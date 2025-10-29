@@ -1,8 +1,10 @@
+<?php require_once __DIR__ . '/../../core/AdminContext.php'; ?>
 <?php $pageTitle = "Usuarios | Garage Barki"; ?>
 <?php require_once __DIR__ . '/../partials/header-admin.php'; ?>
 <?= require_once __DIR__ . '/../partials/navbar-admin.php'; ?> 
 
 <div class="main-content">
+  
   <div class="container-fluid py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h1 class="display-6 fw-bold text-dark mb-0">
@@ -12,6 +14,9 @@
         <i class="fas fa-plus me-2"></i> Nuevo Usuario
       </button>
     </div>
+  <div class="d-flex align-items-center">
+  </div>
+</div>
 
     <!-- Tarjeta de tabla -->
     <div class="card border-0 shadow-sm">
@@ -127,5 +132,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.3/dist/sweetalert2.all.min.js"></script>
 <script src="/BarkiOS/public/assets/js/users-admin.js"></script>
+<script src="/BarkiOS/public/assets/js/logout.js"></script>
 </body>
 </html>
