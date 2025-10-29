@@ -831,3 +831,163 @@
 [28-Oct-2025 05:40:26 Europe/Berlin] Archivo existe después de mover: SI
 [28-Oct-2025 05:40:26 Europe/Berlin] Ruta relativa para BD: public/uploads/products/product_252525252_1761626426.jpg
 [28-Oct-2025 05:40:26 Europe/Berlin] === ImageUploader::upload FIN ===
+[28-Oct-2025 19:38:35 Europe/Berlin] ImageUploader - Directorio: C:\xampp\htdocs\BarkiOS\public\uploads\products\
+[28-Oct-2025 19:38:35 Europe/Berlin] ImageUploader - Existe: SI
+[28-Oct-2025 19:38:35 Europe/Berlin] ImageUploader - Inicializado correctamente
+[28-Oct-2025 19:38:35 Europe/Berlin] === ImageUploader::upload INICIO ===
+[28-Oct-2025 19:38:35 Europe/Berlin] Product ID: 222222276
+[28-Oct-2025 19:38:35 Europe/Berlin] ✓ Archivo temporal existe: C:\xampp\tmp\php5CDF.tmp
+[28-Oct-2025 19:38:35 Europe/Berlin] ✓ Tamaño válido: 46118 bytes
+[28-Oct-2025 19:38:35 Europe/Berlin] Extensión detectada: jpg
+[28-Oct-2025 19:38:35 Europe/Berlin] ✓ Extensión válida
+[28-Oct-2025 19:38:35 Europe/Berlin] ✓ Imagen válida: image/jpeg
+[28-Oct-2025 19:38:35 Europe/Berlin] Nombre archivo: product_222222276_1761676715.jpg
+[28-Oct-2025 19:38:35 Europe/Berlin] Ruta destino: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_222222276_1761676715.jpg
+[28-Oct-2025 19:38:35 Europe/Berlin] Directorio escribible: SI
+[28-Oct-2025 19:38:35 Europe/Berlin] ✓ Archivo movido exitosamente a: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_222222276_1761676715.jpg
+[28-Oct-2025 19:38:35 Europe/Berlin] Archivo existe después de mover: SI
+[28-Oct-2025 19:38:35 Europe/Berlin] Ruta relativa para BD: public/uploads/products/product_222222276_1761676715.jpg
+[28-Oct-2025 19:38:35 Europe/Berlin] === ImageUploader::upload FIN ===
+[28-Oct-2025 19:38:44 Europe/Berlin] ImageUploader - Directorio: C:\xampp\htdocs\BarkiOS\public\uploads\products\
+[28-Oct-2025 19:38:44 Europe/Berlin] ImageUploader - Existe: SI
+[28-Oct-2025 19:38:44 Europe/Berlin] ImageUploader - Inicializado correctamente
+[28-Oct-2025 19:38:44 Europe/Berlin] === ImageUploader::upload INICIO ===
+[28-Oct-2025 19:38:44 Europe/Berlin] Product ID: 222222277
+[28-Oct-2025 19:38:44 Europe/Berlin] ✓ Archivo temporal existe: C:\xampp\tmp\php7EB1.tmp
+[28-Oct-2025 19:38:44 Europe/Berlin] ✓ Tamaño válido: 65092 bytes
+[28-Oct-2025 19:38:44 Europe/Berlin] Extensión detectada: jpg
+[28-Oct-2025 19:38:44 Europe/Berlin] ✓ Extensión válida
+[28-Oct-2025 19:38:44 Europe/Berlin] ✓ Imagen válida: image/jpeg
+[28-Oct-2025 19:38:44 Europe/Berlin] Nombre archivo: product_222222277_1761676724.jpg
+[28-Oct-2025 19:38:44 Europe/Berlin] Ruta destino: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_222222277_1761676724.jpg
+[28-Oct-2025 19:38:44 Europe/Berlin] Directorio escribible: SI
+[28-Oct-2025 19:38:44 Europe/Berlin] ✓ Archivo movido exitosamente a: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_222222277_1761676724.jpg
+[28-Oct-2025 19:38:44 Europe/Berlin] Archivo existe después de mover: SI
+[28-Oct-2025 19:38:44 Europe/Berlin] Ruta relativa para BD: public/uploads/products/product_222222277_1761676724.jpg
+[28-Oct-2025 19:38:44 Europe/Berlin] === ImageUploader::upload FIN ===
+[28-Oct-2025 19:38:56 Europe/Berlin] ImageUploader - Directorio: C:\xampp\htdocs\BarkiOS\public\uploads\products\
+[28-Oct-2025 19:38:56 Europe/Berlin] ImageUploader - Existe: SI
+[28-Oct-2025 19:38:56 Europe/Berlin] ImageUploader - Inicializado correctamente
+[28-Oct-2025 19:38:56 Europe/Berlin] === ImageUploader::upload INICIO ===
+[28-Oct-2025 19:38:56 Europe/Berlin] Product ID: 222222278
+[28-Oct-2025 19:38:56 Europe/Berlin] ✓ Archivo temporal existe: C:\xampp\tmp\phpACF5.tmp
+[28-Oct-2025 19:38:56 Europe/Berlin] ✓ Tamaño válido: 51738 bytes
+[28-Oct-2025 19:38:56 Europe/Berlin] Extensión detectada: jpg
+[28-Oct-2025 19:38:56 Europe/Berlin] ✓ Extensión válida
+[28-Oct-2025 19:38:56 Europe/Berlin] ✓ Imagen válida: image/jpeg
+[28-Oct-2025 19:38:56 Europe/Berlin] Nombre archivo: product_222222278_1761676736.jpg
+[28-Oct-2025 19:38:56 Europe/Berlin] Ruta destino: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_222222278_1761676736.jpg
+[28-Oct-2025 19:38:56 Europe/Berlin] Directorio escribible: SI
+[28-Oct-2025 19:38:56 Europe/Berlin] ✓ Archivo movido exitosamente a: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_222222278_1761676736.jpg
+[28-Oct-2025 19:38:56 Europe/Berlin] Archivo existe después de mover: SI
+[28-Oct-2025 19:38:56 Europe/Berlin] Ruta relativa para BD: public/uploads/products/product_222222278_1761676736.jpg
+[28-Oct-2025 19:38:56 Europe/Berlin] === ImageUploader::upload FIN ===
+[28-Oct-2025 19:39:16 Europe/Berlin] ImageUploader - Directorio: C:\xampp\htdocs\BarkiOS\public\uploads\products\
+[28-Oct-2025 19:39:16 Europe/Berlin] ImageUploader - Existe: SI
+[28-Oct-2025 19:39:16 Europe/Berlin] ImageUploader - Inicializado correctamente
+[28-Oct-2025 19:39:16 Europe/Berlin] === ImageUploader::upload INICIO ===
+[28-Oct-2025 19:39:16 Europe/Berlin] Product ID: 222222282
+[28-Oct-2025 19:39:16 Europe/Berlin] ✓ Archivo temporal existe: C:\xampp\tmp\phpFA1C.tmp
+[28-Oct-2025 19:39:16 Europe/Berlin] ✓ Tamaño válido: 48746 bytes
+[28-Oct-2025 19:39:16 Europe/Berlin] Extensión detectada: jpg
+[28-Oct-2025 19:39:16 Europe/Berlin] ✓ Extensión válida
+[28-Oct-2025 19:39:16 Europe/Berlin] ✓ Imagen válida: image/jpeg
+[28-Oct-2025 19:39:16 Europe/Berlin] Nombre archivo: product_222222282_1761676756.jpg
+[28-Oct-2025 19:39:16 Europe/Berlin] Ruta destino: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_222222282_1761676756.jpg
+[28-Oct-2025 19:39:16 Europe/Berlin] Directorio escribible: SI
+[28-Oct-2025 19:39:16 Europe/Berlin] ✓ Archivo movido exitosamente a: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_222222282_1761676756.jpg
+[28-Oct-2025 19:39:16 Europe/Berlin] Archivo existe después de mover: SI
+[28-Oct-2025 19:39:16 Europe/Berlin] Ruta relativa para BD: public/uploads/products/product_222222282_1761676756.jpg
+[28-Oct-2025 19:39:16 Europe/Berlin] === ImageUploader::upload FIN ===
+[28-Oct-2025 19:39:53 Europe/Berlin] ImageUploader - Directorio: C:\xampp\htdocs\BarkiOS\public\uploads\products\
+[28-Oct-2025 19:39:53 Europe/Berlin] ImageUploader - Existe: SI
+[28-Oct-2025 19:39:53 Europe/Berlin] ImageUploader - Inicializado correctamente
+[28-Oct-2025 19:39:53 Europe/Berlin] === ImageUploader::upload INICIO ===
+[28-Oct-2025 19:39:53 Europe/Berlin] Product ID: 222222283
+[28-Oct-2025 19:39:53 Europe/Berlin] ✓ Archivo temporal existe: C:\xampp\tmp\php8B42.tmp
+[28-Oct-2025 19:39:53 Europe/Berlin] ✓ Tamaño válido: 150491 bytes
+[28-Oct-2025 19:39:53 Europe/Berlin] Extensión detectada: jpg
+[28-Oct-2025 19:39:53 Europe/Berlin] ✓ Extensión válida
+[28-Oct-2025 19:39:53 Europe/Berlin] ✓ Imagen válida: image/jpeg
+[28-Oct-2025 19:39:53 Europe/Berlin] Nombre archivo: product_222222283_1761676793.jpg
+[28-Oct-2025 19:39:53 Europe/Berlin] Ruta destino: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_222222283_1761676793.jpg
+[28-Oct-2025 19:39:53 Europe/Berlin] Directorio escribible: SI
+[28-Oct-2025 19:39:53 Europe/Berlin] ✓ Archivo movido exitosamente a: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_222222283_1761676793.jpg
+[28-Oct-2025 19:39:53 Europe/Berlin] Archivo existe después de mover: SI
+[28-Oct-2025 19:39:53 Europe/Berlin] Ruta relativa para BD: public/uploads/products/product_222222283_1761676793.jpg
+[28-Oct-2025 19:39:53 Europe/Berlin] === ImageUploader::upload FIN ===
+[28-Oct-2025 19:40:05 Europe/Berlin] ImageUploader - Directorio: C:\xampp\htdocs\BarkiOS\public\uploads\products\
+[28-Oct-2025 19:40:05 Europe/Berlin] ImageUploader - Existe: SI
+[28-Oct-2025 19:40:05 Europe/Berlin] ImageUploader - Inicializado correctamente
+[28-Oct-2025 19:40:05 Europe/Berlin] === ImageUploader::upload INICIO ===
+[28-Oct-2025 19:40:05 Europe/Berlin] Product ID: 222222284
+[28-Oct-2025 19:40:05 Europe/Berlin] ✓ Archivo temporal existe: C:\xampp\tmp\phpBA71.tmp
+[28-Oct-2025 19:40:05 Europe/Berlin] ✓ Tamaño válido: 72011 bytes
+[28-Oct-2025 19:40:05 Europe/Berlin] Extensión detectada: jpg
+[28-Oct-2025 19:40:05 Europe/Berlin] ✓ Extensión válida
+[28-Oct-2025 19:40:05 Europe/Berlin] ✓ Imagen válida: image/jpeg
+[28-Oct-2025 19:40:05 Europe/Berlin] Nombre archivo: product_222222284_1761676805.jpg
+[28-Oct-2025 19:40:05 Europe/Berlin] Ruta destino: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_222222284_1761676805.jpg
+[28-Oct-2025 19:40:05 Europe/Berlin] Directorio escribible: SI
+[28-Oct-2025 19:40:05 Europe/Berlin] ✓ Archivo movido exitosamente a: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_222222284_1761676805.jpg
+[28-Oct-2025 19:40:05 Europe/Berlin] Archivo existe después de mover: SI
+[28-Oct-2025 19:40:05 Europe/Berlin] Ruta relativa para BD: public/uploads/products/product_222222284_1761676805.jpg
+[28-Oct-2025 19:40:05 Europe/Berlin] === ImageUploader::upload FIN ===
+[28-Oct-2025 19:40:21 Europe/Berlin] ImageUploader - Directorio: C:\xampp\htdocs\BarkiOS\public\uploads\products\
+[28-Oct-2025 19:40:21 Europe/Berlin] ImageUploader - Existe: SI
+[28-Oct-2025 19:40:21 Europe/Berlin] ImageUploader - Inicializado correctamente
+[28-Oct-2025 19:40:21 Europe/Berlin] === ImageUploader::upload INICIO ===
+[28-Oct-2025 19:40:21 Europe/Berlin] Product ID: 222222285
+[28-Oct-2025 19:40:21 Europe/Berlin] ✓ Archivo temporal existe: C:\xampp\tmp\phpFA3A.tmp
+[28-Oct-2025 19:40:21 Europe/Berlin] ✓ Tamaño válido: 46118 bytes
+[28-Oct-2025 19:40:21 Europe/Berlin] Extensión detectada: jpg
+[28-Oct-2025 19:40:21 Europe/Berlin] ✓ Extensión válida
+[28-Oct-2025 19:40:21 Europe/Berlin] ✓ Imagen válida: image/jpeg
+[28-Oct-2025 19:40:21 Europe/Berlin] Nombre archivo: product_222222285_1761676821.jpg
+[28-Oct-2025 19:40:21 Europe/Berlin] Ruta destino: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_222222285_1761676821.jpg
+[28-Oct-2025 19:40:21 Europe/Berlin] Directorio escribible: SI
+[28-Oct-2025 19:40:21 Europe/Berlin] ✓ Archivo movido exitosamente a: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_222222285_1761676821.jpg
+[28-Oct-2025 19:40:21 Europe/Berlin] Archivo existe después de mover: SI
+[28-Oct-2025 19:40:21 Europe/Berlin] Ruta relativa para BD: public/uploads/products/product_222222285_1761676821.jpg
+[28-Oct-2025 19:40:21 Europe/Berlin] === ImageUploader::upload FIN ===
+[28-Oct-2025 19:46:17 Europe/Berlin] ImageUploader - Directorio: C:\xampp\htdocs\BarkiOS\public\uploads\products\
+[28-Oct-2025 19:46:17 Europe/Berlin] ImageUploader - Existe: SI
+[28-Oct-2025 19:46:17 Europe/Berlin] ImageUploader - Inicializado correctamente
+[28-Oct-2025 19:46:17 Europe/Berlin] === ImageUploader::upload INICIO ===
+[28-Oct-2025 19:46:17 Europe/Berlin] Product ID: 222222287
+[28-Oct-2025 19:46:17 Europe/Berlin] ✓ Archivo temporal existe: C:\xampp\tmp\php6870.tmp
+[28-Oct-2025 19:46:17 Europe/Berlin] ✓ Tamaño válido: 71477 bytes
+[28-Oct-2025 19:46:17 Europe/Berlin] Extensión detectada: jpg
+[28-Oct-2025 19:46:17 Europe/Berlin] ✓ Extensión válida
+[28-Oct-2025 19:46:17 Europe/Berlin] ✓ Imagen válida: image/jpeg
+[28-Oct-2025 19:46:17 Europe/Berlin] Nombre archivo: product_222222287_1761677177.jpg
+[28-Oct-2025 19:46:17 Europe/Berlin] Ruta destino: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_222222287_1761677177.jpg
+[28-Oct-2025 19:46:17 Europe/Berlin] Directorio escribible: SI
+[28-Oct-2025 19:46:17 Europe/Berlin] ✓ Archivo movido exitosamente a: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_222222287_1761677177.jpg
+[28-Oct-2025 19:46:17 Europe/Berlin] Archivo existe después de mover: SI
+[28-Oct-2025 19:46:17 Europe/Berlin] Ruta relativa para BD: public/uploads/products/product_222222287_1761677177.jpg
+[28-Oct-2025 19:46:17 Europe/Berlin] === ImageUploader::upload FIN ===
+[28-Oct-2025 22:18:03 Europe/Berlin] ExchangeRateService [Primary API]: HTTP 403 - Response: <!DOCTYPE html><html lang="en-US"><head><title>Just a moment...</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=Edge"><meta nam
+[28-Oct-2025 22:18:03 Europe/Berlin] ExchangeRateService [Backup API]: Error. cURL: Could not resolve host: pydolarve.org, HTTP: 0
+[28-Oct-2025 22:18:03 Europe/Berlin] ExchangeRateService: Todas las APIs fallaron. Usando FALLBACK_RATE.
+[28-Oct-2025 22:18:07 Europe/Berlin] ExchangeRateService [Primary API]: HTTP 403 - Response: <!DOCTYPE html><html lang="en-US"><head><title>Just a moment...</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=Edge"><meta nam
+[28-Oct-2025 22:18:07 Europe/Berlin] ExchangeRateService [Backup API]: Error. cURL: Could not resolve host: pydolarve.org, HTTP: 0
+[28-Oct-2025 22:18:07 Europe/Berlin] ExchangeRateService: Todas las APIs fallaron. Usando FALLBACK_RATE.
+[28-Oct-2025 22:20:10 Europe/Berlin] ExchangeRateService [Primary API]: HTTP 403 - Response: <!DOCTYPE html><html lang="en-US"><head><title>Just a moment...</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=Edge"><meta nam
+[28-Oct-2025 22:20:10 Europe/Berlin] ExchangeRateService [Backup API]: Error. cURL: Could not resolve host: pydolarve.org, HTTP: 0
+[28-Oct-2025 22:20:10 Europe/Berlin] ExchangeRateService: Todas las APIs fallaron. Usando FALLBACK_RATE.
+[28-Oct-2025 22:39:42 Europe/Berlin] ExchangeRateService [Primary API]: HTTP 403 - Response: <!DOCTYPE html><html lang="en-US"><head><title>Just a moment...</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=Edge"><meta nam
+[28-Oct-2025 22:39:42 Europe/Berlin] ExchangeRateService [Backup API]: Error. cURL: Could not resolve host: pydolarve.org, HTTP: 0
+[28-Oct-2025 22:39:42 Europe/Berlin] ExchangeRateService: Todas las APIs fallaron. Usando FALLBACK_RATE.
+[28-Oct-2025 22:40:59 Europe/Berlin] ExchangeRateService [Primary API]: HTTP 403 - Response: <!DOCTYPE html><html lang="en-US"><head><title>Just a moment...</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=Edge"><meta nam
+[28-Oct-2025 22:41:00 Europe/Berlin] ExchangeRateService [Backup API]: Error. cURL: Could not resolve host: pydolarve.org, HTTP: 0
+[28-Oct-2025 22:41:00 Europe/Berlin] ExchangeRateService: Todas las APIs fallaron. Usando FALLBACK_RATE.
+[28-Oct-2025 22:41:17 Europe/Berlin] ExchangeRateService [Primary API]: HTTP 403 - Response: <!DOCTYPE html><html lang="en-US"><head><title>Just a moment...</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=Edge"><meta nam
+[28-Oct-2025 22:41:17 Europe/Berlin] ExchangeRateService [Backup API]: Error. cURL: Could not resolve host: pydolarve.org, HTTP: 0
+[28-Oct-2025 22:41:17 Europe/Berlin] ExchangeRateService: Todas las APIs fallaron. Usando FALLBACK_RATE.
+[28-Oct-2025 22:42:31 Europe/Berlin] ExchangeRateService [Primary API]: HTTP 403 - Response: <!DOCTYPE html><html lang="en-US"><head><title>Just a moment...</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=Edge"><meta nam
+[28-Oct-2025 22:42:31 Europe/Berlin] ExchangeRateService [Backup API]: Error. cURL: Could not resolve host: pydolarve.org, HTTP: 0
+[28-Oct-2025 22:42:31 Europe/Berlin] ExchangeRateService: Todas las APIs fallaron. Usando FALLBACK_RATE.
+[29-Oct-2025 01:05:34 Europe/Berlin] ExchangeRateService [Primary API]: HTTP 403 - Response: <!DOCTYPE html><html lang="en-US"><head><title>Just a moment...</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=Edge"><meta nam
+[29-Oct-2025 01:05:37 Europe/Berlin] ExchangeRateService [Backup API]: Error. cURL: Could not resolve host: pydolarve.org, HTTP: 0
+[29-Oct-2025 01:05:37 Europe/Berlin] ExchangeRateService: Todas las APIs fallaron. Usando FALLBACK_RATE.
