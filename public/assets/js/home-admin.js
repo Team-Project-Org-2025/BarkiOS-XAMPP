@@ -181,9 +181,39 @@ $(document).ready(function() {
             .removeClass('text-success text-danger text-warning')
             .addClass(margen >= 30 ? 'text-success' : (margen >= 15 ? 'text-warning' : 'text-danger'));
 
-        // Inventario
+        // Inventario (prendas vendidas y disponibles)
         $('#statPrendasVendidas').text(data.inventario.vendidas || 0);
         $('#statInventario').text(data.inventario.disponibles || 0);
+
+        // ✅ NUEVO: Productos totales en el sistema
+        if (data.productos) {
+            const totalProductos = data.productos.total || 0;
+            const disponibles = data.productos.disponibles || 0;
+            const vendidas = data.productos.vendidas || 0;
+            const valorInventario = data.productos.valor_inventario || 0;
+
+            $('#statTotalProductos').text(totalProductos);
+            
+            // Mostrar status del inventario
+            let statusText = '';
+            let statusClass = '';
+            
+            if (disponibles < 10) {
+                statusText = 'Stock Bajo';
+                statusClass = 'bg-danger';
+            } else if (disponibles < 50) {
+                statusText = 'Stock Normal';
+                statusClass = 'bg-warning';
+            } else {
+                statusText = 'Stock Alto';
+                statusClass = 'bg-success';
+            }
+            
+            $('#statProductosStatus')
+                .text(statusText)
+                .removeClass('bg-success bg-warning bg-danger')
+                .addClass(statusClass);
+        }
     }
 
     // ============================================
@@ -456,13 +486,20 @@ $(document).ready(function() {
             });
         }
 
-        // Inventario bajo (opcional)
+        // Inventario bajo
         if (data.inventario.disponibles < 10) {
+            alerts.push({
+                type: 'danger',
+                icon: 'fa-box-open',
+                text: `Inventario crítico: solo ${data.inventario.disponibles} prenda${data.inventario.disponibles !== 1 ? 's' : ''} disponible${data.inventario.disponibles !== 1 ? 's' : ''}`,
+                link: '/BarkiOS/admin/products'
+            });
+        } else if (data.inventario.disponibles < 30) {
             alerts.push({
                 type: 'warning',
                 icon: 'fa-box-open',
-                text: `Inventario bajo: solo ${data.inventario.disponibles} prenda${data.inventario.disponibles !== 1 ? 's' : ''} disponible${data.inventario.disponibles !== 1 ? 's' : ''}`,
-                link: '/BarkiOS/admin/inventory'
+                text: `Inventario bajo: ${data.inventario.disponibles} prenda${data.inventario.disponibles !== 1 ? 's' : ''} disponible${data.inventario.disponibles !== 1 ? 's' : ''}`,
+                link: '/BarkiOS/admin/products'
             });
         }
 

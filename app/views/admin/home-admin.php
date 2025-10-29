@@ -206,7 +206,7 @@ html, body {
         <div class="row g-3 mb-4">
             <!-- Ventas -->
             <div class="col-lg-3 col-md-6">
-                <div class="card border-0 shadow-sm stat-card ventas" onclick="window.location.href='/BarkiOS/admin/sales'">
+                <div class="card border-0 shadow-sm stat-card ventas" onclick="window.location.href='/BarkiOS/admin/sale'">
                     <div class="card-body position-relative">
                         <i class="fas fa-shopping-cart metric-icon text-success"></i>
                         <h6 class="text-muted mb-2 text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">
@@ -227,7 +227,7 @@ html, body {
 
             <!-- Compras -->
             <div class="col-lg-3 col-md-6">
-                <div class="card border-0 shadow-sm stat-card compras" onclick="window.location.href='/BarkiOS/admin/purchases'">
+                <div class="card border-0 shadow-sm stat-card compras" onclick="window.location.href='/BarkiOS/admin/purchase'">
                     <div class="card-body position-relative">
                         <i class="fas fa-box metric-icon text-danger"></i>
                         <h6 class="text-muted mb-2 text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">
