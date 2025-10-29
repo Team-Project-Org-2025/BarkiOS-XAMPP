@@ -142,7 +142,7 @@ html, body {
             <div class="col-lg-5 mb-3 mb-lg-0">
                 <h3 class="mb-2">
                     <i class="fas fa-chart-line me-2 text-primary"></i>
-                    Dashboard Financiero
+                    Dashboard
                 </h3>
                 <p class="text-muted mb-0">
                     <i class="fas fa-calendar-alt me-1"></i>
@@ -176,6 +176,19 @@ html, body {
         <div class="ml-auto widget-container">
             <?php include __DIR__ . '/../partials/exchange-rate-widget.php'; ?>
         </div>
+                        <div class="card border-0 shadow-sm mt-3">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <h6 class="mb-0 fw-semibold">
+                            <i class="fas fa-bell me-2 text-danger"></i>
+                            Alertas
+                        </h6>
+                    </div>
+                    <div class="card-body" id="alertsContainer">
+                        <div class="text-center py-3">
+                            <div class="spinner-border spinner-border-sm text-muted"></div>
+                        </div>
+                    </div>
+                </div>
 
         <!-- Rango de fechas personalizado -->
         <div class="row mb-3 d-none" id="customDateRange">
@@ -427,21 +440,6 @@ html, body {
                                 <i class="fas fa-file-invoice-dollar me-2"></i>
                                 Cuentas por Pagar
                             </a>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Alertas -->
-                <div class="card border-0 shadow-sm mt-3">
-                    <div class="card-header bg-white border-bottom py-3">
-                        <h6 class="mb-0 fw-semibold">
-                            <i class="fas fa-bell me-2 text-danger"></i>
-                            Alertas
-                        </h6>
-                    </div>
-                    <div class="card-body" id="alertsContainer">
-                        <div class="text-center py-3">
-                            <div class="spinner-border spinner-border-sm text-muted"></div>
                         </div>
                     </div>
                 </div>
