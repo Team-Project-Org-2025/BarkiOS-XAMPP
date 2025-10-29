@@ -135,7 +135,8 @@ $(document).ready(function() {
 
             const rows = data.products.map(p => {
                 const imagenHtml = p.imagen 
-                    ? `<img src="/BarkiOS/${escapeHtml(p.imagen)}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;" alt="${escapeHtml(p.nombre)}">`
+                    ? `<img src="/BarkiOS/${escapeHtml(p.imagen)}" style="width: 50px; height: 50px; ob
+                    ject-fit: cover; border-radius: 5px;" alt="${escapeHtml(p.nombre)}">`
                     : `<i class="fas fa-image fa-2x text-muted"></i>`;
 
                 return `
