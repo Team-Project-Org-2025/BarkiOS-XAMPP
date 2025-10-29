@@ -190,4 +190,104 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     })
   }
+    /* ================================
+     CARGAR PRODUCTOS DESTACADOS (API)
+     ================================ */
+  const featuredContainer = document.getElementById("featuredProducts");
+
+  if (featuredContainer) {
+    fetch("/BarkiOS/ProductsApi")
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.success || !data.products) return;
+        
+        const destacados = data.products.slice(0, 4);
+
+        destacados.forEach((product, index) => {
+          const card = `
+            <div class="col-md-3" data-aos="fade-up" data-aos-delay="${index * 100}">
+              <div class="product-card">
+                <div class="product-image">
+                  <span class="product-badge">DISPONIBLE</span>
+                  <img src="/BarkiOS/${product.imagen}" alt="${product.nombre}">
+                  <div class="product-actions">
+                  </div>
+                </div>
+                <div class="product-info">
+                  <h4>${product.nombre}</h4>
+                  <p class="product-category">${product.categoria}</p>
+                  <div class="product-price">$${product.precio}</div>
+                </div>
+              </div>
+            </div>`;
+          featuredContainer.insertAdjacentHTML("beforeend", card);
+        });
+
+        AOS.refresh();
+      })
+      .catch((err) => console.error("Error cargando destacados:", err));
+  }
+
+  /* ================================
+   CARGAR RECIÉN LLEGADOS (API)
+================================ */
+const latestContainer = document.getElementById("latest-products");
+
+if (latestContainer) {
+  fetch("/BarkiOS/app/controllers/front/ProductsApiController.php", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: "limit=8" // ✅ Traemos los 8 más recientes
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (!data.success || data.products.length === 0) {
+      latestContainer.innerHTML = "<p class='text-center'>No hay productos nuevos.</p>";
+      return;
+    }
+
+    latestContainer.innerHTML = ""; // limpiar
+
+    data.products.forEach((product, index) => {
+      const card = `
+        <div class="col-md-3" data-aos="fade-up" data-aos-delay="${index * 100}">
+          <div class="product-card">
+            <div class="product-image">
+              <span class="product-badge bg-danger">Nuevo</span>
+              <img src="/BarkiOS/${product.imagen}" alt="${product.nombre}">
+              <div class="product-actions">
+                <button class="action-btn add-to-wishlist" data-product-id="${product.prenda_id}">
+                  <i class="far fa-heart"></i>
+                </button>
+                <button class="action-btn quick-view" data-product-id="${product.prenda_id}">
+                  <i class="far fa-eye"></i>
+                </button>
+              </div>
+            </div>
+            <div class="product-info">
+              <h4>${product.nombre}</h4>
+              <p class="product-category">${product.categoria}</p>
+              <div class="product-price">$${product.precio}</div>
+              <button class="btn btn-dark w-100 add-to-cart" data-product-id="${product.prenda_id}">
+                Agregar al Carrito
+              </button>
+            </div>
+          </div>
+        </div>`;
+      latestContainer.insertAdjacentHTML("beforeend", card);
+    });
+
+    AOS.refresh();
+  })
+  .catch(err => {
+    console.error("Error cargando novedades:", err);
+    latestContainer.innerHTML = "<p class='text-center text-danger'>Error al cargar productos.</p>";
+  });
+}
+
+
 })
+
+

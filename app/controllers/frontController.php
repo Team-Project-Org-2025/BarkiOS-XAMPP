@@ -143,54 +143,93 @@ class FrontController {
             header('Content-Type: application/json');
             echo json_encode(['success' => false, 'message' => $message]);
         } else {
-            echo "<!DOCTYPE html>
-            <html lang='es'>
-            <head>
-                <meta charset='UTF-8'>
-                <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-                <title>Error 404 | Garage Barki</title>
-                <style>
-                    body {
-                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                        color: #fff;
-                        display: flex;
-                        justify-content: center;
-                        align-items: center;
-                        height: 100vh;
-                        margin: 0;
-                    }
-                    .error-container {
-                        text-align: center;
-                        background: rgba(255, 255, 255, 0.1);
-                        padding: 3rem;
-                        border-radius: 15px;
-                        backdrop-filter: blur(10px);
-                    }
-                    h1 { font-size: 6rem; margin: 0; }
-                    p { font-size: 1.2rem; }
-                    a {
-                        display: inline-block;
-                        margin-top: 1rem;
-                        padding: 0.8rem 2rem;
-                        background: #fff;
-                        color: #667eea;
-                        text-decoration: none;
-                        border-radius: 25px;
-                        font-weight: bold;
-                        transition: transform 0.3s;
-                    }
-                    a:hover { transform: scale(1.05); }
-                </style>
-            </head>
-            <body>
-                <div class='error-container'>
-                    <h1>404</h1>
-                    <p>{$message}</p>
-                    <a href='/BarkiOS/'>Volver al Inicio</a>
-                </div>
-            </body>
-            </html>";
+echo "<!DOCTYPE html>
+<html lang='es'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Error 404 | Garage Barki</title>
+    <link rel=\"shortcut icon\" href= \"/BarkiOS/public/assets/icons/Logo - Garage Barki.webp\" type=\"image/x-icon\">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+
+        body {
+            /* Fondo blanco para que coincida con el sitio */
+            background-color: #ffffff;
+            /* Color de texto principal negro/gris oscuro */
+            color: #333333; 
+            /* Usar una fuente similar o por defecto si no se puede importar la exacta */
+            font-family: 'Montserrat', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            flex-direction: column; /* Asegura que el contenido esté centrado */
+            text-align: center;
+        }
+        /* Contenedor minimalista, sin fondo semitransparente ni blur */
+        .error-container {
+            text-align: center;
+            padding: 2rem;
+        }
+        /* El logo, si puedes incluirlo (opcional) */
+        .logo {
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: 5px; /* Para simular el estilo del logo 'GARAGEBARKI' */
+            margin-bottom: 2rem;
+            text-transform: uppercase;
+        }
+        h1 { 
+            /* Un tamaño grande para el '404' pero en color negro */
+            font-size: 8rem; 
+            margin: 0; 
+            font-weight: 700;
+            color: #111111;
+        }
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 400;
+            margin-top: 0;
+        }
+        p { 
+            font-size: 1.1rem; 
+            margin-bottom: 2rem;
+        }
+        a {
+            display: inline-block;
+            margin-top: 1rem;
+            padding: 0.8rem 2.5rem;
+            /* Botón con fondo blanco y borde negro, o viceversa, para un look limpio */
+            background-color: #ffffff; 
+            color: #333333;
+            text-decoration: none;
+            border: 1px solid #333333; /* Borde sutil */
+            border-radius: 0; /* Bordes cuadrados o ligeramente redondeados si usas esa estética */
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+        a:hover { 
+            /* Efecto hover simple, invirtiendo colores para un look elegante */
+            background-color: #333333;
+            color: #ffffff; 
+            transform: none; /* Quitamos el scale del código original para un look más formal */
+        }
+    </style>
+</head>
+<body>
+    <div class='error-container'>
+        <div class='logo'>GARAGE BARKI</div>
+        <h1>404</h1>
+        <h2>Página no encontrada</h2>
+        <p>Lo sentimos, la página que buscas no existe o se ha movido.</p>
+        <a href='/BarkiOS/'>Volver al Inicio</a>
+    </div>
+</body>
+</html>";
         }
         exit();
     }

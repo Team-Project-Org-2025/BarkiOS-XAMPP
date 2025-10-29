@@ -94,7 +94,7 @@
                 <th class="d-none d-md-table-cell">Fecha</th>
                 <th class="text-end">Monto</th>
                 <th class="text-center d-none d-sm-table-cell">Estado</th>
-                <th class="text-center">Acciones</th>
+                <th class="text-center" width="150">Acciones</th>
               </tr>
             </thead>
             <tbody id="salesTableBody"></tbody>

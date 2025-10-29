@@ -1,20 +1,4 @@
-            <section class="py-5 cta-section">
-            <div class="container">
-                <div class="row justify-content-center">
-                    <div class="col-md-8 text-center" data-aos="fade-up">
-                        <h2 class="mb-4">¿TIENES ALGUNA PREGUNTA?</h2>
-                        <p class="lead mb-4">Nuestro equipo está listo para ayudarte. Contáctanos o visítanos directamente.</p>
-                        <div class="d-flex justify-content-center gap-3">
-                            <a href="../front/contact.php" class="btn btn-dark btn-lg">Contáctanos</a>
-                            <a href="../front/products.php" class="btn btn-dark btn-lg">Ver Productos</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
-    
-    <footer class="py-5 bg-black text-white">
+        <footer class="py-5 bg-black text-white">
         <div class="container">
             <div class="row g-4">
                 <div class="col-lg-4">
