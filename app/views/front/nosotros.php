@@ -115,14 +115,13 @@
                     <div class="col-md-3" data-aos="fade-up">
                         <div class="team-card">
                             <div class="team-image">
-                                <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Miembro del Equipo">
                                 <div class="team-social">
                                     <a href="#"><i class="fab fa-linkedin-in"></i></a>
                                     <a href="#"><i class="fab fa-instagram"></i></a>
                                 </div>
                             </div>
                             <div class="team-info">
-                                <h4>Ana Rodríguez</h4>
+                                <h4>Lilian Bermudez</h4>
                                 <p>Fundadora & CEO</p>
                             </div>
                         </div>
@@ -131,7 +130,6 @@
                     <div class="col-md-3" data-aos="fade-up" data-aos-delay="100">
                         <div class="team-card">
                             <div class="team-image">
-                                <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Miembro del Equipo">
                                 <div class="team-social">
                                     <a href="#"><i class="fab fa-linkedin-in"></i></a>
                                     <a href="#"><i class="fab fa-instagram"></i></a>
@@ -147,7 +145,6 @@
                     <div class="col-md-3" data-aos="fade-up" data-aos-delay="200">
                         <div class="team-card">
                             <div class="team-image">
-                                <img src="https://randomuser.me/api/portraits/women/65.jpg" alt="Miembro del Equipo">
                                 <div class="team-social">
                                     <a href="#"><i class="fab fa-linkedin-in"></i></a>
                                     <a href="#"><i class="fab fa-instagram"></i></a>
@@ -163,7 +160,6 @@
                     <div class="col-md-3" data-aos="fade-up" data-aos-delay="300">
                         <div class="team-card">
                             <div class="team-image">
-                                <img src="https://randomuser.me/api/portraits/women/79.jpg" alt="Miembro del Equipo">
                                 <div class="team-social">
                                     <a href="#"><i class="fab fa-linkedin-in"></i></a>
                                     <a href="#"><i class="fab fa-instagram"></i></a>
@@ -180,37 +176,7 @@
         </section>
 
         <!-- Milestones -->
-        <section class="py-5">
-            <div class="container">
-                <h2 class="text-center mb-5" data-aos="fade-up">NUESTROS LOGROS</h2>
-                <div class="row g-4 counter-section">
-                    <div class="col-md-3 text-center" data-aos="fade-up">
-                        <div class="counter-item">
-                            <div class="counter-number" data-count="14000">0</div>
-                            <h4>Prendas Exclusivas</h4>
-                        </div>
-                    </div>
-                    <div class="col-md-3 text-center" data-aos="fade-up" data-aos-delay="100">
-                        <div class="counter-item">
-                            <div class="counter-number" data-count="5000">0</div>
-                            <h4>Clientes Satisfechas</h4>
-                        </div>
-                    </div>
-                    <div class="col-md-3 text-center" data-aos="fade-up" data-aos-delay="200">
-                        <div class="counter-item">
-                            <div class="counter-number" data-count="10">0</div>
-                            <h4>Años de Experiencia</h4>
-                        </div>
-                    </div>
-                    <div class="col-md-3 text-center" data-aos="fade-up" data-aos-delay="300">
-                        <div class="counter-item">
-                            <div class="counter-number" data-count="15">0</div>
-                            <h4>Premios Recibidos</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+
 
     <!-- Footer-->
 <?php require_once __DIR__ . '/../partials/footer.php';?>
