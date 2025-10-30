@@ -1,4 +1,11 @@
-<!-- Navbar -->
+<?php
+// Detecta la parte final de la URL
+$current = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
+
+// Quita la carpeta base si existe (por ejemplo "BarkiOS/")
+$current = str_replace('BarkiOS/', '', $current);
+?>
+
 <nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top">
     <div class="container">
         <a class="navbar-brand" href="../front/inicio.php">
@@ -10,25 +17,25 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item">
-                    <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'home.php' ? 'active' : '' ?>" href="/BarkiOS/inicio">Inicio</a>
+                  <a class="nav-link <?= $current == 'inicio' ? 'active' : '' ?>" href="/BarkiOS/inicio">Inicio</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'news.php' ? 'active' : '' ?>" href="/BarkiOS/novedades">Novedades</a>
+                  <a class="nav-link <?= $current == 'novedades' ? 'active' : '' ?>" href="/BarkiOS/novedades">Novedades</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'products.php' ? 'active' : '' ?>" href="/BarkiOS/productos">Productos</a>
+                  <a class="nav-link <?= $current == 'productos' ? 'active' : '' ?>" href="/BarkiOS/productos">Productos</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'about.php' ? 'active' : '' ?>" href="/BarkiOS/nosotros">Nosotros</a>
+                  <a class="nav-link <?= $current == 'nosotros' ? 'active' : '' ?>" href="/BarkiOS/nosotros">Nosotros</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'locate.php' ? 'active' : '' ?>" href="/BarkiOS/ubicanos">Ubícanos</a>
+                  <a class="nav-link <?= $current == 'ubicanos' ? 'active' : '' ?>" href="/BarkiOS/ubicanos">Ubícanos</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'contact.php' ? 'active' : '' ?>" href="/BarkiOS/contacto">Contacto</a>
+                  <a class="nav-link <?= $current == 'contacto' ? 'active' : '' ?>" href="/BarkiOS/contacto">Contacto</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'help.php' ? 'active' : '' ?>" href="/BarkiOS/ayuda">Ayuda</a>
+                  <a class="nav-link <?= $current == 'ayuda' ? 'active' : '' ?>" href="/BarkiOS/ayuda">Ayuda</a>
                 </li>
             </ul>
         </div>

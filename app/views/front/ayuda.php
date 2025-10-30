@@ -12,88 +12,6 @@
             </div>
         </section>
 
-        <!-- Búsqueda mejorada -->
-        <section class="py-5">
-            <div class="container">
-                <div class="row justify-content-center">
-                    <div class="col-lg-8 text-center" data-aos="fade-up">
-                        <h2 class="mb-4">¿EN QUÉ PODEMOS AYUDARTE?</h2>
-                        <div class="search-box">
-                            <div class="input-group">
-                                <input type="text" class="form-control" placeholder="Busca tu pregunta aquí..." id="helpSearch">
-                                <button class="btn btn-dark" type="button">
-                                    <i class="fas fa-search"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Categorías de ayuda mejoradas -->
-        <section class="py-5 bg-light">
-            <div class="container">
-                <h2 class="text-center mb-5" data-aos="fade-up">CATEGORÍAS DE AYUDA</h2>
-                <div class="row g-4">
-                    <div class="col-md-4" data-aos="fade-up">
-                        <div class="help-category-card">
-                            <div class="help-category-icon">
-                                <i class="fas fa-shopping-cart"></i>
-                            </div>
-                            <h3>Pedidos y Compras</h3>
-                            <p>Información sobre cómo realizar pedidos, métodos de pago y seguimiento.</p>
-                        </div>
-                    </div>
-                    <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
-                        <div class="help-category-card">
-                            <div class="help-category-icon">
-                                <i class="fas fa-truck"></i>
-                            </div>
-                            <h3>Envíos y Entregas</h3>
-                            <p>Detalles sobre tiempos de envío, costos y opciones de entrega.</p>
-                        </div>
-                    </div>
-                    <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
-                        <div class="help-category-card">
-                            <div class="help-category-icon">
-                                <i class="fas fa-exchange-alt"></i>
-                            </div>
-                            <h3>Cambios y Devoluciones</h3>
-                            <p>Políticas de cambio, devolución y reembolso de productos.</p>
-                        </div>
-                    </div>
-                    <div class="col-md-4" data-aos="fade-up">
-                        <div class="help-category-card">
-                            <div class="help-category-icon">
-                                <i class="fas fa-tshirt"></i>
-                            </div>
-                            <h3>Productos</h3>
-                            <p>Información sobre tallas, materiales y cuidado de las prendas.</p>
-                        </div>
-                    </div>
-                    <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
-                        <div class="help-category-card">
-                            <div class="help-category-icon">
-                                <i class="fas fa-user"></i>
-                            </div>
-                            <h3>Mi Cuenta</h3>
-                            <p>Gestión de cuenta, contraseñas y datos personales.</p>
-                        </div>
-                    </div>
-                    <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
-                        <div class="help-category-card">
-                            <div class="help-category-icon">
-                                <i class="fas fa-credit-card"></i>
-                            </div>
-                            <h3>Pagos</h3>
-                            <p>Métodos de pago aceptados, seguridad y facturación.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
         <!-- FAQ mejorado con acordeones elegantes -->
         <section class="py-5">
             <div class="container">
@@ -124,18 +42,6 @@
                             <div id="pedido2" class="accordion-collapse collapse" data-bs-parent="#accordionPedidos">
                                 <div class="accordion-body">
                                     Puedes modificar o cancelar tu pedido dentro de las primeras 2 horas después de haberlo realizado. Contáctanos inmediatamente por WhatsApp o teléfono. Una vez que el pedido ha sido procesado y enviado, no podrá ser modificado.
-                                </div>
-                            </div>
-                        </div>
-                        <div class="accordion-item">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#pedido3">
-                                    ¿Cómo puedo rastrear mi pedido?
-                                </button>
-                            </h2>
-                            <div id="pedido3" class="accordion-collapse collapse" data-bs-parent="#accordionPedidos">
-                                <div class="accordion-body">
-                                    Una vez que tu pedido sea enviado, recibirás un correo electrónico con el número de seguimiento. Podrás rastrear tu paquete en tiempo real a través del enlace proporcionado o contactándonos directamente.
                                 </div>
                             </div>
                         </div>
