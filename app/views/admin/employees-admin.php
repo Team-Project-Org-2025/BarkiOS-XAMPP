@@ -15,7 +15,7 @@
         <div class="card mt-3">
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle text-center">
+                    <table id="employeesTable" class="table table-hover align-middle text-center">
                         <thead>
                             <tr>
                                 <th>Cédula</th>
@@ -147,9 +147,11 @@
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.3/dist/sweetalert2.all.min.js"></script>
-<script src="/BarkiOS/public/assets/js/employees-admin.js"></script>
-<script src="/BarkiOS/public/assets/js/logout.js"></script>
+<script type="module" src="/BarkiOS/public/assets/js/admin/employees-admin.js"></script>
+<script src="/BarkiOS/public/assets/js/admin/logout.js"></script>
 </body>
 </html>
