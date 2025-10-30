@@ -1,275 +1,217 @@
-$(document).ready(function () {
-    const $clientsTableBody = $('#clientesTableBody');
-    const $addClientForm = $('#addClientForm');
-    const $editClientForm = $('#editClientForm');
-        // delegación = no se re-bindea en cada recarga
-    $(document).on('click', '.btn-eliminar', handleDelete);
-    $(document).on('click', '.btn-editar', e => loadClientForEdit($(e.currentTarget)));
+/**
+ * ============================================
+ * MÓDULO DE CLIENTES - GARAGE BARKI
+ * Versión refactorizada v2.0 (ES6 Module)
+ * ============================================
+ */
 
-    let dt = null; // instancia global datatable
-    
-        const renderSpinner = () => `
-    <tr><td colspan="6" class="text-center py-3">
-        <div class="spinner-border text-primary"></div> Cargando...
-    </td></tr>`;
+import * as Validations from '/BarkiOS/public/assets/js/utils/validation.js';
+import * as Helpers from '/BarkiOS/public/assets/js/utils/helpers.js';
+import * as Ajax from '/BarkiOS/public/assets/js/utils/ajax-handler.js';
 
-    const renderEmpty = () => `
-    <tr><td colspan="6" class="text-center py-3">
-        No hay clientes disponibles
-    </td></tr>`;
 
-    const buildRow = c => `
-    <tr id="cliente-${escapeHtml(c.cliente_ced)}">
-        <td class="text-center">${escapeHtml(c.cliente_ced)}</td>
-        <td>${escapeHtml(c.nombre_cliente)}</td>
-        <td>${escapeHtml(c.direccion)}</td>
-        <td class="text-end">${formatearTelefono(c.telefono)}</td>
-        <td class="text-center">${escapeHtml(c.tipo)}</td>
-        <td class="text-center">
-            <button class="btn btn-sm btn-outline-primary btn-editar"
-                data-cedula="${escapeHtml(c.cliente_ced)}"
-                data-nombre="${escapeHtml(c.nombre_cliente)}"
-                data-direccion="${escapeHtml(c.direccion)}"
-                data-telefono="${escapeHtml(c.telefono)}"
-                data-membresia="${escapeHtml(c.tipo)}">
-                <i class="fas fa-edit"></i> Editar
-            </button>
-            <button class="btn btn-sm btn-outline-danger btn-eliminar"
-                data-cedula='${escapeHtml(c.cliente_ced)}'
-                data-nombre='${escapeHtml(c.nombre_cliente)}'>
-                <i class="fas fa-trash"></i> Eliminar
-            </button>
-        </td>
-    </tr>`;
-
-    
-    // ✅ CORREGIDO: Base URL correcta
+$(document).ready(function() {
     const baseUrl = '/BarkiOS/admin/clients';
+    let clientsTable = null;
 
-    const escapeHtml = str => String(str ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-
-    const showAlert = (msg, type = 'info') => {
-        let icon = 'info';
-        if (type === 'success') icon = 'success';
-        else if (type === 'danger' || type === 'error') icon = 'error';
-        else if (type === 'warning') icon = 'warning';
-        Swal.fire({
-            text: msg,
-            icon: icon,
-            timer: 3000,
-            showConfirmButton: false,
-            timerProgressBar: true,
-            position: 'top',
-            toast: true
+    // ============================================
+    // INICIALIZACIÓN DATATABLE
+    // ============================================
+    const initDataTable = () => {
+        clientsTable = $('#clientsTable').DataTable({
+            ajax: {
+                url: `${baseUrl}?action=get_clients`,
+                method: 'GET',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                dataSrc: 'clients'
+            },
+            columns: [
+                { data: 'cliente_ced' },
+                { data: 'nombre_cliente' },
+                { data: 'direccion' },
+                {
+                    data: 'telefono',
+                    render: (data) => Helpers.formatPhone(data)
+                },
+                {
+                    data: 'tipo',
+                    render: (data) => Helpers.getBadge(data)
+                },
+                {
+                    data: null,
+                    orderable: false,
+                    render: (data) => {
+                        return `
+                            <button class="btn btn-sm btn-outline-primary btn-edit" 
+                                    data-cedula="${Helpers.escapeHtml(data.cliente_ced)}"
+                                    data-nombre="${Helpers.escapeHtml(data.nombre_cliente)}"
+                                    data-direccion="${Helpers.escapeHtml(data.direccion)}"
+                                    data-telefono="${Helpers.escapeHtml(data.telefono)}"
+                                    data-tipo="${Helpers.escapeHtml(data.tipo)}">
+                                <i class="fas fa-edit"></i> Editar
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger btn-delete"
+                                    data-cedula="${Helpers.escapeHtml(data.cliente_ced)}"
+                                    data-nombre="${Helpers.escapeHtml(data.nombre_cliente)}">
+                                <i class="fas fa-trash"></i> Eliminar
+                            </button>
+                        `;
+                    }
+                }
+            ],
+            pageLength: 10,
+            responsive: true,
+            autoWidth: false,
+            language: {
+                url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json"
+            }
         });
     };
 
-    const formatearTelefono = t => t && String(t).length === 11 ? String(t).replace(/(\d{4})(\d{7})/, '$1-$2') : t;
+    // ============================================
+    // AGREGAR CLIENTE
+    // ============================================
+    $('#addClientForm').on('submit', function(e) {
+        e.preventDefault();
 
-    // --- VALIDACIÓN EN TIEMPO REAL ---
-    function validarCampo($input, regex) {
-        const valor = $input.val().trim();
-        if (regex.test(valor)) {
-            $input.removeClass('is-invalid').addClass('is-valid');
-            return true;
-        } else {
-            $input.removeClass('is-valid').addClass('is-invalid');
-            return false;
-        }
-    }
-
-    function validarSelect($select) {
-        if (!$select.val()) {
-            $select.removeClass('is-valid').addClass('is-invalid');
-            return false;
-        } else {
-            $select.removeClass('is-invalid').addClass('is-valid');
-            return true;
-        }
-    }
-
-    function configurarValidacion($form) {
-        const reglas = {
-            'cedula': /^\d{7,8}$/,
-            'nombre': /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{3,60}$/,
-            'direccion': /^.{5,150}$/,
-            'telefono': /^\d{11}$/
+        const rules = {
+            cedula: 'cedula',
+            nombre: 'nombre',
+            direccion: 'direccion',
+            telefono: 'telefono',
+            membresia: 'select'
         };
 
-        $.each(reglas, function (campo, regex) {
-            const $input = $form.find(`[name="${campo}"]`);
-            if ($input.length) {
-                $input.on('input', () => validarCampo($input, regex));
-            }
-        });
-
-        const $selectMembresia = $form.find('[name="membresia"]');
-        if ($selectMembresia.length) $selectMembresia.on('change', () => validarSelect($selectMembresia));
-
-        $form.on('submit', function (e) {
-            let valido = true;
-            $.each(reglas, function (campo, regex) {
-                const $input = $form.find(`[name="${campo}"]`);
-                if ($input.length && !validarCampo($input, regex)) valido = false;
-            });
-            if ($selectMembresia.length && !validarSelect($selectMembresia)) valido = false;
-
-            if (!valido) {
-                e.preventDefault();
-                showAlert('Por favor corrige los campos en rojo.', 'warning');
-            }
-        });
-    }
-
-    // --- CARGAR CLIENTES ---
-    function AjaxClients() {
-
-    // si datatable ya existe, destruir antes de pintar
-    if (dt) {
-        dt.destroy();
-        dt = null;
-    }
-
-    $clientsTableBody.html(renderSpinner());
-
-    $.ajax({
-        url: `${baseUrl}?action=get_clients`,
-        method: 'GET',
-        headers: { 'X-Requested-With': 'XMLHttpRequest' },
-        dataType: 'json'
-    }).done(data => {
-
-        if (!data.clients?.length) {
-            $clientsTableBody.html(renderEmpty());
-        } else {
-            $clientsTableBody.html(data.clients.map(buildRow).join(''));
+        if (!Validations.validateForm($(this), rules)) {
+            Helpers.toast('warning', 'Corrija los campos resaltados');
+            return;
         }
 
-        // inicializar datatable después de pintar
-        dt = $('#clientsTable').DataTable({
-            responsive: true,
-            language: { url: '/ruta/a/Spanish.json' }
-        });
+        const formData = $(this).serialize();
 
-    }).fail(() => showAlert('Error al cargar clientes','danger'));
-}
+        Ajax.post(`${baseUrl}?action=add_ajax`, formData)
+            .then(response => {
+                if (response.success) {
+                    Helpers.toast('success', 'Cliente agregado correctamente');
+                    $('#addClientModal').modal('hide');
+                    clientsTable.ajax.reload(null, false);
+                } else {
+                    Helpers.toast('error', response.message);
+                }
+            })
+            .catch(err => {
+                Helpers.toast('error', err);
+            });
+    });
 
-
-    // --- AGREGAR CLIENTE ---
-    function handleAdd(e) {
-        e.preventDefault();
+    // ============================================
+    // EDITAR CLIENTE
+    // ============================================
+    $(document).on('click', '.btn-edit', function() {
+        const $btn = $(this);
         
-        $.ajax({
-            url: `${baseUrl}?action=add_ajax`,
-            method: 'POST',
-            headers: { 'X-Requested-With': 'XMLHttpRequest' },
-            data: $addClientForm.serialize(),
-            dataType: 'json'
-        }).done(data => {
-            if (data.success) {
-                showAlert('Cliente agregado correctamente', 'success');
-                $addClientForm.trigger('reset');
-                $('#addClientModal').modal('hide');
-                AjaxClients();
-            } else {
-                showAlert(data.message, 'danger');
-            }
-        }).fail((xhr, status, error) => {
-            console.error('Error al agregar:', error);
-            showAlert('Error al agregar cliente', 'danger');
-        });
-    }
-
-    // --- CARGAR CLIENTE EN MODAL EDITAR ---
-    function loadClientForEdit($btn) {
         $('#editClientCedula').val($btn.data('cedula'));
         $('#editClientCedulaHidden').val($btn.data('cedula'));
         $('#editClientNombre').val($btn.data('nombre'));
         $('#editClientDireccion').val($btn.data('direccion'));
         $('#editClientTelefono').val($btn.data('telefono'));
-        $('#editClientMembresia').val($btn.data('membresia') || '');
-        $('#editClientModal').modal('show');
-    }
-
-    // --- EDITAR CLIENTE ---
-    function handleEdit(e) {
-        e.preventDefault();
+        $('#editClientMembresia').val($btn.data('tipo') || '');
         
-        $.ajax({
-            url: `${baseUrl}?action=edit_ajax`,
-            method: 'POST',
-            headers: { 'X-Requested-With': 'XMLHttpRequest' },
-            data: $editClientForm.serialize(),
-            dataType: 'json'
-        }).done(data => {
-            if (data.success) {
-                showAlert('Cliente actualizado correctamente', 'success');
-                $('#editClientModal').modal('hide');
-                AjaxClients();
-            } else {
-                showAlert(data.message, 'danger');
-            }
-        }).fail((xhr, status, error) => {
-            console.error('Error al actualizar:', error);
-            showAlert('Error al actualizar cliente', 'danger');
-        });
-    }
+        Validations.clearValidation($('#editClientForm'));
+        $('#editClientModal').modal('show');
+    });
 
-    // --- ELIMINAR CLIENTE ---
-    function handleDelete() {
+    $('#editClientForm').on('submit', function(e) {
+        e.preventDefault();
+
+        const rules = {
+            nombre: 'nombre',
+            direccion: 'direccion',
+            telefono: 'telefono',
+            membresia: 'select'
+        };
+
+        if (!Validations.validateForm($(this), rules)) {
+            Helpers.toast('warning', 'Corrija los campos resaltados');
+            return;
+        }
+
+        const formData = $(this).serialize();
+
+        Ajax.post(`${baseUrl}?action=edit_ajax`, formData)
+            .then(response => {
+                if (response.success) {
+                    Helpers.toast('success', 'Cliente actualizado correctamente');
+                    $('#editClientModal').modal('hide');
+                    clientsTable.ajax.reload(null, false);
+                } else {
+                    Helpers.toast('error', response.message);
+                }
+            })
+            .catch(err => {
+                Helpers.toast('error', err);
+            });
+    });
+
+    // ============================================
+    // ELIMINAR CLIENTE
+    // ============================================
+    $(document).on('click', '.btn-delete', function() {
         const cedula = $(this).data('cedula');
         const nombre = $(this).data('nombre');
 
-        Swal.fire({
-            title: '¿Eliminar cliente?',
-            html: `¿Deseas eliminar <strong>${escapeHtml(nombre)}</strong>?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Sí, eliminar',
-            cancelButtonText: 'Cancelar'
-        }).then(res => {
-            if (res.isConfirmed) {
-                $.ajax({
-                    url: `${baseUrl}?action=delete_ajax`,
-                    method: 'POST',
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                    data: { cedula },
-                    dataType: 'json'
-                }).done(data => {
-                    if (data.success) {
-                        showAlert('Cliente eliminado correctamente', 'success');
-                        AjaxClients();
-                    } else {
-                        showAlert(data.message, 'danger');
-                    }
-                }).fail((xhr, status, error) => {
-                    console.error('Error al eliminar:', error);
-                    showAlert('Error al eliminar cliente', 'danger');
-                });
-            }
-        });
-    }
-
-    // --- RESET DE FORMULARIOS ---
-    $('#addClientModal, #editClientModal').on('hidden.bs.modal', function () {
-        const $form = $(this).find('form');
-        $form.trigger('reset').find('.is-valid, .is-invalid').removeClass('is-valid is-invalid');
+        Helpers.confirmDialog(
+            '¿Eliminar cliente?',
+            `¿Deseas eliminar a <strong>${Helpers.escapeHtml(nombre)}</strong>?`,
+            () => {
+                Ajax.post(`${baseUrl}?action=delete_ajax`, { cedula })
+                    .then(response => {
+                        if (response.success) {
+                            Helpers.toast('success', 'Cliente eliminado correctamente');
+                            clientsTable.ajax.reload(null, false);
+                        } else {
+                            Helpers.toast('error', response.message);
+                        }
+                    })
+                    .catch(err => {
+                        Helpers.toast('error', err);
+                    });
+            },
+            'Sí, eliminar'
+        );
     });
 
-    // --- INICIALIZACIÓN ---
-    if ($addClientForm.length) {
-        $addClientForm.on('submit', handleAdd);
-        configurarValidacion($addClientForm);
-    }
-    if ($editClientForm.length) {
-        $editClientForm.on('submit', handleEdit);
-        configurarValidacion($editClientForm);
-    }
+    // ============================================
+    // VALIDACIÓN EN TIEMPO REAL
+    // ============================================
+    const addRules = {
+        cedula: 'cedula',
+        nombre: 'nombre',
+        direccion: 'direccion',
+        telefono: 'telefono',
+        membresia: 'select'
+    };
 
-    AjaxClients();
+    const editRules = {
+        nombre: 'nombre',
+        direccion: 'direccion',
+        telefono: 'telefono',
+        membresia: 'select'
+    };
+
+    Validations.setupRealTimeValidation($('#addClientForm'), addRules);
+    Validations.setupRealTimeValidation($('#editClientForm'), editRules);
+
+    // ============================================
+    // LIMPIAR MODALES AL CERRAR
+    // ============================================
+    $('#addClientModal, #editClientModal').on('hidden.bs.modal', function() {
+        const $form = $(this).find('form');
+        Helpers.resetForm($form);
+    });
+
+    // ============================================
+    // INICIALIZAR
+    // ============================================
+    initDataTable();
 });
