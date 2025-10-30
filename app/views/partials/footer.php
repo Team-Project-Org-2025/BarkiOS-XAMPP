@@ -49,9 +49,9 @@
             <i class="fas fa-map-marker-alt me-2"></i> 
             Tienda física: Calle 25 con Carrera 23, diagonal al C.C. Cosmos
           </li>
-          <li class="mb-2"><i class="fas fa-phone me-2"></i> +58 300 000 0000</li>
+          <li class="mb-2"><i class="fas fa-phone me-2"></i> +58 424 5287 855</li>
           <li class="mb-2"><i class="fas fa-envelope me-2"></i> info@garagebarki.com</li>
-          <li class="mb-2"><i class="fas fa-clock me-2"></i> Lun - Sáb: 10:00 a 20:00</li>
+          <li class="mb-2"><i class="fas fa-clock me-2"></i> Lun - Sáb: 8:00 a 17:00</li>
         </ul>
       </div>
     </div>

@@ -10,12 +10,6 @@
                 <div class="row">
                     <div class="col-12 text-center">
                         <h1 data-aos="fade-up">PRODUCTOS</h1>
-                        <nav aria-label="breadcrumb" data-aos="fade-up" data-aos-delay="200">
-                            <ol class="breadcrumb justify-content-center">
-                                <li class="breadcrumb-item"><a href="../index.html">Inicio</a></li>
-                                <li class="breadcrumb-item active" aria-current="page">Productos</li>
-                            </ol>
-                        </nav>
                     </div>
                 </div>
             </div>
