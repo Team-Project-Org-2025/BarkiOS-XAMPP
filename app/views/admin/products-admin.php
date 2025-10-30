@@ -11,15 +11,9 @@ require_once __DIR__ . '/../partials/header-admin.php';
         <!-- Header con Tasa BCV -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="display-6 fw-bold text-dark">Productos</h1>
-            
-            <!-- ⭐ Incluir el widget de tasa BCV -->
+
             <?php include __DIR__ . '/../partials/exchange-rate-widget.php'; ?>
         </div>
-
-        <button class="btn btn-primary rounded-pill px-4 me-3" data-bs-toggle="modal" data-bs-target="#addProductModal">
-            <i class="fas fa-plus me-1"></i> Agregar producto
-        </button>
-
         <!-- Tabla de Productos -->
         <div class="card mt-3">
             <div class="card-body p-0">
