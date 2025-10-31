@@ -1,10 +1,3 @@
-/**
- * ============================================
- * SISTEMA CENTRALIZADO DE VALIDACIONES
- * Garage Barki - v2.0 (ES6 Module)
- * ============================================
- */
-
 // Expresiones regulares reutilizables
 export const REGEX = {
     cedula: /^\d{7,10}$/,
@@ -44,13 +37,7 @@ export const MESSAGES = {
     select: 'Seleccione una opción'
 };
 
-/**
- * Valida un campo individual
- * @param {jQuery} $input - Elemento input a validar
- * @param {RegExp|null} regex - Expresión regular para validar
- * @param {string} errorMsg - Mensaje de error personalizado
- * @returns {boolean} - true si es válido
- */
+//Valida un campo individual
 export const validateField = ($input, regex = null, errorMsg = '') => {
     const valor = $input.val().trim();
     
@@ -76,11 +63,7 @@ export const validateField = ($input, regex = null, errorMsg = '') => {
     return true;
 };
 
-/**
- * Valida un select
- * @param {jQuery} $select - Elemento select a validar
- * @returns {boolean}
- */
+//Valida un select
 export const validateSelect = ($select) => {
     const valor = $select.val();
     if (!valor || valor === '') {
@@ -91,12 +74,7 @@ export const validateSelect = ($select) => {
     return true;
 };
 
-/**
- * Configura validación en tiempo real para un formulario
- * @param {jQuery} $form - Formulario a configurar
- * @param {Object} rules - Reglas de validación {campo: 'tipo'}
- * @param {boolean} isEdit - Si es formulario de edición
- */
+//Configura validación en tiempo real para un formulario
 export const setupRealTimeValidation = ($form, rules, isEdit = false) => {
     Object.entries(rules).forEach(([campo, tipo]) => {
         const $input = $form.find(`[name="${campo}"]`);
@@ -129,13 +107,7 @@ export const setupRealTimeValidation = ($form, rules, isEdit = false) => {
     });
 };
 
-/**
- * Valida todo el formulario antes de submit
- * @param {jQuery} $form - Formulario a validar
- * @param {Object} rules - Reglas de validación
- * @param {boolean} isEdit - Si es edición
- * @returns {boolean}
- */
+//Valida todo el formulario antes de submit
 export const validateForm = ($form, rules, isEdit = false) => {
     let isValid = true;
 
@@ -165,10 +137,7 @@ export const validateForm = ($form, rules, isEdit = false) => {
     return isValid;
 };
 
-/**
- * Limpia validaciones de un formulario
- * @param {jQuery} $form
- */
+//Limpia validaciones de un formulario
 export const clearValidation = ($form) => {
     $form.find('.is-valid, .is-invalid').removeClass('is-valid is-invalid');
     $form.find('.invalid-feedback').remove();

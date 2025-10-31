@@ -1,15 +1,3 @@
-/**
- * ============================================
- * GESTOR CENTRALIZADO DE PETICIONES AJAX
- * Garage Barki - v2.0 (ES6 Module)
- * ============================================
- */
-
-/**
- * Petición AJAX genérica
- * @param {Object} config
- * @returns {Promise}
- */
 export const request = (config) => {
     const defaults = {
         method: 'GET',
@@ -43,12 +31,7 @@ export const request = (config) => {
     });
 };
 
-/**
- * GET request simplificado
- * @param {string} url
- * @param {Object} params
- * @returns {Promise}
- */
+//GET request 
 export const get = (url, params = null) => {
     return request({
         url,
@@ -57,12 +40,7 @@ export const get = (url, params = null) => {
     });
 };
 
-/**
- * POST request simplificado
- * @param {string} url
- * @param {Object|FormData} data
- * @returns {Promise}
- */
+//POST request simplificado
 export const post = (url, data) => {
     const isFormData = (data instanceof FormData);
     
@@ -75,19 +53,11 @@ export const post = (url, data) => {
     });
 };
 
-/**
- * DELETE request simplificado
- * @param {string} url
- * @param {Object} data
- * @returns {Promise}
- */
+//DELETE request
 export const del = (url, data) => {
     return post(url, data); // En muchos casos usamos POST con action=delete
 };
-
-/**
- * Wrapper para operaciones CRUD comunes
- */
+//Wrapper para operaciones CRUD comunes
 export const crud = (baseUrl) => {
     return {
         getAll: () => get(`${baseUrl}?action=get_all`),

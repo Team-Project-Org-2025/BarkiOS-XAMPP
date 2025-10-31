@@ -1,10 +1,3 @@
-/**
- * ============================================
- * MÓDULO DE EMPLEADOS - GARAGE BARKI
- * Versión refactorizada v2.0 (ES6 Module)
- * ============================================
- */
-
 import * as Validations from '/BarkiOS/public/assets/js/utils/validation.js';
 import * as Helpers from '/BarkiOS/public/assets/js/utils/helpers.js';
 import * as Ajax from '/BarkiOS/public/assets/js/utils/ajax-handler.js';
@@ -13,9 +6,6 @@ $(document).ready(function() {
     const baseUrl = '/BarkiOS/admin/employees';
     let employeesTable = null;
 
-    // ============================================
-    // INICIALIZACIÓN DATATABLE
-    // ============================================
     const initDataTable = () => {
         employeesTable = $('#employeesTable').DataTable({
             ajax: {
@@ -69,9 +59,7 @@ $(document).ready(function() {
         });
     };
 
-    // ============================================
-    // AGREGAR EMPLEADO
-    // ============================================
+    //Agregar empleado
     $('#addEmployeeForm').on('submit', function(e) {
         e.preventDefault();
 
@@ -104,9 +92,7 @@ $(document).ready(function() {
             });
     });
 
-    // ============================================
-    // EDITAR EMPLEADO
-    // ============================================
+    //Editar empleado
     $(document).on('click', '.btn-edit', function() {
         const $btn = $(this);
         
@@ -151,9 +137,7 @@ $(document).ready(function() {
             });
     });
 
-    // ============================================
-    // ELIMINAR EMPLEADO
-    // ============================================
+    //Eliminar empleado
     $(document).on('click', '.btn-delete', function() {
         const cedula = $(this).data('cedula');
         const nombre = $(this).data('nombre');
@@ -179,9 +163,7 @@ $(document).ready(function() {
         );
     });
 
-    // ============================================
-    // VALIDACIÓN EN TIEMPO REAL
-    // ============================================
+    //Validacion
     const addRules = {
         cedula: 'cedula',
         nombre: 'nombre',
@@ -198,16 +180,10 @@ $(document).ready(function() {
     Validations.setupRealTimeValidation($('#addEmployeeForm'), addRules);
     Validations.setupRealTimeValidation($('#editEmployeeForm'), editRules);
 
-    // ============================================
-    // LIMPIAR MODALES AL CERRAR
-    // ============================================
     $('#addEmployeeModal, #editEmployeeModal').on('hidden.bs.modal', function() {
         const $form = $(this).find('form');
         Helpers.resetForm($form);
     });
 
-    // ============================================
-    // INICIALIZAR
-    // ============================================
     initDataTable();
 });

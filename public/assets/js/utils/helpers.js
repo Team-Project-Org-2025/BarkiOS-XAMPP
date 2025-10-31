@@ -1,26 +1,11 @@
-/**
- * ============================================
- * SISTEMA DE UTILIDADES Y HELPERS
- * Garage Barki - v2.0 (ES6 Module)
- * ============================================
- */
-
-/**
- * Escapa HTML para prevenir XSS
- * @param {string} str
- * @returns {string}
- */
+//Escapa HTML para prevenir XSS
 export const escapeHtml = (str) => {
     const div = document.createElement('div');
     div.textContent = String(str ?? '');
     return div.innerHTML;
 };
 
-/**
- * Muestra alertas Toast con SweetAlert2
- * @param {string} type - 'success', 'error', 'warning', 'info'
- * @param {string} msg - Mensaje a mostrar
- */
+//Muestra alertas Toast con SweetAlert2
 export const toast = (type, msg) => {
     if (typeof Swal === 'undefined') {
         console.warn('SweetAlert2 no está cargado');
@@ -47,11 +32,7 @@ export const toast = (type, msg) => {
     });
 };
 
-/**
- * Formatea un número como moneda USD
- * @param {number|string} n
- * @returns {string}
- */
+//Formatea un número como moneda USD
 export const formatCurrency = (n) => {
     const num = Number(n) || 0;
     return new Intl.NumberFormat('es-VE', {
@@ -61,11 +42,7 @@ export const formatCurrency = (n) => {
     }).format(num);
 };
 
-/**
- * Formatea un número como moneda Bs
- * @param {number|string} n
- * @returns {string}
- */
+//Formatea un número como moneda Bs
 export const formatCurrencyBs = (n) => {
     const num = Number(n) || 0;
     return new Intl.NumberFormat('es-VE', {
@@ -75,12 +52,7 @@ export const formatCurrencyBs = (n) => {
     }).format(num);
 };
 
-/**
- * Formatea una fecha
- * @param {string} dateStr
- * @param {boolean} includeTime
- * @returns {string}
- */
+//Formatea una fecha
 export const formatDate = (dateStr, includeTime = false) => {
     if (!dateStr) return 'N/A';
     const date = new Date(dateStr);
@@ -100,11 +72,7 @@ export const formatDate = (dateStr, includeTime = false) => {
     return date.toLocaleString('es-ES', options);
 };
 
-/**
- * Formatea un teléfono venezolano
- * @param {string} tel
- * @returns {string}
- */
+//Formatea un teléfono venezolano
 export const formatPhone = (tel) => {
     if (!tel) return '';
     const str = String(tel);
@@ -113,13 +81,7 @@ export const formatPhone = (tel) => {
         : str;
 };
 
-/**
- * Muestra modal de confirmación
- * @param {string} title
- * @param {string} text
- * @param {Function} onConfirm
- * @param {string} confirmText
- */
+//Muestra modal de confirmación
 export const confirmDialog = (title, text, onConfirm, confirmText = 'Sí, continuar') => {
     if (typeof Swal === 'undefined') {
         if (confirm(`${title}\n${text}`)) onConfirm();
@@ -140,10 +102,7 @@ export const confirmDialog = (title, text, onConfirm, confirmText = 'Sí, contin
     });
 };
 
-/**
- * Muestra spinner de carga
- * @param {string} title
- */
+//Muestra spinner de carga
 export const showLoading = (title = 'Cargando...') => {
     if (typeof Swal === 'undefined') return;
     Swal.fire({
@@ -153,18 +112,12 @@ export const showLoading = (title = 'Cargando...') => {
     });
 };
 
-/**
- * Cierra el loading
- */
+//Cierra el loading
 export const closeLoading = () => {
     if (typeof Swal !== 'undefined') Swal.close();
 };
 
-/**
- * Genera HTML de spinner para DataTables
- * @param {number} colspan
- * @returns {string}
- */
+//Genera HTML de spinner para DataTables
 export const spinnerHtml = (colspan = 5) => {
     return `
         <tr>
@@ -176,12 +129,7 @@ export const spinnerHtml = (colspan = 5) => {
     `;
 };
 
-/**
- * Genera HTML de mensaje vacío
- * @param {number} colspan
- * @param {string} msg
- * @returns {string}
- */
+//Genera HTML de mensaje vacío
 export const emptyHtml = (colspan = 5, msg = 'No hay datos disponibles') => {
     return `
         <tr>
@@ -193,12 +141,7 @@ export const emptyHtml = (colspan = 5, msg = 'No hay datos disponibles') => {
     `;
 };
 
-/**
- * Debounce para búsquedas
- * @param {Function} func
- * @param {number} wait
- * @returns {Function}
- */
+//Debounce para búsquedas
 export const debounce = (func, wait = 300) => {
     let timeout;
     return function executedFunction(...args) {
@@ -211,21 +154,14 @@ export const debounce = (func, wait = 300) => {
     };
 };
 
-/**
- * Limpia formulario y validaciones
- * @param {jQuery} $form
- */
+//Limpia formulario y validaciones 
 export const resetForm = ($form) => {
     $form[0].reset();
     $form.find('.is-valid, .is-invalid').removeClass('is-valid is-invalid');
     $form.find('.invalid-feedback').remove();
 };
 
-/**
- * Genera badge de estado
- * @param {string} estado
- * @returns {string}
- */
+//Genera badge de estado
 export const getBadge = (estado) => {
     const badges = {
         'DISPONIBLE': 'badge bg-success',
@@ -245,10 +181,7 @@ export const getBadge = (estado) => {
     return `<span class="${cls}">${escapeHtml(estado)}</span>`;
 };
 
-/**
- * Obtiene los parámetros de la URL
- * @returns {Object}
- */
+//Obtiene los parámetros de la URL
 export const getUrlParams = () => {
     const params = new URLSearchParams(window.location.search);
     const obj = {};
