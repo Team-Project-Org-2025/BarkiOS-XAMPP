@@ -13,6 +13,7 @@ export const REGEX = {
     direccion: /^.{5,150}$/,
     cargo: /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{2,50}$/,
     referencia: /^\d{8,10}$/,
+    referenciaVenta: /^[A-Za-z0-9\-]{1,15}$/, 
     banco: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s\-\.]{3,30}$/,
     password: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&._-])[A-Za-z\d@$!%*?&._-]{8,30}$/,
     passwordEdit: /^(?:.{0}|(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&._-])[A-Za-z\d@$!%*?&._-]{8,30})$/
@@ -31,6 +32,7 @@ export const MESSAGES = {
     direccion: 'Dirección muy corta (mínimo 5 caracteres)',
     cargo: 'Cargo inválido (2-50 caracteres)',
     referencia: 'Referencia bancaria inválida (8-10 dígitos)',
+    referenciaVenta: 'Referencia inválida (máx 15 caracteres, solo letras, números y guión)',  
     banco: 'Nombre del banco inválido (3-30 caracteres)',
     password: 'Contraseña debe tener 8-30 caracteres, mayúsculas, minúsculas, números y símbolos',
     required: 'Este campo es requerido',
