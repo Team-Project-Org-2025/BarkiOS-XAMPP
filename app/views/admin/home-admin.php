@@ -317,7 +317,7 @@ html, body {
                                 </h4>
                             </div>
                             <div class="col-md-3 text-center">
-                                <h6 class="text-muted mb-2 small">Inventario Disponible</h6>
+                                <h6 class="text-muted mb-2 small">Stock Disponible</h6>
                                 <h4 class="mb-0 fw-bold text-success" id="statInventario">
                                     <span class="spinner-border spinner-border-sm"></span>
                                 </h4>
@@ -333,7 +333,7 @@ html, body {
                     <div class="card-body position-relative">
                         <i class="fas fa-warehouse metric-icon" style="color: #6f42c1;"></i>
                         <h6 class="text-muted mb-2 text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">
-                            Productos en Inventario
+                            Productos en Stock
                         </h6>
                         <h3 class="mb-1 fw-bold" style="color: #6f42c1;" id="statTotalProductos">
                             <span class="spinner-border spinner-border-sm"></span>
@@ -420,7 +420,7 @@ html, body {
                             </a>
                             <a href="/BarkiOS/admin/products" class="btn btn-outline-primary btn-sm text-start">
                                 <i class="fas fa-box me-2"></i>
-                                Ver Inventario
+                                Ver Stock
                             </a>
                             <a href="/BarkiOS/admin/accounts-receivable" class="btn btn-outline-warning btn-sm text-start">
                                 <i class="fas fa-hand-holding-usd me-2"></i>
@@ -493,8 +493,8 @@ $dolarRate = getDolarRate();
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="/BarkiOS/public/assets/js/home-admin.js"></script>
-<script src="/BarkiOS/public/assets/js/logout.js"></script>
+<script src="/BarkiOS/public/assets/js/admin/home-admin.js"></script>
+<script src="/BarkiOS/public/assets/js/admin/logout.js"></script>
 
 </body>
 </html>
