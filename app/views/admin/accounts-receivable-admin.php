@@ -19,7 +19,7 @@
 
         <!-- Tabla de Cuentas por Cobrar -->
         <div class="card mt-3">
-            <div class="card-body p-0">
+            <div class="card-body p-3">
                 <div class="table-responsive">
                     <table id="accountsTable" class="table table-striped table-bordered nowrap" style="width:100%">
                       <thead>

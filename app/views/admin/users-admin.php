@@ -25,7 +25,7 @@
           <i class="fas fa-list me-2 text-primary"></i> Lista de Usuarios
         </h5>
       </div>
-      <div class="card-body p-0">
+      <div class="card-body p-3">
         <div class="table-responsive">
         <table id="usersTable" class="table table-hover align-middle text-center mb-0">
           <thead class="table-primary">
