@@ -13,7 +13,7 @@
         
         <!-- Tabla de Empleados -->
         <div class="card mt-3">
-            <div class="card-body p-0">
+            <div class="card-body p-3">
                 <div class="table-responsive">
                     <table id="employeesTable" class="table table-hover align-middle text-center">
                         <thead>

@@ -14,7 +14,7 @@
         </button>
         <!-- Tabla de Clientes -->
         <div class="card mt-3">
-            <div class="card-body p-0">
+            <div class="card-body p-3">
                 <div class="table-responsive">
                     <table id="clientsTable" class="table table-hover align-middle table-hover text-center">
                         <thead>
