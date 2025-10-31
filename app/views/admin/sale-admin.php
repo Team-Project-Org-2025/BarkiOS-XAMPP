@@ -3,23 +3,6 @@
 <?= require_once __DIR__ . '/../partials/navbar-admin.php'; ?> 
 
 
-<style>
-  html, body {
-      height: 100%;
-      overflow-y: auto;
-  }
-  .main-content {
-      overflow-y: auto;
-      max-height: calc(100vh - 80px);
-      padding-bottom: 2rem;
-  }
-  .modal-dialog-scrollable .modal-body {
-      max-height: calc(100vh - 200px);
-      overflow-y: auto;
-  }
-</style>
-
-
 <div class="main-content">
   <div class="container-fluid py-3">
     <!-- Header -->

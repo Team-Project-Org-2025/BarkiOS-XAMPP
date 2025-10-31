@@ -2,26 +2,6 @@
 <?php require_once __DIR__ . '/../partials/header-admin.php'; ?>
 <?= require_once __DIR__ . '/../partials/navbar-admin.php'; ?>
 
-<style>
-html, body {
-    height: 100%;
-    overflow-y: auto;
-}
-.main-content {
-    overflow-y: auto;
-    max-height: calc(100vh - 80px);
-    padding-bottom: 2rem;
-}
-.modal-dialog-scrollable .modal-body {
-    max-height: calc(100vh - 200px);
-    overflow-y: auto;
-}
-.badge-vigente { background-color: #28a745; }
-.badge-por-vencer { background-color: #ffc107; }
-.badge-vencido { background-color: #dc3545; }
-.badge-pagado { background-color: #17a2b8; }
-</style>
-
 <div class="main-content">
     <div class="container-fluid">
         
