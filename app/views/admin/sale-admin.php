@@ -84,7 +84,7 @@
     <div class="card shadow-sm border-0">
       <div class="card-body p-0">
         <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0 table-modern">
+          <table id="salesTable" class="table table-hover align-middle mb-0 table-modern">
             <thead class="table-light">
               <tr>
                 <th class="text-center d-none d-md-table-cell">#</th>
@@ -97,7 +97,7 @@
                 <th class="text-center" width="150">Acciones</th>
               </tr>
             </thead>
-            <tbody id="salesTableBody"></tbody>
+            <tbody></tbody>
           </table>
         </div>
       </div>
@@ -266,10 +266,13 @@ if (!function_exists('getDolarRate')) {
     const DOLAR_BCV_RATE = <?php echo getDolarRate(); ?>;
 </script>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="/BarkiOS/public/assets/js/sales-admin.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.3/dist/sweetalert2.all.min.js"></script>
+<script type="module" src="/BarkiOS/public/assets/js/admin/sales-admin.js"></script>
+<script src="/BarkiOS/public/assets/js/admin/logout.js"></script>
 
 </body>
 </html>

@@ -1,258 +1,174 @@
-// ============================================================
-// MÓDULO DE VENTAS - GARAGE BARKI
-// Versión optimizada con estilos originales + fecha vencimiento
-// ============================================================
+/**
+ * ============================================
+ * MÓDULO DE VENTAS - GARAGE BARKI
+ * Versión refactorizada v2.0 (ES6 Module)
+ * ============================================
+ */
 
-$(document).ready(function () {
+import * as Validations from '/BarkiOS/public/assets/js/utils/validation.js';
+import * as Helpers from '/BarkiOS/public/assets/js/utils/helpers.js';
+import * as Ajax from '/BarkiOS/public/assets/js/utils/ajax-handler.js';
+
+
+$(document).ready(function() {
     const baseUrl = '/BarkiOS/admin/sale';
-    // --- Estado Global ---
-    const $salesBody = $('#salesTableBody');
-    const $addSaleForm = $('#addSaleForm');
-    const $productsContainer = $('#productsContainer');
-    const $noProductsAlert = $('#noProductsAlert');
-
-    const REGEX = {
-        cedula: /^\d{7,10}$/,
-        money: /^\d+(\.\d{1,2})?$/
-    };
-
     let clients = [], employees = [], products = [], cart = [], pid = 0;
     const IVA_DEFAULT = 16.00;
 
-    // --- UTILIDADES ---
-    const esc = (t) => {
-        const div = document.createElement('div');
-        div.textContent = String(t ?? '');
-        return div.innerHTML;
-    };
+    // ============================================
+    // CARGA INICIAL DE DATOS
+    // ============================================
+    // ============================================
+// INICIALIZAR DATATABLE DE VENTAS
+// ============================================
+let salesTable = null;
 
-    const toast = (type, msg) => {
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({
-                toast: true,
-                position: 'top-end',
-                icon: type,
-                title: msg,
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true
-            });
-        } else {
-            console[type === 'error' ? 'error' : 'log'](msg);
-        }
-    };
+const initSalesTable = () => {
+    if ($.fn.DataTable.isDataTable('#salesTable')) {
+        $('#salesTable').DataTable().destroy();
+    }
 
-    const fmt = (n) => {
-        const num = Number(n) || 0;
-        return new Intl.NumberFormat('es-VE', { 
-            style: 'currency', 
-            currency: 'USD',
-            minimumFractionDigits: 2
-        }).format(num);
-    };
-
-    const fmtBs = (n) => {
-      const num = Number(n) || 0;
-      return new Intl.NumberFormat("es-VE", {
-        style: "currency",
-        currency: "VES",
-        minimumFractionDigits: 2
-      }).format(num);
-    };
-
-
-    const fmtDate = (d) => {
-        if (!d) return '';
-        const dt = new Date(d);
-        if (isNaN(dt)) return String(d);
-        return dt.toLocaleString('es-ES', { 
-            year: 'numeric', 
-            month: 'short', 
-            day: 'numeric', 
-            hour: '2-digit', 
-            minute: '2-digit' 
-        });
-    };
-
-    // AJAX helper
-    function ajax(method, url, data, success, error) {
-        const isFormData = (data instanceof FormData);
-        $.ajax({
-            url: url,
-            method: method,
-            data: data,
-            dataType: 'json',
-            processData: !isFormData,
-            contentType: isFormData ? false : 'application/x-www-form-urlencoded; charset=UTF-8',
-            headers: {'X-Requested-With': 'XMLHttpRequest'},
-            success: success,
-            error: function (xhr) {
-                let msg = 'Error en la petición';
-                try {
-                    const json = xhr.responseJSON || JSON.parse(xhr.responseText);
-                    if (json && json.message) msg = json.message;
-                } catch (e) {
-                    msg = xhr.statusText || msg;
+    salesTable = $('#salesTable').DataTable({
+        ajax: {
+            url: `${baseUrl}?action=get_sales`,
+            method: 'GET',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            dataSrc: (json) => {
+                if (!json.success) {
+                    Helpers.toast('warning', json.message || 'No se pudieron cargar las ventas');
+                    return [];
                 }
-                if (error) error(msg);
-                else toast('error', msg);
+                // Actualiza estadísticas si existe updateStats()
+                if (typeof updateStats === 'function') updateStats(json.sales || []);
+                return json.sales || [];
             }
-        });
-    }
-
-    // =============================================================
-    // ✅ CONTROL DE FECHA DE VENCIMIENTO (NUEVO)
-    // =============================================================
-    
-    const $tipoVentaSelect = $('[name="tipo_venta"]');
-    const $clienteSelect = $('#add_cliente');
-    const $fechaVencimientoGroup = $('#fechaVencimientoGroup');
-    const $fechaVencimientoInput = $('#add_fecha_vencimiento');
-
-    // Establecer fecha mínima (mañana)
-    function setMinDate() {
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        $fechaVencimientoInput.attr('min', tomorrow.toISOString().split('T')[0]);
-    }
-
-    // Manejar cambio de tipo de venta
-    $tipoVentaSelect.on('change', function () {
-        const tipo = $(this).val();
-        const clienteCed = $clienteSelect.val();
-        
-        if (tipo === 'credito') {
-            if (!clienteCed) {
-                toast('warning', 'Seleccione primero un cliente');
-                $(this).val('contado');
-                return;
+        },
+        columns: [
+            { data: 'venta_id', className: 'text-center d-none d-md-table-cell' },
+            { data: 'referencia', render: (d) => `<code>${Helpers.escapeHtml(d ?? '')}</code>` },
+            { data: 'nombre_cliente', className: 'd-none d-lg-table-cell' },
+            { data: 'nombre_empleado', className: 'd-none d-xl-table-cell' },
+            {
+                data: 'fecha',
+                className: 'd-none d-md-table-cell',
+                render: (data) => Helpers.formatDate(data, true)
+            },
+            {
+                data: 'monto_total',
+                className: 'text-end',
+                render: (data) => Helpers.formatCurrency(parseFloat(data) || 0)
+            },
+            {
+                data: 'estado_venta',
+                className: 'text-center d-none d-sm-table-cell',
+                render: (estado) => {
+                    const color = estado === 'Completada'
+                        ? 'success'
+                        : estado === 'Pendiente'
+                        ? 'warning'
+                        : 'secondary';
+                    return `<span class="badge bg-${color}">${Helpers.escapeHtml(estado)}</span>`;
+                }
+            },
+            {
+                data: null,
+                className: 'text-center',
+                orderable: false,
+                render: (data, type, row) => `
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-info btn-view" data-id="${row.venta_id}">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-outline-success btn-pdf" data-id="${row.venta_id}">
+                            <i class="fas fa-file-pdf"></i>
+                        </button>
+                        ${(row.estado_venta || '').toLowerCase() !== 'cancelada' ? `
+                            <button class="btn btn-outline-danger btn-cancel" data-id="${row.venta_id}">
+                                <i class="fas fa-ban"></i>
+                            </button>` : ''}
+                    </div>
+                `
             }
-
-            const $selectedOption = $clienteSelect.find('option:selected');
-            const tipoCliente = $selectedOption.data('tipo');
-            
-            if (tipoCliente === 'vip') {
-                $fechaVencimientoGroup.show();
-                $fechaVencimientoInput.prop('required', true);
-                setMinDate();
-                toast('info', 'Debe seleccionar una fecha de vencimiento');
-            } else {
-                toast('warning', 'Solo clientes VIP pueden comprar a crédito');
-                $(this).val('contado');
-                $fechaVencimientoGroup.hide();
-                $fechaVencimientoInput.prop('required', false).val('');
+        ],
+        pageLength: 10,
+        responsive: true,
+        autoWidth: false,
+        language: {
+            url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
+        },
+        dom: '<"d-flex justify-content-between align-items-center mb-2"lfB>tip',
+        buttons: [
+            {
+                text: '<i class="fas fa-sync-alt"></i> Actualizar',
+                className: 'btn btn-outline-secondary btn-sm',
+                action: function() {
+                    salesTable.ajax.reload(null, false);
+                }
             }
-        } else {
-            $fechaVencimientoGroup.hide();
-            $fechaVencimientoInput.prop('required', false).val('');
-        }
+        ]
     });
+};
 
-    // Validar cuando cambia el cliente
-    $clienteSelect.on('change', function () {
-        const tipo = $tipoVentaSelect.val();
-        if (tipo === 'credito') {
-            $tipoVentaSelect.trigger('change');
-        }
-    });
 
-    // Validación de fecha en tiempo real
-    $fechaVencimientoInput.on('change', function () {
-        const selectedDate = new Date($(this).val());
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        if (selectedDate <= today) {
-            $(this).addClass('is-invalid').removeClass('is-valid');
-            toast('error', 'La fecha de vencimiento debe ser posterior a hoy');
-        } else {
-            $(this).addClass('is-valid').removeClass('is-invalid');
-        }
-    });
+    const loadClients = () => {
+        Ajax.get(`${baseUrl}?action=get_clients`)
+            .then(r => {
+                if (r?.success) {
+                    clients = r.clients || [];
+                    const opts = clients.map(c => 
+                        `<option value="${Helpers.escapeHtml(c.cliente_ced)}" data-tipo="${Helpers.escapeHtml(c.tipo)}">
+                            ${Helpers.escapeHtml(c.nombre_cliente)} (${Helpers.escapeHtml(c.cliente_ced)}) 
+                            ${c.tipo === 'vip' ? '⭐' : ''}
+                        </option>`
+                    ).join('');
+                    $('#add_cliente').html('<option value="">Seleccione...</option>' + opts);
+                }
+            });
+    };
 
-    // =============================================================
-    // CARGA INICIAL
-    // =============================================================
-    
-    function loadAll() {
-        loadSales();
-        loadClients();
-        loadEmployees();
-        loadProducts();
-    }
+    const loadEmployees = () => {
+        Ajax.get(`${baseUrl}?action=get_employees`)
+            .then(r => {
+                if (r?.success) {
+                    employees = r.employees || [];
+                    const opts = employees.map(e => 
+                        `<option value="${Helpers.escapeHtml(e.empleado_ced)}">
+                            ${Helpers.escapeHtml(e.nombre)} - ${Helpers.escapeHtml(e.cargo || '')}
+                        </option>`
+                    ).join('');
+                    $('#add_empleado').html('<option value="">Seleccione...</option>' + opts);
+                }
+            });
+    };
 
-    function loadSales() {
-        $salesBody.html(`<tr><td colspan="9" class="text-center py-4"><div class="spinner-border text-primary"></div> Cargando...</td></tr>`);
-        ajax('GET', baseUrl + '?action=get_sales', null, function (r) {
-            if (r && r.success) {
-                renderSales(r.sales || []);
-            } else {
-                $salesBody.html(`<tr><td colspan="9" class="text-center py-4 text-muted">No se pudieron cargar las ventas</td></tr>`);
-                toast('error', r?.message || 'Error al cargar ventas');
-            }
-        });
-    }
+    const loadProducts = () => {
+        Ajax.get(`${baseUrl}?action=get_products`)
+            .then(r => {
+                if (r?.success) {
+                    products = r.products || [];
+                    updateProductCount(products.length);
+                }
+            });
+    };
 
-    function loadClients() {
-        ajax('GET', baseUrl + '?action=get_clients', null, function (r) {
-            if (r && r.success) {
-                clients = r.clients || [];
-                const opts = clients.map(c => 
-                    `<option value="${esc(c.cliente_ced)}" data-tipo="${esc(c.tipo)}">${esc(c.nombre_cliente)} (${esc(c.cliente_ced)}) ${c.tipo === 'vip' ? '⭐' : ''}</option>`
-                ).join('');
-                $clienteSelect.html('<option value="">Seleccione...</option>' + opts);
-            } else {
-                $clienteSelect.html('<option value="">No disponible</option>');
-            }
-        });
-    }
-
-    function loadEmployees() {
-        ajax('GET', baseUrl + '?action=get_employees', null, function (r) {
-            if (r && r.success) {
-                employees = r.employees || [];
-                const opts = employees.map(e => 
-                    `<option value="${esc(e.empleado_ced)}">${esc(e.nombre)} - ${esc(e.cargo || '')}</option>`
-                ).join('');
-                $('#add_empleado').html('<option value="">Seleccione...</option>' + opts);
-            } else {
-                $('#add_empleado').html('<option value="">No disponible</option>');
-            }
-        });
-    }
-
-    function loadProducts() {
-        ajax('GET', baseUrl + '?action=get_products', null, function (r) {
-            if (r && r.success) {
-                products = r.products || [];
-                updateProductCount(products.length);
-            } else {
-                products = [];
-                updateProductCount(0);
-            }
-        });
-    }
-
-    function updateProductCount(count) {
+    const updateProductCount = (count) => {
         const $badge = $('#productsCount');
         if ($badge.length) {
             $badge.text(`${count} disponibles`).toggleClass('text-danger', count === 0);
         }
-    }
+    };
 
-    // =============================================================
-    // RENDER VENTAS
-    // =============================================================
-    
-    function renderSales(sales) {
+    // ============================================
+    // RENDERIZAR VENTAS
+    // ============================================
+    const renderSales = (sales) => {
         if (!sales || sales.length === 0) {
-            $salesBody.html(`<tr><td colspan="9" class="text-center py-5"><p class="text-muted mb-0">No hay ventas registradas.</p></td></tr>`);
+            $('#salesTableBody').html(Helpers.emptyHtml(8, 'No hay ventas registradas'));
             updateStats([]);
             return;
         }
 
-        let rows = '';
-        sales.forEach((s, i) => {
+        const rows = sales.map((s, i) => {
             const ventaId = s.venta_id ?? s.id ?? '';
             const estadoBadge = {
                 'completada': 'success',
@@ -260,70 +176,58 @@ $(document).ready(function () {
                 'cancelada': 'danger'
             }[(s.estado_venta || '').toLowerCase()] || 'secondary';
 
-            rows += `<tr>
-                <td class="text-center d-none d-md-table-cell">${i+1}</td>
-                <td><code>${esc(s.referencia ?? 'N/A')}</code></td>
-                <td class="d-none d-lg-table-cell">${esc(s.nombre_cliente ?? '')}</td>
-                <td class="d-none d-xl-table-cell">${esc(s.nombre_empleado ?? '')}</td>
-                <td class="d-none d-md-table-cell">${esc(fmtDate(s.fecha))}</td>
-                <td class="text-end"><strong>${fmt(parseFloat(s.monto_total ?? 0))}</strong></td>
-                <td class="text-center d-none d-sm-table-cell">
-                    <span class="badge bg-${estadoBadge}">${esc(s.estado_venta ?? '')}</span>
-                </td>
-                <td class="text-center">
-                    <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-info" onclick="window.viewSale(${ventaId})" title="Ver detalle">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="btn btn-outline-success" onclick="window.generateSalePdf(${ventaId})" title="Descargar PDF">
-                            <i class="fas fa-file-pdf"></i>
-                        </button>
-                        ${ (s.estado_venta || '').toLowerCase() !== 'cancelada' ? `
-                            <button class="btn btn-outline-danger" onclick="window.cancelSale(${ventaId})" title="Anular venta">
-                                <i class="fas fa-ban"></i>
-                            </button>` : '' }
-                    </div>
-                </td>
-            </tr>`;
-        });
+            return `
+                <tr>
+                    <td class="text-center d-none d-md-table-cell">${i + 1}</td>
+                    <td><code>${Helpers.escapeHtml(s.referencia ?? 'N/A')}</code></td>
+                    <td class="d-none d-lg-table-cell">${Helpers.escapeHtml(s.nombre_cliente ?? '')}</td>
+                    <td class="d-none d-xl-table-cell">${Helpers.escapeHtml(s.nombre_empleado ?? '')}</td>
+                    <td class="d-none d-md-table-cell">${Helpers.formatDate(s.fecha, true)}</td>
+                    <td class="text-end"><strong>${Helpers.formatCurrency(s.monto_total ?? 0)}</strong></td>
+                    <td class="text-center d-none d-sm-table-cell">
+                        <span class="badge bg-${estadoBadge}">${Helpers.escapeHtml(s.estado_venta ?? '')}</span>
+                    </td>
+                    <td class="text-center">
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-info btn-view" data-id="${ventaId}">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-outline-success btn-pdf" data-id="${ventaId}">
+                                <i class="fas fa-file-pdf"></i>
+                            </button>
+                            ${(s.estado_venta || '').toLowerCase() !== 'cancelada' ? `
+                                <button class="btn btn-outline-danger btn-cancel" data-id="${ventaId}">
+                                    <i class="fas fa-ban"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
 
-        $salesBody.html(rows);
+        $('#salesTableBody').html(rows);
         updateStats(sales);
-    }
+    };
 
-    function updateStats(sales) {
+    const updateStats = (sales) => {
         const totalSales = (sales || []).length;
         const revenue = (sales || []).reduce((acc, s) => acc + (parseFloat(s.monto_total ?? 0) || 0), 0);
         const pending = (sales || []).reduce((acc, s) => acc + (parseFloat(s.saldo_pendiente || 0) || 0), 0);
         const completed = (sales || []).filter(s => (s.estado_venta || '').toLowerCase() === 'completada').length;
 
         $('#totalSales').text(totalSales);
-        $('#totalRevenue').text(fmt(revenue));
-        $('#totalPending').text(fmt(pending));
+        $('#totalRevenue').text(Helpers.formatCurrency(revenue));
+        $('#totalPending').text(Helpers.formatCurrency(pending));
         $('#completedSales').text(completed);
-    }
+    };
 
-    // =============================================================
-    // BUSCADOR
-    // =============================================================
-    
-    $('#searchInput').on('keyup', function () {
-        const q = $(this).val().toLowerCase();
-        $('#salesTableBody tr').each(function () {
-            const text = $(this).text().toLowerCase();
-            $(this).toggle(text.indexOf(q) !== -1);
-        });
-    });
-
-    // =============================================================
-    // GESTIÓN DE PRODUCTOS EN VENTA
-    // =============================================================
-    
-    $('#btnAddProduct').on('click', addProductRow);
-
-    function addProductRow(productData = null) {
+    // ============================================
+    // GESTIÓN DE PRODUCTOS EN CARRITO
+    // ============================================
+    const addProductRow = () => {
         if (!products || products.length === 0) {
-            toast('info', 'No hay productos disponibles');
+            Helpers.toast('info', 'No hay productos disponibles');
             return;
         }
 
@@ -335,7 +239,9 @@ $(document).ready(function () {
             const price = parseFloat(p.precio ?? 0);
             const codigo = p.codigo_prenda ?? '';
             const name = p.nombre ?? `ID:${p.prenda_id || ''}`;
-            return `<option value="${esc(codigo)}" data-price="${price}" data-name="${esc(name)}">${esc(codigo)} - ${esc(name)} - ${fmt(price)}</option>`;
+            return `<option value="${Helpers.escapeHtml(codigo)}" data-price="${price}" data-name="${Helpers.escapeHtml(name)}">
+                ${Helpers.escapeHtml(codigo)} - ${Helpers.escapeHtml(name)} - ${Helpers.formatCurrency(price)}
+            </option>`;
         }).join('');
 
         const html = `
@@ -354,30 +260,30 @@ $(document).ready(function () {
                     </div>
                     <div class="col-4 col-md-2">
                         <label class="form-label small">Subtotal</label>
-                        <div class="fw-bold text-primary product-subtotal" data-row="${rowId}">${fmt(0)}</div>
+                        <div class="fw-bold text-primary product-subtotal" data-row="${rowId}">${Helpers.formatCurrency(0)}</div>
                     </div>
                     <div class="col-2 col-md-1 text-end">
                         <label class="form-label small d-block">&nbsp;</label>
-                        <button type="button" class="btn btn-sm btn-danger remove-product" data-row="${rowId}"><i class="fas fa-trash"></i></button>
+                        <button type="button" class="btn btn-sm btn-danger remove-product" data-row="${rowId}">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </div>
                 </div>
                 <input type="hidden" class="product-code" data-row="${rowId}">
             </div>
         `;
 
-        $productsContainer.append(html);
+        $('#productsContainer').append(html);
 
-        // Eventos
-        $(`#${rowId} .product-select`).on('change', function () {
+        $(`#${rowId} .product-select`).on('change', function() {
             const r = $(this).data('row');
             const codigo = $(this).val();
             const $opt = $(this).find('option:selected');
             const price = parseFloat($opt.data('price') || 0);
             const name = $opt.data('name') || '';
             
-            // Evitar duplicados de código
             if (codigo && cart.some(c => c.codigo_prenda === codigo && c.id !== r)) {
-                toast('warning', `El producto ${codigo} ya está agregado`);
+                Helpers.toast('warning', `El producto ${codigo} ya está agregado`);
                 $(this).val('');
                 updateProductRow(r, '', '', 0);
                 return;
@@ -386,14 +292,14 @@ $(document).ready(function () {
             updateProductRow(r, codigo, name, price);
         });
 
-        $(`#${rowId} .remove-product`).on('click', function () {
+        $(`#${rowId} .remove-product`).on('click', function() {
             removeProductRow($(this).data('row'));
         });
 
         calcTotals();
-    }
+    };
 
-    function updateProductRow(rowId, codigo, name, price) {
+    const updateProductRow = (rowId, codigo, name, price) => {
         const item = { id: rowId, codigo_prenda: codigo, name: name, price: price, subtotal: price };
         const existingIndex = cart.findIndex(c => c.id === rowId);
         
@@ -405,46 +311,104 @@ $(document).ready(function () {
 
         $(`#${rowId} .product-code`).val(codigo);
         $(`#${rowId} .product-price`).val(price ? price.toFixed(2) : '');
-        $(`#${rowId} .product-subtotal`).text(fmt(price));
+        $(`#${rowId} .product-subtotal`).text(Helpers.formatCurrency(price));
         calcTotals();
-    }
+    };
 
-    function removeProductRow(rowId) {
+    const removeProductRow = (rowId) => {
         cart = cart.filter(c => c.id !== rowId);
         $(`#${rowId}`).fadeOut(200, function() { $(this).remove(); });
-        if (cart.length === 0) $noProductsAlert.show();
+        if (cart.length === 0) $('#noProductsAlert').show();
         calcTotals();
-    }
+    };
 
-    function calcTotals() {
+    const calcTotals = () => {
         const subtotal = cart.reduce((acc, i) => acc + (parseFloat(i.subtotal || 0) || 0), 0);
         const ivaPct = parseFloat($('#add_iva').val() || IVA_DEFAULT);
         const ivaAmount = subtotal * (ivaPct / 100);
         const total = subtotal + ivaAmount;
 
-        $('#summary_subtotal').text(fmt(subtotal));
-        $('#summary_iva').text(fmt(ivaAmount));
-        $('#summary_total').text(fmt(total));
-        // Calcular y mostrar total en Bs
-        const totalBs = total * DOLAR_BCV_RATE;
-        $('#summary_total_bs').text(fmtBs(totalBs));
+        $('#summary_subtotal').text(Helpers.formatCurrency(subtotal));
+        $('#summary_iva').text(Helpers.formatCurrency(ivaAmount));
+        $('#summary_total').text(Helpers.formatCurrency(total));
+        
+        if (typeof DOLAR_BCV_RATE !== 'undefined') {
+            const totalBs = total * DOLAR_BCV_RATE;
+            $('#summary_total_bs').text(Helpers.formatCurrencyBs(totalBs));
+        }
         
         $('#iva_percentage').text(ivaPct.toFixed(2));
-    }
+    };
 
-    // Validar IVA en tiempo real
-    $('#add_iva').on('input', function () {
-        const val = parseFloat($(this).val());
-        $(this).toggleClass('is-invalid', isNaN(val) || val < 0 || val > 100);
-        $(this).toggleClass('is-valid', !isNaN(val) && val >= 0 && val <= 100);
-        calcTotals();
+    // ============================================
+    // CONTROL DE FECHA VENCIMIENTO
+    // ============================================
+    const $tipoVentaSelect = $('[name="tipo_venta"]');
+    const $clienteSelect = $('#add_cliente');
+    const $fechaVencimientoGroup = $('#fechaVencimientoGroup');
+    const $fechaVencimientoInput = $('#add_fecha_vencimiento');
+
+    const setMinDate = () => {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        $fechaVencimientoInput.attr('min', tomorrow.toISOString().split('T')[0]);
+    };
+
+    $tipoVentaSelect.on('change', function() {
+        const tipo = $(this).val();
+        const clienteCed = $clienteSelect.val();
+        
+        if (tipo === 'credito') {
+            if (!clienteCed) {
+                Helpers.toast('warning', 'Seleccione primero un cliente');
+                $(this).val('contado');
+                return;
+            }
+
+            const $selectedOption = $clienteSelect.find('option:selected');
+            const tipoCliente = $selectedOption.data('tipo');
+            
+            if (tipoCliente === 'vip') {
+                $fechaVencimientoGroup.show();
+                $fechaVencimientoInput.prop('required', true);
+                setMinDate();
+                Helpers.toast('info', 'Debe seleccionar una fecha de vencimiento');
+            } else {
+                Helpers.toast('warning', 'Solo clientes VIP pueden comprar a crédito');
+                $(this).val('contado');
+                $fechaVencimientoGroup.hide();
+                $fechaVencimientoInput.prop('required', false).val('');
+            }
+        } else {
+            $fechaVencimientoGroup.hide();
+            $fechaVencimientoInput.prop('required', false).val('');
+        }
     });
 
-    // =============================================================
-    // GUARDAR VENTA (CON VALIDACIÓN DE FECHA VENCIMIENTO)
-    // =============================================================
-    
-    $addSaleForm.on('submit', function (e) {
+    $clienteSelect.on('change', function() {
+        const tipo = $tipoVentaSelect.val();
+        if (tipo === 'credito') {
+            $tipoVentaSelect.trigger('change');
+        }
+    });
+
+    $fechaVencimientoInput.on('change', function() {
+        const selectedDate = new Date($(this).val());
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (selectedDate <= today) {
+            $(this).addClass('is-invalid').removeClass('is-valid');
+            Helpers.toast('error', 'La fecha de vencimiento debe ser posterior a hoy');
+        } else {
+            $(this).addClass('is-valid').removeClass('is-invalid');
+        }
+    });
+
+    // ============================================
+    // GUARDAR VENTA
+    // ============================================
+    $('#addSaleForm').on('submit', function(e) {
         e.preventDefault();
 
         const cliente = $clienteSelect.val();
@@ -452,39 +416,37 @@ $(document).ready(function () {
         const tipo = $tipoVentaSelect.val();
 
         if (!cliente || !empleado) {
-            toast('error', 'Seleccione cliente y vendedor');
+            Helpers.toast('error', 'Seleccione cliente y vendedor');
             return;
         }
 
         if (cart.length === 0) {
-            toast('error', 'Agregue al menos un producto');
+            Helpers.toast('error', 'Agregue al menos un producto');
             return;
         }
 
-        // ✅ Validar crédito y fecha de vencimiento
         if (tipo === 'credito') {
             const $opt = $clienteSelect.find('option:selected');
             const tipoCliente = $opt.data('tipo');
             
             if (tipoCliente !== 'vip') {
-                toast('error', 'Solo clientes VIP pueden comprar a crédito');
+                Helpers.toast('error', 'Solo clientes VIP pueden comprar a crédito');
                 return;
             }
 
             const fechaVencimiento = $fechaVencimientoInput.val();
             if (!fechaVencimiento) {
-                toast('error', 'Debe seleccionar una fecha de vencimiento');
+                Helpers.toast('error', 'Debe seleccionar una fecha de vencimiento');
                 $fechaVencimientoInput.focus();
                 return;
             }
 
-            // Validar que la fecha sea futura
             const selectedDate = new Date(fechaVencimiento);
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             
             if (selectedDate <= today) {
-                toast('error', 'La fecha de vencimiento debe ser posterior a hoy');
+                Helpers.toast('error', 'La fecha de vencimiento debe ser posterior a hoy');
                 $fechaVencimientoInput.focus();
                 return;
             }
@@ -505,99 +467,90 @@ $(document).ready(function () {
             productos: JSON.stringify(productosPayload)
         };
 
-        // ✅ Agregar fecha de vencimiento si es crédito
         if (tipo === 'credito') {
             data.fecha_vencimiento = $fechaVencimientoInput.val();
         }
 
-        // Deshabilitar botón
-        const $btn = $addSaleForm.find('button[type="submit"]');
+        const $btn = $(this).find('button[type="submit"]');
         const btnText = $btn.html();
         $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Guardando...');
 
-        ajax('POST', baseUrl + '?action=add_sale', data, 
-            function (r) {
-                $btn.prop('disabled', false).html(btnText);
-                
-                if (r && r.success) {
-                    toast('success', r.message || 'Venta registrada');
-                    $addSaleForm.trigger('reset');
-                    $productsContainer.empty();
+        Ajax.post(`${baseUrl}?action=add_sale`, data)
+            .then(r => {
+                if (r?.success) {
+                    Helpers.toast('success', r.message || 'Venta registrada');
+                    $(this)[0].reset();
+                    $('#productsContainer').empty();
                     cart = [];
                     pid = 0;
-                    $noProductsAlert.show();
+                    $('#noProductsAlert').show();
                     $fechaVencimientoGroup.hide();
                     $fechaVencimientoInput.prop('required', false).val('');
                     calcTotals();
                     $('#addSaleModal').modal('hide');
-                    loadSales();
+                    initSalesTable();
                     loadProducts();
                 } else {
-                    toast('error', r?.message || 'Error al guardar venta');
+                    Helpers.toast('error', r?.message || 'Error al guardar venta');
                 }
-            },
-            function (msg) {
-                $btn.prop('disabled', false).html(btnText);
-                toast('error', msg);
-            }
-        );
+            })
+            .catch(msg => Helpers.toast('error', msg))
+            .finally(() => $btn.prop('disabled', false).html(btnText));
     });
 
-    // =============================================================
+    // ============================================
     // VER DETALLES
-    // =============================================================
-    
-    window.viewSale = function (id) {
+    // ============================================
+    $(document).on('click', '.btn-view', function() {
+        const id = $(this).data('id');
         if (!id) return;
         
         $('#saleDetailsContent').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div><p class="mt-2">Cargando...</p></div>');
         $('#viewSaleModal').modal('show');
 
-        ajax('GET', baseUrl + `?action=get_by_id&id=${encodeURIComponent(id)}`, null, 
-            function (r) {
-                if (r && r.success && r.venta) {
+        Ajax.get(`${baseUrl}?action=get_by_id&id=${encodeURIComponent(id)}`)
+            .then(r => {
+                if (r?.success && r.venta) {
                     renderSaleDetails(r.venta);
                 } else {
                     $('#saleDetailsContent').html('<p class="text-center text-muted">No se encontraron detalles</p>');
                 }
-            },
-            function (msg) {
-                $('#saleDetailsContent').html(`<p class="text-center text-muted">${esc(msg)}</p>`);
-            }
-        );
-    };
+            })
+            .catch(msg => {
+                $('#saleDetailsContent').html(`<p class="text-center text-muted">${Helpers.escapeHtml(msg)}</p>`);
+            });
+    });
 
-    function renderSaleDetails(s) {
+    const renderSaleDetails = (s) => {
+        const subtotal = parseFloat(s.monto_subtotal ?? s.subtotal ?? 0);
+        const iva = parseFloat(s.monto_iva ?? s.iva ?? 0);
+        const total = parseFloat(s.monto_total ?? s.total ?? 0);
+        const pagado = parseFloat(s.total_pagado ?? s.pagado ?? 0);
+        const saldo = parseFloat(s.saldo_pendiente ?? s.saldo ?? 0);
+
         let html = `
-        <div class="text-end mb-3">
-            <button class="btn btn-sm btn-success" onclick="window.generateSalePdf(${s.venta_id ?? s.id})">
-                <i class="fas fa-file-pdf me-1"></i> Descargar PDF
-            </button>
-        </div>
+            <div class="text-end mb-3">
+                <button class="btn btn-sm btn-success btn-pdf" data-id="${s.venta_id ?? s.id}">
+                    <i class="fas fa-file-pdf me-1"></i> Descargar PDF
+                </button>
+            </div>
             <div class="row mb-3">
                 <div class="col-md-6">
-                    <h5>Venta #${esc(s.venta_id ?? '')}</h5>
-                    <p class="mb-1"><strong>Referencia:</strong> <code>${esc(s.referencia ?? 'N/A')}</code></p>
-                    <p class="mb-1"><strong>Estado:</strong> <span class="badge bg-${(s.estado_venta === 'completada') ? 'success' : ((s.estado_venta === 'cancelada') ? 'danger' : 'warning')}">${esc(s.estado_venta ?? '')}</span></p>
-                    <p class="mb-1"><strong>Tipo:</strong> <span class="badge bg-info">${esc(s.tipo_venta ?? '')}</span></p>
+                    <h5>Venta #${Helpers.escapeHtml(s.venta_id ?? '')}</h5>
+                    <p class="mb-1"><strong>Referencia:</strong> <code>${Helpers.escapeHtml(s.referencia ?? 'N/A')}</code></p>
+                    <p class="mb-1"><strong>Estado:</strong> ${Helpers.getBadge(s.estado_venta ?? '')}</p>
+                    <p class="mb-1"><strong>Tipo:</strong> <span class="badge bg-info">${Helpers.escapeHtml(s.tipo_venta ?? '')}</span></p>
                 </div>
                 <div class="col-md-6 text-end">
-                    <p class="mb-1"><strong>Fecha:</strong> ${esc(fmtDate(s.fecha))}</p>
-                    <p class="mb-1"><strong>Cliente:</strong> ${esc(s.nombre_cliente ?? '')}</p>
-                    <p class="mb-1"><strong>Vendedor:</strong> ${esc(s.nombre_empleado ?? '')}</p>
+                    <p class="mb-1"><strong>Fecha:</strong> ${Helpers.formatDate(s.fecha, true)}</p>
+                    <p class="mb-1"><strong>Cliente:</strong> ${Helpers.escapeHtml(s.nombre_cliente ?? '')}</p>
+                    <p class="mb-1"><strong>Vendedor:</strong> ${Helpers.escapeHtml(s.nombre_empleado ?? '')}</p>
                 </div>
             </div>
-
             <h6 class="border-bottom pb-2">Productos</h6>
             <table class="table table-sm">
                 <thead>
-                    <tr>
-                        <th>Código</th>
-                        <th>Producto</th>
-                        <th>Tipo</th>
-                        <th>Categoría</th>
-                        <th class="text-end">Precio</th>
-                    </tr>
+                    <tr><th>Código</th><th>Producto</th><th>Tipo</th><th>Categoría</th><th class="text-end">Precio</th></tr>
                 </thead>
                 <tbody>
         `;
@@ -609,135 +562,120 @@ $(document).ready(function () {
             const categoria = it.categoria ?? it.categoria_prenda ?? '';
             const precio = parseFloat(it.precio_unitario ?? it.subtotal ?? it.precio ?? 0);
 
-            html += `<tr>
-                <td><code>${esc(codigo)}</code></td>
-                <td>${esc(name)}</td>
-                <td>${esc(tipo)}</td>
-                <td><small class="text-muted">${esc(categoria)}</small></td>
-                <td class="text-end">${fmt(precio)}</td>
-            </tr>`;
+            html += `
+                <tr>
+                    <td><code>${Helpers.escapeHtml(codigo)}</code></td>
+                    <td>${Helpers.escapeHtml(name)}</td>
+                    <td>${Helpers.escapeHtml(tipo)}</td>
+                    <td><small class="text-muted">${Helpers.escapeHtml(categoria)}</small></td>
+                    <td class="text-end">${Helpers.formatCurrency(precio)}</td>
+                </tr>
+            `;
         });
 
-        html += `</tbody></table>`;
-
-        const subtotal = parseFloat(s.monto_subtotal ?? s.subtotal ?? 0);
-        const iva = parseFloat(s.monto_iva ?? s.iva ?? 0);
-        const total = parseFloat(s.monto_total ?? s.total ?? 0);
-        const pagado = parseFloat(s.total_pagado ?? s.pagado ?? 0);
-        const saldo = parseFloat(s.saldo_pendiente ?? s.saldo ?? 0);
-        const totalBs = total * DOLAR_BCV_RATE;
-
         html += `
+                </tbody>
+            </table>
             <div class="row">
                 <div class="col-md-6 offset-md-6">
                     <table class="table table-sm table-borderless">
-                        <tr><td>Subtotal:</td><td class="text-end">${fmt(subtotal)}</td></tr>
-                        <tr><td>IVA (${s.iva_porcentaje ?? 16}%):</td><td class="text-end">${fmt(iva)}</td></tr>
-                        <tr class="fw-bold"><td>Total:</td><td class="text-end">${fmt(total)}</td></tr>
-                        ${pagado > 0 ? `<tr class="text-success"><td>Pagado:</td><td class="text-end">${fmt(pagado)}</td></tr>` : ''}
-                        ${saldo > 0 ? `<tr class="text-danger"><td >Saldo:</td><td class="text-end">${fmt(saldo)}</td></tr>` : ''}
-                        <tr><td>Tasa usada:</td><td class="text-end">${DOLAR_BCV_RATE.toFixed(2)} Bs</td></tr>
-                        <tr class="fw-bold"><td>Total (Bs):</td><td class="text-end">${fmtBs(totalBs)}</td></tr>
+                        <tr><td>Subtotal:</td><td class="text-end">${Helpers.formatCurrency(subtotal)}</td></tr>
+                        <tr><td>IVA (${s.iva_porcentaje ?? 16}%):</td><td class="text-end">${Helpers.formatCurrency(iva)}</td></tr>
+                        <tr class="fw-bold"><td>Total:</td><td class="text-end">${Helpers.formatCurrency(total)}</td></tr>
+                        ${pagado > 0 ? `<tr class="text-success"><td>Pagado:</td><td class="text-end">${Helpers.formatCurrency(pagado)}</td></tr>` : ''}
+                        ${saldo > 0 ? `<tr class="text-danger"><td>Saldo:</td><td class="text-end">${Helpers.formatCurrency(saldo)}</td></tr>` : ''}
                     </table>
                 </div>
             </div>
         `;
 
-        if (s.pagos && s.pagos.length > 0) {
-            html += `<h6 class="border-bottom pb-2 mt-3">Historial de Pagos</h6>`;
-            html += `<table class="table table-sm"><thead><tr><th>Fecha</th><th class="text-end">Monto</th><th>Observaciones</th></tr></thead><tbody>`;
-            s.pagos.forEach(p => {
-                html += `<tr>
-                    <td>${esc(fmtDate(p.fecha_pago ?? p.fecha))}</td>
-                    <td class="text-end">${fmt(parseFloat(p.monto ?? 0))}</td>
-                    <td><small class="text-muted">${esc(p.observaciones ?? '-')}</small></td>
-                </tr>`;
-            });
-            html += `</tbody></table>`;
-        }
-
         $('#saleDetailsContent').html(html);
-    }
+    };
 
-    // =============================================================
+    // ============================================
     // ANULAR VENTA
-    // =============================================================
-    
-    window.cancelSale = function (ventaId) {
+    // ============================================
+    $(document).on('click', '.btn-cancel', function() {
+        const ventaId = $(this).data('id');
         if (!ventaId) return;
         
-        Swal.fire({
-            title: '¿Anular venta?',
-            text: 'Esto liberará las prendas y marcará la venta como anulada.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Sí, anular',
-            cancelButtonText: 'Cancelar',
-            confirmButtonColor: '#dc3545'
-        }).then(res => {
-            if (!res.isConfirmed) return;
-            
-            ajax('POST', baseUrl + '?action=cancel_sale', { venta_id: ventaId }, 
-                function (r) {
-                    if (r && r.success) {
-                        toast('success', r.message || 'Venta anulada');
-                        loadSales();
-                        loadProducts();
-                    } else {
-                        toast('error', r?.message || 'Error al anular venta');
-                    }
-                },
-                function (msg) {
-                    toast('error', msg);
-                }
-            );
+        Helpers.confirmDialog(
+            '¿Anular venta?',
+            'Esto liberará las prendas y marcará la venta como anulada.',
+            () => {
+                Ajax.post(`${baseUrl}?action=cancel_sale`, { venta_id: ventaId })
+                    .then(r => {
+                        if (r?.success) {
+                            Helpers.toast('success', r.message || 'Venta anulada');
+                            initSalesTable();
+                            loadProducts();
+                        } else {
+                            Helpers.toast('error', r?.message || 'Error al anular venta');
+                        }
+                    })
+                    .catch(msg => Helpers.toast('error', msg));
+            },
+            'Sí, anular'
+        );
+    });
+
+    // ============================================
+    // GENERAR PDF
+    // ============================================
+    $(document).on('click', '.btn-pdf', function() {
+        const ventaId = $(this).data('id');
+        if (!ventaId) return;
+        window.open(`${baseUrl}?action=generate_pdf&venta_id=${ventaId}`, '_blank');
+    });
+
+    // ============================================
+    // BÚSQUEDA
+    // ============================================
+    $('#searchInput').on('keyup', Helpers.debounce(function() {
+        const q = $(this).val().toLowerCase();
+        $('#salesTableBody tr').each(function() {
+            const text = $(this).text().toLowerCase();
+            $(this).toggle(text.indexOf(q) !== -1);
         });
-    };
+    }, 300));
 
-    /**
-     * Generar PDF de venta
-     */
-    window.generateSalePdf = function(ventaId) {
-        if (!ventaId) return;
-        
-        const url = `${baseUrl}?action=generate_pdf&venta_id=${ventaId}`;
-        window.open(url, '_blank');
-    };
-
-    // =============================================================
-    // LIMPIAR MODALES
-    // =============================================================
+    // ============================================
+    // EVENTOS
+    // ============================================
+    $('#btnAddProduct').on('click', addProductRow);
     
-    $('#addSaleModal, #viewSaleModal').on('hidden.bs.modal', function () {
-        $(this).find('form').each(function () {
+    $('#add_iva').on('input', function() {
+        const val = parseFloat($(this).val());
+        $(this).toggleClass('is-invalid', isNaN(val) || val < 0 || val > 100);
+        $(this).toggleClass('is-valid', !isNaN(val) && val >= 0 && val <= 100);
+        calcTotals();
+    });
+
+    $('#addSaleModal, #viewSaleModal').on('hidden.bs.modal', function() {
+        $(this).find('form').each(function() {
             if (this.reset) this.reset();
             $(this).find('.is-valid, .is-invalid').removeClass('is-valid is-invalid');
         });
         
         if ($(this).attr('id') === 'addSaleModal') {
-            $productsContainer.empty();
+            $('#productsContainer').empty();
             cart = [];
             pid = 0;
-            $noProductsAlert.show();
+            $('#noProductsAlert').show();
             $fechaVencimientoGroup.hide();
             $fechaVencimientoInput.prop('required', false).val('');
             calcTotals();
         }
     });
 
-    // =============================================================
+    // ============================================
     // INICIALIZACIÓN
-    // =============================================================
-    
-    loadAll();
-    
-    // Establecer fecha mínima inicial y ocultar por defecto
+    // ============================================
+    initSalesTable();   // ✅ Inicializa la tabla con DataTables
+    loadClients();
+    loadEmployees();
+    loadProducts();
     setMinDate();
     $fechaVencimientoGroup.hide();
     $fechaVencimientoInput.prop('required', false);
-
-    // Exponer funciones globales
-    window.calcTotals = calcTotals;
-    window.addProductRow = addProductRow;
-    window.removeProduct = function(rowId) { removeProductRow(rowId); };
 });
