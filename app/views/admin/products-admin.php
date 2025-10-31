@@ -16,9 +16,9 @@ require_once __DIR__ . '/../partials/header-admin.php';
         </div>
         <!-- Tabla de Productos -->
         <div class="card mt-3">
-            <div class="card-body p-0">
+            <div class="card-body p-3">
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle table-hover text-center">
+                    <table id="productsTable" class="table table-hover align-middle text-center">
                         <thead>
                             <tr>
                                 <th>Imagen</th>
@@ -63,6 +63,8 @@ require_once __DIR__ . '/../partials/header-admin.php';
                             id="productId"
                             name="prenda_id" 
                             placeholder="Ingrese código del producto"
+                            pattern="^\d{9}$"
+                            maxlength="9"
                             required>
                         <div class="invalid-feedback">Por favor ingrese un código válido</div>
                     </div>
@@ -243,10 +245,12 @@ if (!function_exists('getDolarRate')) {
 </script>
 
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.3/dist/sweetalert2.all.min.js"></script>
-<script src="/BarkiOS/public/assets/js/products-admin.js"></script>
-<script src="/BarkiOS/public/assets/js/logout.js"></script>
+<script type="module" src="/BarkiOS/public/assets/js/admin/products-admin.js"></script>
+<script src="/BarkiOS/public/assets/js/admin/logout.js"></script>
 
 </body>
 </html>

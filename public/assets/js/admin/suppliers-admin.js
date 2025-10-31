@@ -2,7 +2,8 @@ $(document).ready(function () {
     const $suppliersTableBody = $('#suppliersTableBody');
     const $addSupplierForm = $('#addSupplierForm');
     const $editSupplierForm = $('#editSupplierForm');
-    const baseUrl = '/BarkiOS/admin/supplier'
+    const baseUrl = '/BarkiOS/admin/supplier';
+
     // --- UTILIDADES ---
     const escapeHtml = str => String(str ?? '')
         .replace(/&/g, '&amp;')
@@ -29,16 +30,15 @@ $(document).ready(function () {
 
     // --- VALIDACIÓN ---
     function validarProveedor($form, validarRif = true) {
-        const $tipoRif = $form.find('[name="tipo_rif"]'); // select
+        const $tipoRif = $form.find('[name="tipo_rif"]');
         const $rif = $form.find('[name="proveedor_rif"]');
         const $nombreContacto = $form.find('[name="nombre_contacto"]');
         const $nombreEmpresa = $form.find('[name="nombre_empresa"]');
         const $direccion = $form.find('[name="direccion"]');
 
-        // Expresiones regulares
-        const regexRif = /^\d{9}$/; // ejemplo: J-12345678 o V123456789
+        const regexRif = /^\d{9}$/;
         const regexNombre = /^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s\-\_\.\,\&\"\']{2,60}$/;
-        const regexDireccion = /^.{5,150}$/; // mínimo 5 caracteres, máx 150
+        const regexDireccion = /^.{5,150}$/;
 
         let valido = true;
         $form.find('.is-invalid').removeClass('is-invalid');
@@ -47,22 +47,18 @@ $(document).ready(function () {
             $tipoRif.addClass('is-invalid');
             valido = false;
         }
-
         if (validarRif && !regexRif.test($rif.val().trim())) {
             $rif.addClass('is-invalid');
             valido = false;
         }
-
         if (!regexNombre.test($nombreContacto.val().trim())) {
             $nombreContacto.addClass('is-invalid');
             valido = false;
         }
-
         if (!regexNombre.test($nombreEmpresa.val().trim())) {
             $nombreEmpresa.addClass('is-invalid');
             valido = false;
         }
-
         if (!regexDireccion.test($direccion.val().trim())) {
             $direccion.addClass('is-invalid');
             valido = false;
@@ -71,65 +67,85 @@ $(document).ready(function () {
         if (!valido) {
             showAlert('Por favor corrija los campos resaltados antes de continuar.', 'warning');
         }
-
         return valido;
     }
 
     // --- CARGAR PROVEEDORES ---
     function AjaxSuppliers() {
-        $suppliersTableBody.html(`
-            <tr><td colspan="6" class="text-center py-3">
-                <div class="spinner-border text-primary"></div> Cargando...
-            </td></tr>
-        `);
+    $suppliersTableBody.html(`
+        <tr><td colspan="6" class="text-center py-3">
+            <div class="spinner-border text-primary"></div> Cargando...
+        </td></tr>
+    `);
 
-        $.ajax({
-            url: window.location.pathname + '?action=get_suppliers',
-            headers: { 'X-Requested-With': 'XMLHttpRequest' },
-            dataType: 'json'
-        }).done(function (data) {
-            if (!data.suppliers?.length) {
-                $suppliersTableBody.html(`
-                    <td colspan="6" class="text-center" style="padding: 1.5rem 0;">
-                        <i class="fa-solid fa-circle-info me-2 text-primary"></i>
-                        No hay proveedores disponibles
-                    </td>
-                `);
-                return;
-            }
+    $.ajax({
+        url: window.location.pathname + '?action=get_suppliers',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        dataType: 'json'
+    }).done(function (data) {
+        if (!data.suppliers?.length) {
+            $suppliersTableBody.html(`
+                <td colspan="6" class="text-center" style="padding: 1.5rem 0;">
+                    <i class="fa-solid fa-circle-info me-2 text-primary"></i>
+                    No hay proveedores disponibles
+                </td>
+            `);
+            return;
+        }
 
-            const rows = data.suppliers.map(s => `
-                <tr id="proveedor-${escapeHtml(s.proveedor_rif)}">
-                    <td>${escapeHtml(s.tipo_rif)}-${escapeHtml(s.proveedor_rif)}</td>
-                    <td>${escapeHtml(s.tipo_rif)}</td>
-                    <td>${escapeHtml(s.nombre_contacto)}</td>
-                    <td>${escapeHtml(s.nombre_empresa)}</td>
-                    <td>${escapeHtml(s.direccion)}</td>
-                    <td class="text-center">
-                        <button class="btn btn-sm btn-outline-primary btn-editar"
-                            data-proveedor_rif="${escapeHtml(s.proveedor_rif)}"
-                            data-tipo_rif="${escapeHtml(s.tipo_rif)}"
-                            data-nombre_contacto="${escapeHtml(s.nombre_contacto)}"
-                            data-nombre_empresa="${escapeHtml(s.nombre_empresa)}"
-                            data-direccion="${escapeHtml(s.direccion)}">
-                            <i class="fas fa-edit"></i> Editar
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger btn-eliminar"
-                            data-proveedor_rif="${escapeHtml(s.proveedor_rif)}"
-                            data-nombre="${escapeHtml(s.nombre_contacto)}">
-                            <i class="fas fa-trash"></i> Eliminar
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
+        const rows = data.suppliers.map(s => `
+            <tr id="proveedor-${escapeHtml(s.proveedor_rif)}">
+                <td>${escapeHtml(s.tipo_rif)}-${escapeHtml(s.proveedor_rif)}</td>
+                <td>${escapeHtml(s.tipo_rif)}</td>
+                <td>${escapeHtml(s.nombre_contacto)}</td>
+                <td>${escapeHtml(s.nombre_empresa)}</td>
+                <td>${escapeHtml(s.direccion)}</td>
+                <td class="text-center">
+                    <button class="btn btn-sm btn-outline-primary btn-editar"
+                        data-proveedor_rif="${escapeHtml(s.proveedor_rif)}"
+                        data-tipo_rif="${escapeHtml(s.tipo_rif)}"
+                        data-nombre_contacto="${escapeHtml(s.nombre_contacto)}"
+                        data-nombre_empresa="${escapeHtml(s.nombre_empresa)}"
+                        data-direccion="${escapeHtml(s.direccion)}">
+                        <i class="fas fa-edit"></i> Editar
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger btn-eliminar"
+                        data-proveedor_rif="${escapeHtml(s.proveedor_rif)}"
+                        data-nombre="${escapeHtml(s.nombre_contacto)}">
+                        <i class="fas fa-trash"></i> Eliminar
+                    </button>
+                </td>
+            </tr>
+        `).join('');
 
-            $suppliersTableBody.html(rows);
-            $('.btn-eliminar').on('click', handleDelete);
-            $('.btn-editar').on('click', function () {
-                loadSupplierForEdit($(this));
+        $suppliersTableBody.html(rows);
+
+        // 🔹 Si DataTable no existe, inicialízalo. Si existe, solo recarga contenido.
+        if (!$.fn.DataTable.isDataTable('#suppliersTable')) {
+            $('#suppliersTable').DataTable({
+                pageLength: 5,
+                responsive: true,
+                language: {
+                    url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json"
+                }
             });
-        }).fail(() => showAlert('Error al cargar proveedores', 'danger'));
-    }
+        } else {
+            const table = $('#suppliersTable').DataTable();
+            table.clear();
+            $('#suppliersTableBody tr').each(function () {
+                table.row.add($(this));
+            });
+            table.draw(false);
+        }
+
+        // Reasignar eventos
+        $('.btn-eliminar').on('click', handleDelete);
+        $('.btn-editar').on('click', function () {
+            loadSupplierForEdit($(this));
+        });
+    }).fail(() => showAlert('Error al cargar proveedores', 'danger'));
+}
+
 
     // --- AGREGAR ---
     function handleAdd(e) {
@@ -147,6 +163,8 @@ $(document).ready(function () {
                 showAlert('Proveedor agregado correctamente', 'success');
                 $addSupplierForm.trigger('reset');
                 $('#addSupplierModal').modal('hide');
+
+                // Recargar tabla sin perder DataTable
                 AjaxSuppliers();
             } else showAlert(data.message, 'danger');
         }).fail(() => showAlert('Error al agregar', 'danger'));
@@ -187,6 +205,7 @@ $(document).ready(function () {
     function handleDelete() {
         const proveedor_rif = $(this).data('proveedor_rif');
         const nombre = $(this).data('nombre');
+
         Swal.fire({
             title: '¿Eliminar proveedor?',
             html: `¿Deseas eliminar <strong>${escapeHtml(nombre)}</strong>?`,
@@ -205,7 +224,11 @@ $(document).ready(function () {
                 }).done(function (data) {
                     if (data.success) {
                         showAlert('Proveedor eliminado correctamente', 'success');
-                        AjaxSuppliers();
+
+                        // Quitar la fila sin recargar toda la tabla
+                        const table = $('#suppliersTable').DataTable();
+                        const row = $(`#proveedor-${proveedor_rif}`);
+                        table.row(row).remove().draw(false);
                     } else showAlert(data.message, 'danger');
                 }).fail(() => showAlert('Error al eliminar', 'danger'));
             }
