@@ -1,11 +1,3 @@
-/**
- * ============================================
- * MÓDULO DE PRODUCTOS - GARAGE BARKI
- * Versión refactorizada v2.0 (ES6 Module)
- * Solo permite: EDITAR y ELIMINAR
- * ============================================
- */
-
 import * as Validations from '/BarkiOS/public/assets/js/utils/validation.js';
 import * as Helpers from '/BarkiOS/public/assets/js/utils/helpers.js';
 import * as Ajax from '/BarkiOS/public/assets/js/utils/ajax-handler.js';
@@ -24,9 +16,6 @@ $(document).ready(function() {
         Fiesta: ["Vestido", "Falda", "Blusa", "Enterizo"]
     };
 
-    // ============================================
-    // INICIALIZACIÓN DATATABLE
-    // ============================================
     const initDataTable = () => {
         productsTable = $('#productsTable').DataTable({
             ajax: {
@@ -173,9 +162,7 @@ $(document).ready(function() {
         }
     };
 
-    // ============================================
-    // EDITAR PRODUCTO
-    // ============================================
+    //Editar producto
     $(document).on('click', '.btn-edit', function() {
         const $btn = $(this);
         
@@ -293,9 +280,7 @@ $(document).ready(function() {
             });
     });
 
-    // ============================================
-    // ELIMINAR PRODUCTO
-    // ============================================
+    //Eliminar producto
     $(document).on('click', '.btn-delete', function() {
         const id = $(this).data('id');
         const nombre = $(this).data('nombre');
@@ -328,9 +313,7 @@ $(document).ready(function() {
         });
     });
 
-    // ============================================
-    // VALIDACIÓN EN TIEMPO REAL - EDITAR
-    // ============================================
+    //Validacion
     const editRules = {
         nombre: 'nombreProducto',
         categoria: 'select',
@@ -339,17 +322,11 @@ $(document).ready(function() {
     };
     Validations.setupRealTimeValidation($('#editProductForm'), editRules);
 
-    // ============================================
-    // LIMPIAR MODAL AL CERRAR
-    // ============================================
     $('#editProductModal').on('hidden.bs.modal', function() {
         Helpers.resetForm($('#editProductForm'));
         $('#currentImagePreview').html('');
         $('#editGananciaInfo').html('').hide();
     });
 
-    // ============================================
-    // INICIALIZAR
-    // ============================================
     initDataTable();
 });

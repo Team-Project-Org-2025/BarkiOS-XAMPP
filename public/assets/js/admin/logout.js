@@ -2,10 +2,10 @@ $(document).ready(function () {
     $(document).on('click', '.logout-link', function (e) {
         e.preventDefault();
 
-        // 1. Obtiene la URL base del atributo href (ej: /BarkiOS/login/logout)
+        
         const baseUrl = $(this).attr('href');
         
-        // 2. Construye la URL AJAX agregando "_ajax" al final
+        
         const logoutUrlAjax = baseUrl + '_ajax'; 
 
         Swal.fire({
@@ -18,7 +18,7 @@ $(document).ready(function () {
             reverseButtons: true,
             confirmButtonColor: '#dc3545',
             cancelButtonColor: '#6c757d',
-            // ✅ IMPORTANTE: Detenemos el cierre automático al confirmar
+            //  Detenemos el cierre automático al confirmar
             showLoaderOnConfirm: true,
             preConfirm: () => {
                 // Al confirmar, transformamos este modal en un spinner de carga
@@ -47,9 +47,7 @@ $(document).ready(function () {
         }).then(result => {
             // El `result` contiene la respuesta del AJAX (si fue exitoso) o la razón del rechazo (si fue cancelado o hubo error de preConfirm)
             if (result.isConfirmed && result.value && result.value.success) {
-                // ----------------------------------------------------
-                // ✅ Muestra el modal de éxito después del AJAX
-                // ----------------------------------------------------
+
                 Swal.fire({
                     title: 'Sesión cerrada',
                     text: 'Hasta pronto 👋',

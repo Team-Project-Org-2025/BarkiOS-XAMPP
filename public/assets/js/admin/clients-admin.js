@@ -1,10 +1,3 @@
-/**
- * ============================================
- * MÓDULO DE CLIENTES - GARAGE BARKI
- * Versión refactorizada v2.0 (ES6 Module)
- * ============================================
- */
-
 import * as Validations from '/BarkiOS/public/assets/js/utils/validation.js';
 import * as Helpers from '/BarkiOS/public/assets/js/utils/helpers.js';
 import * as Ajax from '/BarkiOS/public/assets/js/utils/ajax-handler.js';
@@ -14,9 +7,6 @@ $(document).ready(function() {
     const baseUrl = '/BarkiOS/admin/clients';
     let clientsTable = null;
 
-    // ============================================
-    // INICIALIZACIÓN DATATABLE
-    // ============================================
     const initDataTable = () => {
         clientsTable = $('#clientsTable').DataTable({
             ajax: {
@@ -68,9 +58,7 @@ $(document).ready(function() {
         });
     };
 
-    // ============================================
-    // AGREGAR CLIENTE
-    // ============================================
+    //Agregar Cliente
     $('#addClientForm').on('submit', function(e) {
         e.preventDefault();
 
@@ -104,9 +92,7 @@ $(document).ready(function() {
             });
     });
 
-    // ============================================
-    // EDITAR CLIENTE
-    // ============================================
+    //Editar cliente 
     $(document).on('click', '.btn-edit', function() {
         const $btn = $(this);
         
@@ -153,9 +139,7 @@ $(document).ready(function() {
             });
     });
 
-    // ============================================
-    // ELIMINAR CLIENTE
-    // ============================================
+    //Eliminar cliente
     $(document).on('click', '.btn-delete', function() {
         const cedula = $(this).data('cedula');
         const nombre = $(this).data('nombre');
@@ -181,9 +165,7 @@ $(document).ready(function() {
         );
     });
 
-    // ============================================
-    // VALIDACIÓN EN TIEMPO REAL
-    // ============================================
+    //validacion
     const addRules = {
         cedula: 'cedula',
         nombre: 'nombre',
@@ -202,16 +184,10 @@ $(document).ready(function() {
     Validations.setupRealTimeValidation($('#addClientForm'), addRules);
     Validations.setupRealTimeValidation($('#editClientForm'), editRules);
 
-    // ============================================
-    // LIMPIAR MODALES AL CERRAR
-    // ============================================
     $('#addClientModal, #editClientModal').on('hidden.bs.modal', function() {
         const $form = $(this).find('form');
         Helpers.resetForm($form);
     });
 
-    // ============================================
-    // INICIALIZAR
-    // ============================================
     initDataTable();
 });

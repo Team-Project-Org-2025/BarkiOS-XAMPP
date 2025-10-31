@@ -1,10 +1,3 @@
-/**
- * ============================================
- * MÓDULO DE USUARIOS - GARAGE BARKI
- * Versión refactorizada v2.0 (ES6 Module)
- * ============================================
- */
-
 import * as Validations from '/BarkiOS/public/assets/js/utils/validation.js';
 import * as Helpers from '/BarkiOS/public/assets/js/utils/helpers.js';
 import * as Ajax from '/BarkiOS/public/assets/js/utils/ajax-handler.js';
@@ -13,10 +6,6 @@ $(document).ready(function() {
     const baseUrl = '/BarkiOS/admin/users';
     let usersTable = null;
     
-
-    // ============================================
-    // INICIALIZACIÓN DATATABLE
-    // ============================================
     const initDataTable = () => {
         usersTable = $('#usersTable').DataTable({
             ajax: {
@@ -58,9 +47,7 @@ $(document).ready(function() {
         });
     };
 
-    // ============================================
-    // AGREGAR USUARIO
-    // ============================================
+    //Agregar usuario
     $('#addUserForm').on('submit', function(e) {
         e.preventDefault();
 
@@ -92,9 +79,8 @@ $(document).ready(function() {
             });
     });
 
-    // ============================================
-    // EDITAR USUARIO
-    // ============================================
+
+    //Editar usuario
     $(document).on('click', '.btn-edit', function() {
         const $btn = $(this);
         
@@ -141,9 +127,7 @@ $(document).ready(function() {
             });
     });
 
-    // ============================================
-    // ELIMINAR USUARIO
-    // ============================================
+    //Eliminar usuario
     $(document).on('click', '.btn-delete', function() {
         const id = $(this).data('id');
         const nombre = $(this).data('nombre');
@@ -169,9 +153,6 @@ $(document).ready(function() {
         );
     });
 
-    // ============================================
-    // VALIDACIÓN EN TIEMPO REAL
-    // ============================================
     const addRules = {
         nombre: 'nombre',
         email: 'email',
@@ -187,16 +168,11 @@ $(document).ready(function() {
     Validations.setupRealTimeValidation($('#addUserForm'), addRules, false);
     Validations.setupRealTimeValidation($('#editUserForm'), editRules, true);
 
-    // ============================================
-    // LIMPIAR MODALES AL CERRAR
-    // ============================================
+    //Limpiar modales
     $('#addUserModal, #editUserModal').on('hidden.bs.modal', function() {
         const $form = $(this).find('form');
         Helpers.resetForm($form);
     });
 
-    // ============================================
-    // INICIALIZAR
-    // ============================================
     initDataTable();
 });
