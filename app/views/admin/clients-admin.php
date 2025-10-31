@@ -12,15 +12,11 @@
         <button class="btn btn-primary rounded-pill px-4 me-3" data-bs-toggle="modal" data-bs-target="#addClientModal">
             <i class="fas fa-plus me-1"></i> Agregar cliente
         </button>
-        
-        <!-- Mensajes de éxito/error dinámicos (ya no se usa, todo es pop-up con SweetAlert2) -->
-        <!-- <div id="alertContainer" class="mt-3"></div> -->
-
         <!-- Tabla de Clientes -->
         <div class="card mt-3">
-            <div class="card-body p-0">
+            <div class="card-body p-3">
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle table-hover text-center">
+                    <table id="clientsTable" class="table table-hover align-middle table-hover text-center">
                         <thead>
                             <tr>
                                 <th>Cédula</th>
@@ -193,10 +189,11 @@
     </div>
 </div>
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.3/dist/sweetalert2.all.min.js"></script>
-
-<script src="/BarkiOS/public/assets/js/clients-admin.js"></script>
-<script src="/BarkiOS/public/assets/js/logout.js"></script>
+<script type="module" src="/BarkiOS/public/assets/js/admin/clients-admin.js"></script>
+<script src="/BarkiOS/public/assets/js/admin/logout.js"></script>
 </body>
 </html>

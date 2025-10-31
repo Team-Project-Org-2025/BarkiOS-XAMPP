@@ -174,6 +174,6 @@
     <!-- AOS Animation Library -->
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <!-- Controller Scripts -->
-    <script src="/BarkiOS/public/assets/js/about.js"></script>
+    <script src="/BarkiOS/public/assets/js/front/about.js"></script>
 </body>
 </html>

@@ -18,7 +18,7 @@ class Product extends Database {
             $stmt = $this->db->query("
                 SELECT * FROM prendas 
                 WHERE activo = 1 AND estado IN ('DISPONIBLE', 'VENDIDA')
-                ORDER BY prenda_id ASC
+                ORDER BY codigo_prenda ASC
             ");
             return $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
         } catch (\Throwable $e) {
@@ -31,7 +31,7 @@ class Product extends Database {
         $stmt = $this->db->query("
             SELECT * FROM prendas
             WHERE activo = 1 AND estado = 'DISPONIBLE'
-            ORDER BY prenda_id ASC
+            ORDER BY codigo_prenda ASC
         ");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -53,8 +53,10 @@ class Product extends Database {
         return $stmt->fetchColumn() > 0;
     }
 
-
-    public function add(int $id, string $nombre, string $tipo, string $categoria, float $precio, ?string $imagen = null, ?string $descripcion = null) {
+    /**
+     * Agrega un nuevo producto CON imagen y precio de compra
+     */
+    public function add(int $id, string $nombre, string $tipo, string $categoria, float $precio, ?string $imagen = null, ?string $descripcion = null, ?float $precio_compra = null) {
         // Verificar si existe por prenda_id
         if ($this->productExists($id)) {
             throw new Exception("Ya existe un producto con este código (prenda_id: $id).");
@@ -67,8 +69,8 @@ class Product extends Database {
         }
 
         $stmt = $this->db->prepare("
-            INSERT INTO prendas (codigo_prenda, nombre, tipo, categoria, precio, imagen, descripcion, activo, estado)
-            VALUES (:codigo_prenda, :nombre, :tipo, :categoria, :precio, :imagen, :descripcion, 1, 'DISPONIBLE')
+            INSERT INTO prendas (codigo_prenda, nombre, tipo, categoria, precio, precio_compra, imagen, descripcion, activo, estado)
+            VALUES (:codigo_prenda, :nombre, :tipo, :categoria, :precio, :precio_compra, :imagen, :descripcion, 1, 'DISPONIBLE')
         ");
         
         return $stmt->execute([
@@ -77,12 +79,17 @@ class Product extends Database {
             ':tipo' => $tipo,
             ':categoria' => $categoria,
             ':precio' => $precio,
+            ':precio_compra' => $precio_compra,
             ':imagen' => $imagen,
             ':descripcion' => $descripcion
         ]);
     }
 
-    public function update(int $id, string $nombre, string $tipo, string $categoria, float $precio, ?string $imagen = null, ?string $descripcion = null, bool $updateImage = false) {
+    /**
+     * Actualiza un producto existente
+     * $updateImage: si es true, actualiza la imagen; si es false, mantiene la actual
+     */
+    public function update(int $id, string $nombre, string $tipo, string $categoria, float $precio, ?string $imagen = null, ?string $descripcion = null, bool $updateImage = false, ?float $precio_compra = null) {
         if (!$this->productExists($id)) {
             throw new Exception("No existe el producto con ID: $id");
         }
@@ -98,6 +105,7 @@ class Product extends Database {
                     tipo = :tipo, 
                     categoria = :categoria, 
                     precio = :precio,
+                    precio_compra = :precio_compra,
                     imagen = :imagen,
                     descripcion = :descripcion,
                     fec_actualizacion = NOW()
@@ -109,6 +117,7 @@ class Product extends Database {
                 ':tipo' => $tipo,
                 ':categoria' => $categoria,
                 ':precio' => $precio,
+                ':precio_compra' => $precio_compra,
                 ':imagen' => $imagen,
                 ':descripcion' => $descripcion
             ];
@@ -119,6 +128,7 @@ class Product extends Database {
                     tipo = :tipo, 
                     categoria = :categoria, 
                     precio = :precio,
+                    precio_compra = :precio_compra,
                     descripcion = :descripcion,
                     fec_actualizacion = NOW()
                     WHERE prenda_id = :prenda_id";
@@ -129,6 +139,7 @@ class Product extends Database {
                 ':tipo' => $tipo,
                 ':categoria' => $categoria,
                 ':precio' => $precio,
+                ':precio_compra' => $precio_compra,
                 ':descripcion' => $descripcion
             ];
         }
@@ -189,31 +200,36 @@ class Product extends Database {
         ");
         return $stmt->execute([':id' => $id]);
     }
-    public function getLatest(int $limit = 8)
-{
-    $stmt = $this->db->prepare("
-        SELECT * FROM prendas
-        WHERE activo = 1 AND estado = 'DISPONIBLE'
-        ORDER BY fecha_creacion DESC
-        LIMIT :limit
-    ");
-    $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
-    $stmt->execute();
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
 
-public function getByCategoria(string $categoria, ?int $limit = null)
-{
-    $sql = "SELECT * FROM prendas
+    /**
+     * Obtiene los productos más recientes
+     */
+    public function getLatest(int $limit = 8) {
+        $stmt = $this->db->prepare("
+            SELECT * FROM prendas
             WHERE activo = 1 AND estado = 'DISPONIBLE'
-            AND categoria = :categoria
-            ORDER BY fecha_creacion DESC";
-    if ($limit) $sql .= " LIMIT :limit";
+            ORDER BY fecha_creacion DESC
+            LIMIT :limit
+        ");
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 
-    $stmt = $this->db->prepare($sql);
-    $stmt->bindValue(':categoria', $categoria, PDO::PARAM_STR);
-    if ($limit) $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
-    $stmt->execute();
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
+    /**
+     * Obtiene productos por categoría
+     */
+    public function getByCategoria(string $categoria, ?int $limit = null) {
+        $sql = "SELECT * FROM prendas
+                WHERE activo = 1 AND estado = 'DISPONIBLE'
+                AND categoria = :categoria
+                ORDER BY fecha_creacion DESC";
+        if ($limit) $sql .= " LIMIT :limit";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':categoria', $categoria, PDO::PARAM_STR);
+        if ($limit) $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

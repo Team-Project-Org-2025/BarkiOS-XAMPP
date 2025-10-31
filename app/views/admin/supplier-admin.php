@@ -17,10 +17,11 @@
 
         <!-- Tabla de Proveedores -->
         <div class="card mt-3">
-            <div class="card-body p-0">
+            <div class="card-body p-3">
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle text-center" id="suppliersTable">
-                        <thead>
+                    <table id="suppliersTable"
+                           class="table table-striped table-bordered table-hover align-middle text-center w-100">
+                        <thead class="table-light">
                             <tr>
                                 <th>RIF</th>
                                 <th>Tipo RIF</th>
@@ -72,6 +73,8 @@
                         name="proveedor_rif"
                         id="supplierRif"
                         placeholder="Ingrese el RIF (solo números)"
+                        pattern="\d{9}"
+                        maxlength="9"
                         required>
                     <div class="invalid-feedback">Por favor ingrese un RIF válido (9 dígitos)</div>
                 </div>
@@ -174,9 +177,12 @@
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.3/dist/sweetalert2.all.min.js"></script>
-<script src="/BarkiOS/public/assets/js/suppliers-admin.js"></script>
-<script src="/BarkiOS/public/assets/js/logout.js"></script>
+<script type="module" src="/BarkiOS/public/assets/js/admin/suppliers-admin.js"></script>
+<script src="/BarkiOS/public/assets/js/admin/logout.js"></script>
+
 </body>
 </html>

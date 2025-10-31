@@ -321,8 +321,8 @@ function processExpired($model)
 function index()
 {
     $paths = [
-        __DIR__ . '/../../views/admin/accountsReceivable.php',
-        dirname(__DIR__, 2) . '/views/admin/accountsReceivable.php'
+        __DIR__ . '/../../views/admin/accounts-receivable-admin',
+        dirname(__DIR__, 2) . '/views/admin/accounts-receivable-admin.php'
     ];
 
     foreach ($paths as $path) {

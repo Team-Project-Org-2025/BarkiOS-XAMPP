@@ -14,7 +14,7 @@
                     <a class="nav-link <?php echo isActiveRoute('admin/login/dashboard') ? 'active' : ''; ?>" 
                        href="/BarkiOS/admin/login/dashboard">
                         <i class="fas fa-tachometer-alt"></i>
-                        Dashboard
+                        Inicio
                     </a>
                 </li>
                 <li class="nav-item">
