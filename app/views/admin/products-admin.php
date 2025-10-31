@@ -258,8 +258,6 @@ require_once __DIR__ . '/../partials/header-admin.php';
         </div>
     </div>
 </div>
-
-<!-- ⚠️ IMPORTANTE: Cargar el widget JS ANTES del products-admin.js -->
 <?php 
 // Asegurarse de que las funciones JS estén disponibles
 if (!function_exists('getDolarRate')) {
