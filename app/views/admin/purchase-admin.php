@@ -176,27 +176,12 @@ html, body {
                 </div>
             </div>
         </div>
-
-        <!-- Filtros y Búsqueda -->
-        <div class="row mb-4">
-            <div class="col-12 col-md-8">
-                <div class="input-group">
-                    <span class="input-group-text bg-white">
-                        <i class="fas fa-search text-muted"></i>
-                    </span>
-                    <input type="text" 
-                           class="form-control border-start-0" 
-                           id="searchInput" 
-                           placeholder="Buscar por factura, proveedor...">
-                </div>
-            </div>
-        </div>
-
+        
         <!-- Tabla de Compras -->
         <div class="card shadow-sm border-0">
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
+                    <table id="purchaseTable" class="table table-hover align-middle mb-0 table-striped">
                         <thead class="table-light">
                             <tr>
                                 <th class="px-4">N° Factura</th>
@@ -207,14 +192,7 @@ html, body {
                                 <th class="text-center" width="200">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody id="purchaseTableBody">
-                            <tr>
-                                <td colspan="6" class="text-center py-5">
-                                    <div class="spinner-border text-primary" role="status"></div>
-                                    <p class="mt-2 text-muted">Cargando compras...</p>
-                                </td>
-                            </tr>
-                        </tbody>
+                        <tbody id="purchaseTableBody"></tbody>
                     </table>
                 </div>
             </div>
@@ -599,11 +577,13 @@ html, body {
     </div>
 </template>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="/BarkiOS/public/assets/js/purchase-admin.js"></script>
-<script src="/BarkiOS/public/assets/js/logout.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.3/dist/sweetalert2.all.min.js"></script>
+<script type="module" src="/BarkiOS/public/assets/js/admin/purchase-admin.js"></script>
+<script src="/BarkiOS/public/assets/js/admin/logout.js"></script>
 
 </body>
 </html>
