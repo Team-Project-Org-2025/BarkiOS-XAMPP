@@ -1,119 +1,140 @@
-// ============================================
-// ACCOUNTS PAYABLE ADMIN JS - MEJORADO
-// Incluye: USD/BS, validaciones regex, filtrado de cuentas pagadas
-// ============================================
+/**
+ * ============================================
+ * MÓDULO DE CUENTAS POR PAGAR - GARAGE BARKI
+ * Versión refactorizada v2.0 (ES6 Module)
+ * ============================================
+ */
+
+import * as Validations from '/BarkiOS/public/assets/js/utils/validation.js';
+import * as Helpers from '/BarkiOS/public/assets/js/utils/helpers.js';
+import * as Ajax from '/BarkiOS/public/assets/js/utils/ajax-handler.js';
+
 $(document).ready(function() {
+    const baseUrl = window.location.pathname;
     let allAccounts = [];
     let currentSaldo = 0;
     
-    // Constantes de monedas
     const METODOS_USD = ["EFECTIVO", "TRANSFERENCIA"];
     const METODOS_BS = ["EFECTIVO", "PAGO MOVIL", "TRANSFERENCIA"];
-    const MARGEN_ERROR_BS = 10; // Margen de ±10 Bs
+    const MARGEN_ERROR_BS = 10;
 
     // ============================================
     // CARGAR CUENTAS POR PAGAR
     // ============================================
-    function fetchAccounts() {
-        $('#accountsTableBody').html('<tr><td colspan="9" class="text-center py-4"><div class="spinner-border"></div></td></tr>');
-        
-        $.ajax({
-            url: window.location.pathname + '?action=get_accounts',
+    // ============================================
+// INICIALIZAR DATATABLE DE CUENTAS POR PAGAR
+// ============================================
+let accountsTable = null;
+
+const initAccountsTable = () => {
+    accountsTable = $('#accountsTable').DataTable({
+        ajax: {
+            url: `${baseUrl}?action=get_accounts`,
+            method: 'GET',
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
-            success: function(data) {
-                if (data.success && data.data.length) {
-                    // ✅ FILTRAR CUENTAS PAGADAS (saldo_pendiente <= 0)
-                    allAccounts = data.data.filter(c => parseFloat(c.saldo_pendiente || 0) > 0);
-                    
-                    if (allAccounts.length > 0) {
-                        renderAccounts(allAccounts);
-                        updateStats();
-                    } else {
-                        $('#accountsTableBody').html('<tr><td colspan="9" class="text-center py-4"><i class="fas fa-inbox fa-3x text-muted mb-3"></i><p>No hay cuentas por pagar pendientes</p></td></tr>');
-                    }
-                } else {
-                    $('#accountsTableBody').html('<tr><td colspan="9" class="text-center py-4"><i class="fas fa-inbox fa-3x text-muted mb-3"></i><p>No hay cuentas por pagar</p></td></tr>');
+            dataSrc: (json) => {
+                if (!json.success) {
+                    Helpers.toast('warning', json.message || 'No se pudieron cargar las cuentas');
+                    return [];
+                }
+                // Actualizar estadísticas
+                allAccounts = json.data || [];
+                if (typeof updateStats === 'function') updateStats();
+                return json.data || [];
+            }
+        },
+        columns: [
+            { data: 'factura_numero', render: d => `<strong>#${d}</strong>`, className: 'px-4' },
+            { data: 'nombre_proveedor', render: (d, t, row) => `
+                <div><strong>${Helpers.escapeHtml(d)}</strong></div>
+                <small class="text-muted">${row.tipo_rif}-${row.proveedor_rif}</small>
+            `},
+            { data: 'fecha_compra', render: d => `<small>${Helpers.formatDate(d)}</small>` },
+            { data: 'fecha_vencimiento', render: d => `<small>${Helpers.formatDate(d)}</small>` },
+            {
+                data: 'monto_total',
+                className: 'text-end',
+                render: d => `<strong>${Helpers.formatCurrency(d)}</strong>`
+            },
+            {
+                data: 'total_pagado',
+                className: 'text-end',
+                render: d => `<span class="text-success">${Helpers.formatCurrency(d)}</span>`
+            },
+            {
+                data: 'saldo_pendiente',
+                className: 'text-end',
+                render: (saldo) => {
+                    const s = parseFloat(saldo) || 0;
+                    return `<strong class="${s > 0 ? 'text-danger' : 'text-success'}">${Helpers.formatCurrency(s)}</strong>`;
                 }
             },
-            error: () => $('#accountsTableBody').html('<tr><td colspan="9" class="text-center text-danger">Error al cargar</td></tr>')
-        });
-    }
+            {
+                data: null,
+                className: 'text-center',
+                render: (row) => {
+                    const hoy = new Date();
+                    const vencimiento = new Date(row.fecha_vencimiento);
+                    const diasVencer = Math.ceil((vencimiento - hoy) / (1000 * 60 * 60 * 24));
 
-    // ============================================
-    // RENDERIZAR CUENTAS
-    // ============================================
-    function renderAccounts(accounts) {
-        const html = accounts.map(c => {
-            const saldo = parseFloat(c.saldo_pendiente || 0);
-            const pagado = parseFloat(c.total_pagado || 0);
-            const total = parseFloat(c.monto_total || 0);
-            
-            // Determinar estado visual
-            let estadoClass = 'al-dia';
-            let estadoBadge = '<span class="badge bg-success badge-estado">Al día</span>';
-            
-            if (c.estado === 'vencido' || c.vencida) {
-                estadoClass = 'vencida';
-                estadoBadge = '<span class="badge bg-danger badge-estado">Vencida</span>';
-            } else if (c.estado === 'pagado') {
-                estadoBadge = '<span class="badge bg-secondary badge-estado">Pagando</span>';
-            } else {
-                const diasVencer = Math.ceil((new Date(c.fecha_vencimiento) - new Date()) / (1000 * 60 * 60 * 24));
-                if (diasVencer <= 7 && diasVencer > 0) {
-                    estadoClass = 'por-vencer';
-                    estadoBadge = `<span class="badge bg-warning badge-estado">Vence en ${diasVencer}d</span>`;
+                    let estadoBadge = '<span class="badge bg-success">Al día</span>';
+                    if (row.estado === 'vencido' || row.vencida) {
+                        estadoBadge = '<span class="badge bg-danger">Vencida</span>';
+                    } else if (diasVencer <= 7 && diasVencer > 0) {
+                        estadoBadge = `<span class="badge bg-warning">Vence en ${diasVencer}d</span>`;
+                    } else if (row.estado === 'pagado') {
+                        estadoBadge = '<span class="badge bg-secondary">Pagando</span>';
+                    }
+                    return estadoBadge;
                 }
-            }
-            
-            return `
-                <tr class="cuenta-row ${estadoClass}">
-                    <td class="px-4">
-                        <strong>#${c.factura_numero}</strong>
-                    </td>
-                    <td>
-                        <div><strong>${c.nombre_proveedor}</strong></div>
-                        <small class="text-muted">${c.tipo_rif}-${c.proveedor_rif}</small>
-                    </td>
-                    <td>
-                        <small>${new Date(c.fecha_compra).toLocaleDateString('es-ES')}</small>
-                    </td>
-                    <td>
-                        <small>${new Date(c.fecha_vencimiento).toLocaleDateString('es-ES')}</small>
-                    </td>
-                    <td class="text-end">
-                        <strong>$${total.toFixed(2)}</strong>
-                    </td>
-                    <td class="text-end">
-                        <span class="text-success">$${pagado.toFixed(2)}</span>
-                    </td>
-                    <td class="text-end">
-                        <strong class="${saldo > 0 ? 'text-danger' : 'text-success'}">$${saldo.toFixed(2)}</strong>
-                    </td>
-                    <td class="text-center">
-                        ${estadoBadge}
-                    </td>
-                    <td class="text-center">
-                        <div class="btn-group btn-group-sm">
-                            <button class="btn btn-outline-primary" onclick="viewAccount(${c.cuenta_pagar_id})" title="Ver detalle">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            ${saldo > 0 ? `
-                            <button class="btn btn-outline-success" onclick="addPayment(${c.cuenta_pagar_id}, '${c.nombre_proveedor}', '${c.factura_numero}', ${total}, ${saldo})" title="Registrar pago">
+            },
+            {
+                data: null,
+                className: 'text-center',
+                orderable: false,
+                render: (row) => `
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-primary btn-view" data-id="${row.cuenta_pagar_id}">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        ${parseFloat(row.saldo_pendiente) > 0 ? `
+                            <button class="btn btn-outline-success btn-pay" 
+                                    data-id="${row.cuenta_pagar_id}"
+                                    data-proveedor="${Helpers.escapeHtml(row.nombre_proveedor)}"
+                                    data-factura="${row.factura_numero}"
+                                    data-total="${row.monto_total}"
+                                    data-saldo="${row.saldo_pendiente}">
                                 <i class="fas fa-dollar-sign"></i>
                             </button>
-                            ` : ''}
-                        </div>
-                    </td>
-                </tr>
-            `;
-        }).join('');
-        $('#accountsTableBody').html(html);
-    }
+                        ` : ''}
+                    </div>
+                `
+            }
+        ],
+        order: [[3, 'asc']],
+        pageLength: 10,
+        responsive: true,
+        autoWidth: false,
+        language: {
+            url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
+        },
+        dom: '<"d-flex justify-content-between align-items-center mb-2"lfB>tip',
+        buttons: [
+            {
+                text: '<i class="fas fa-sync-alt"></i> Actualizar',
+                className: 'btn btn-outline-secondary btn-sm',
+                action: function() {
+                    accountsTable.ajax.reload(null, false);
+                }
+            }
+        ]
+    });
+};
 
     // ============================================
     // ACTUALIZAR ESTADÍSTICAS
     // ============================================
-    function updateStats() {
+    const updateStats = () => {
         let totalCuentas = allAccounts.length;
         let deudaTotal = 0;
         let porVencer = 0;
@@ -137,25 +158,33 @@ $(document).ready(function() {
         });
         
         $('#statTotalCuentas').text(totalCuentas);
-        $('#statDeudaTotal').text('$' + deudaTotal.toFixed(2));
+        $('#statDeudaTotal').text(Helpers.formatCurrency(deudaTotal));
         $('#statPorVencer').text(porVencer);
         $('#statVencidas').text(vencidas);
-    }
+    };
 
     // ============================================
-    // REGISTRAR PAGO - MEJORADO CON USD/BS
+    // REGISTRAR PAGO
     // ============================================
-    window.addPayment = function(cuentaId, proveedor, factura, montoTotal, saldo) {
+    $(document).on('click', '.btn-pay', function() {
+        const $btn = $(this);
+        const cuentaId = $btn.data('id');
+        const proveedor = $btn.data('proveedor');
+        const factura = $btn.data('factura');
+        const montoTotal = parseFloat($btn.data('total'));
+        const saldo = parseFloat($btn.data('saldo'));
+
+        currentSaldo = saldo;
+        const saldoPendienteBS = saldo * (window.DOLAR_BCV_RATE || 1);
+
         $('#paymentCuentaId').val(cuentaId);
         $('#paymentProveedor').text(proveedor);
         $('#paymentFactura').text(factura);
         $('#paymentMontoTotal').text(montoTotal.toFixed(2));
         $('#paymentSaldo').html(`
-            <strong>$${saldo.toFixed(2)}</strong>
-            <br><small class="text-muted">≈ Bs ${(saldo * DOLAR_BCV_RATE).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</small>
+            <strong>${Helpers.formatCurrency(saldo)}</strong>
+            <br><small class="text-muted">≈ Bs ${saldoPendienteBS.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</small>
         `);
-        
-        currentSaldo = saldo;
         
         $('#addPaymentForm')[0].reset();
         $('#paymentMontoGeneral').val('').removeClass('is-valid is-invalid');
@@ -165,21 +194,12 @@ $(document).ready(function() {
         
         cambiarMoneda("USD");
         $('#addPaymentModal').modal('show');
-    };
+    });
 
     // ============================================
     // CAMBIO DE MONEDA
     // ============================================
-    $('#paymentMoneda').on('change', function() {
-        const moneda = $(this).val();
-        cambiarMoneda(moneda);
-        
-        if ($('#paymentMontoGeneral').val()) {
-            $('#paymentMontoGeneral').trigger('input');
-        }
-    });
-
-    function cambiarMoneda(moneda) {
+    const cambiarMoneda = (moneda) => {
         const $tipoPago = $('#paymentTipo');
         $tipoPago.empty().removeClass('is-valid is-invalid');
         $tipoPago.append(`<option value="" disabled selected>Seleccione un método de pago</option>`);
@@ -190,18 +210,27 @@ $(document).ready(function() {
         $('#referenciaField, #bancoField').hide();
         $('#paymentReferencia, #paymentBanco').val('').removeClass('is-valid is-invalid');
 
-        const $symbol = $('#currency-symbol');
         if (moneda === "BS") {
-            $symbol.text('Bs');
             $('#equivInfo').show();
         } else {
-            $symbol.text('$');
             $('#equivInfo').hide().html('');
         }
-    }
+    };
+
+    $('#paymentMoneda').on('change', function() {
+        cambiarMoneda($(this).val());
+        if ($('#paymentMontoGeneral').val()) {
+            $('#paymentMontoGeneral').trigger('input');
+        }
+        if ($(this).val() === "BS") {
+            $('#paymentSaldo small').text(`≈ Bs ${(currentSaldo * DOLAR_BCV_RATE).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+        } else {
+            $('#paymentSaldo small').text('');
+        }
+    });
 
     // ============================================
-    // VALIDACIÓN EN TIEMPO REAL
+    // VALIDACIÓN MONTO CON MARGEN
     // ============================================
     $('#paymentMontoGeneral').on('input', function() {
         const moneda = $('#paymentMoneda').val();
@@ -225,48 +254,54 @@ $(document).ready(function() {
             
             if (montoUSD > currentSaldo) {
                 $(this).addClass('is-invalid').removeClass('is-valid');
-                $(this).after(`<div class="invalid-feedback">El monto excede el saldo pendiente ($${currentSaldo.toFixed(2)})</div>`);
+                $(this).after(`<div class="invalid-feedback">El monto excede el saldo pendiente (${Helpers.formatCurrency(currentSaldo)})</div>`);
             } else {
                 esValido = true;
             }
 
         } else if (moneda === "BS") {
-            montoUSD = valorIngresado / DOLAR_BCV_RATE;
-            const diferenciaBs = (montoUSD - currentSaldo) * DOLAR_BCV_RATE;
+            const valorBs = valorIngresado;
+            montoUSD = valorBs / DOLAR_BCV_RATE;
+
+            // Diferencia en Bs entre el monto ingresado y el saldo equivalente
+            const saldoBs = currentSaldo * DOLAR_BCV_RATE;
+            const diferenciaBs = valorBs - saldoBs;
 
             if (Math.abs(diferenciaBs) <= MARGEN_ERROR_BS) {
+                // ✅ Si la diferencia está dentro del margen permitido, ajustar al saldo real
                 montoUSD = currentSaldo;
                 esValido = true;
-                
+            
                 $('#equivInfo').html(`
                     <span class="text-success">
                         <i class="fas fa-check-circle me-1"></i>
                         Equivale a: <strong>$${montoUSD.toFixed(2)}</strong>
-                        ${Math.abs(diferenciaBs) > 0.01 ? '<small class="d-block">Se ajustará al saldo exacto</small>' : ''}
+                        <small class="d-block">Monto dentro del margen de ±${MARGEN_ERROR_BS} Bs</small>
                     </span>
                 `).show();
                 
-            } else if (diferenciaBs > MARGEN_ERROR_BS) {
+            } else if (valorBs > saldoBs) {
+                // ❌ Monto excede el saldo
                 $(this).addClass('is-invalid').removeClass('is-valid');
-                $(this).after(`<div class="invalid-feedback">El monto excede el saldo pendiente</div>`);
+                $(this).after(`<div class="invalid-feedback">El monto excede el saldo pendiente (${saldoBs.toFixed(2)} Bs)</div>`);
                 $('#equivInfo').html(`<span class="text-danger">Equivale a: $${montoUSD.toFixed(2)}</span>`).show();
-                
+            
             } else {
+                // ✅ Monto menor al saldo
                 esValido = true;
-                $('#equivInfo').html(`<span class="text-info">Equivale a: <strong>$${montoUSD.toFixed(2)}</strong></span>`).show();
+                $('#equivInfo').html(`
+                    <span class="text-info">
+                        Equivale a: <strong>$${montoUSD.toFixed(2)}</strong>
+                        <small class="d-block">Saldo restante después del pago: 
+                        ${(saldoBs - valorBs).toFixed(2)} Bs</small>
+                    </span>
+                `).show();
             }
-        }
-
-        if (esValido) {
-            $(this).addClass('is-valid').removeClass('is-invalid');
-            $('#paymentMonto').val(montoUSD.toFixed(4));
-        } else {
-            $('#paymentMonto').val('');
         }
     });
 
     // ============================================
-    // VALIDACIONES DE TIPO DE PAGO
+    // VALIDACIÓN TIPO PAGO Y CAMPOS BANCARIOS
     // ============================================
     $('#paymentTipo').on('change', function() {
         const tipo = $(this).val();
@@ -275,11 +310,7 @@ $(document).ready(function() {
         const $refInput = $('#paymentReferencia');
         const $bancoInput = $('#paymentBanco');
 
-        if (!tipo) {
-            $(this).addClass('is-invalid').removeClass('is-valid');
-        } else {
-            $(this).addClass('is-valid').removeClass('is-invalid');
-        }
+        Validations.validateSelect($(this));
 
         if (tipo === 'EFECTIVO' || !tipo) {
             $refBancaria.hide();
@@ -292,60 +323,23 @@ $(document).ready(function() {
         }
     });
 
-    // ============================================
-    // VALIDACIONES CON REGEX
-    // ============================================
-    const REGEX_REFERENCIA = /^\d{8,10}$/;
-    const REGEX_BANCO = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s\-\.]{3,30}$/;
+    // Validaciones en tiempo real
+    const setupPaymentValidations = () => {
+        $('#paymentReferencia').on('input', function() {
+            if (!$(this).is(':visible')) return;
+            Validations.validateField($(this), Validations.REGEX.referencia, Validations.MESSAGES.referencia);
+        });
 
-    $('#paymentReferencia').on('input', function() {
-        if (!$(this).is(':visible')) return;
+        $('#paymentBanco').on('input', function() {
+            if (!$(this).is(':visible')) return;
+            Validations.validateField($(this), Validations.REGEX.banco, Validations.MESSAGES.banco);
+        });
+    };
 
-        const valor = $(this).val().trim();
-        $(this).siblings('.invalid-feedback').remove();
-
-        if (valor.length === 0) {
-            $(this).addClass('is-invalid').removeClass('is-valid');
-            $(this).after('<div class="invalid-feedback">La referencia bancaria es requerida</div>');
-        } else if (!REGEX_REFERENCIA.test(valor)) {
-            $(this).addClass('is-invalid').removeClass('is-valid');
-            if (!/^\d+$/.test(valor)) {
-                $(this).after('<div class="invalid-feedback">Solo se permiten números</div>');
-            } else if (valor.length < 8) {
-                $(this).after('<div class="invalid-feedback">Mínimo 8 dígitos</div>');
-            } else {
-                $(this).after('<div class="invalid-feedback">Máximo 10 dígitos</div>');
-            }
-        } else {
-            $(this).addClass('is-valid').removeClass('is-invalid');
-        }
-    });
-
-    $('#paymentBanco').on('input', function() {
-        if (!$(this).is(':visible')) return;
-
-        const valor = $(this).val().trim();
-        $(this).siblings('.invalid-feedback').remove();
-
-        if (valor.length === 0) {
-            $(this).addClass('is-invalid').removeClass('is-valid');
-            $(this).after('<div class="invalid-feedback">El nombre del banco es requerido</div>');
-        } else if (!REGEX_BANCO.test(valor)) {
-            $(this).addClass('is-invalid').removeClass('is-valid');
-            if (valor.length < 3) {
-                $(this).after('<div class="invalid-feedback">Mínimo 3 caracteres</div>');
-            } else if (valor.length > 30) {
-                $(this).after('<div class="invalid-feedback">Máximo 30 caracteres (actual: ' + valor.length + ')</div>');
-            } else {
-                $(this).after('<div class="invalid-feedback">Solo se permiten letras, números, espacios, guiones y puntos</div>');
-            }
-        } else {
-            $(this).addClass('is-valid').removeClass('is-invalid');
-        }
-    });
+    setupPaymentValidations();
 
     // ============================================
-    // SUBMIT CON CONVERSIÓN A USD
+    // SUBMIT PAGO
     // ============================================
     $('#addPaymentForm').on('submit', function(e) {
         e.preventDefault();
@@ -353,221 +347,202 @@ $(document).ready(function() {
         const montoUSD = parseFloat($('#paymentMonto').val());
         
         if (!montoUSD || montoUSD <= 0) {
-            return Swal.fire({ icon: 'error', title: 'Error', text: 'El monto debe ser al acorde al saldo pendiente' });
+            Helpers.toast('error', 'El monto debe ser acorde al saldo pendiente');
+            return;
         }
         
         if (!$('#paymentTipo').val()) {
-            return Swal.fire({ icon: 'error', title: 'Error', text: 'Seleccione un método de pago' });
+            Helpers.toast('error', 'Seleccione un método de pago');
+            return;
         }
 
-        // Validar campos bancarios si son visibles
         const tipoPago = $('#paymentTipo').val();
         if (tipoPago !== 'EFECTIVO') {
             const refBancaria = $('#paymentReferencia').val().trim();
-            const banco = $('#paymentBanco').val();
+            const banco = $('#paymentBanco').val().trim();
 
-            if (!refBancaria || !REGEX_REFERENCIA.test(refBancaria)) {
+            if (!Validations.REGEX.referencia.test(refBancaria)) {
                 $('#paymentReferencia').addClass('is-invalid');
-                return Swal.fire({ icon: 'error', title: 'Error', text: 'Referencia bancaria inválida (8-10 dígitos)' });
+                Helpers.toast('error', 'Referencia bancaria inválida (8-10 dígitos)');
+                return;
             }
 
-            if (!banco || banco.trim().length < 4 || !REGEX_BANCO.test(banco.trim())) {
+            if (!Validations.REGEX.banco.test(banco)) {
                 $('#paymentBanco').addClass('is-invalid');
-                return Swal.fire({ 
-                    icon: 'error', 
-                    title: 'Error', 
-                    text: 'El nombre del banco debe tener al menos 4 caracteres válidos' 
-                });
+                Helpers.toast('error', 'El nombre del banco debe tener al menos 3 caracteres válidos');
+                return;
             }
-
         }
         
-        const btn = $('#btnGuardarPago');
-        btn.prop('disabled', true).find('.spinner-border').removeClass('d-none');
+        const $btn = $('#btnGuardarPago');
+        const btnText = $btn.html();
+        $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Guardando...');
         
-        $.ajax({
-            url: window.location.pathname + '?action=add_payment',
-            method: 'POST',
-            data: $(this).serialize(),
-            headers: { 'X-Requested-With': 'XMLHttpRequest' },
-            success: function(res) {
+        Ajax.post(`${baseUrl}?action=add_payment`, $(this).serialize())
+            .then(res => {
                 if (res.success) {
-                    Swal.fire({ 
-                        icon: 'success', 
-                        title: '¡Pago registrado!', 
-                        text: res.message, 
-                        timer: 2000, 
-                        showConfirmButton: false 
-                    });
+                    Helpers.toast('success', res.message || 'Pago registrado correctamente');
                     $('#addPaymentModal').modal('hide');
-                    $('#addPaymentForm')[0].reset();
-                    fetchAccounts();
+                    if (accountsTable) accountsTable.ajax.reload(null, false);
                 } else {
-                    Swal.fire({ icon: 'error', title: 'Error', text: res.message });
+                    Helpers.toast('error', res.message);
                 }
-            },
-            error: () => Swal.fire({ icon: 'error', title: 'Error', text: 'Error al registrar el pago' }),
-            complete: () => {
-                btn.prop('disabled', false).find('.spinner-border').addClass('d-none');
-            }
-        });
+            })
+            .catch(err => Helpers.toast('error', err))
+            .finally(() => $btn.prop('disabled', false).html(btnText));
     });
 
     // ============================================
-    // VER DETALLE DE CUENTA
+    // VER DETALLE
     // ============================================
-    window.viewAccount = function(cuentaId) {
+    $(document).on('click', '.btn-view', function() {
+        const cuentaId = $(this).data('id');
+        
         $('#viewAccountModal').modal('show');
         $('#viewAccountContent').html('<div class="text-center py-5"><div class="spinner-border"></div><p class="mt-2">Cargando...</p></div>');
         
-        $.ajax({
-            url: window.location.pathname + '?action=get_account_detail',
-            data: { cuenta_pagar_id: cuentaId },
-            headers: { 'X-Requested-With': 'XMLHttpRequest' },
-            success: function(data) {
+        Ajax.get(`${baseUrl}?action=get_account_detail`, { cuenta_pagar_id: cuentaId })
+            .then(data => {
                 if (data.success) {
-                    const c = data.data.cuenta;
-                    const pagos = data.data.pagos;
-                    const prendas = data.data.prendas;
-                    
-                    const saldo = parseFloat(c.saldo_pendiente || 0);
-                    const total = parseFloat(c.monto_total || 0);
-                    const pagado = parseFloat(c.total_pagado || 0);
-                    
-                    let pagosHtml = '';
-                    if (pagos.length > 0) {
-                        pagosHtml = pagos.map(p => `
-                            <div class="pago-item">
-                                <div class="row">
-                                    <div class="col-md-3">
-                                        <small class="text-muted">Fecha</small>
-                                        <br><strong>${new Date(p.fecha_pago).toLocaleDateString('es-ES')}</strong>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <small class="text-muted">Monto</small>
-                                        <br><strong class="text-success">$${parseFloat(p.monto).toFixed(2)}</strong>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <small class="text-muted">Tipo</small>
-                                        <br><span class="badge bg-info">${p.tipo_pago}</span>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <small class="text-muted">Estado</small>
-                                        <br><span class="badge bg-${p.estado_pago === 'CONFIRMADO' ? 'success' : 'warning'}">${p.estado_pago}</span>
-                                    </div>
-                                </div>
-                                ${p.referencia_bancaria ? `<small class="text-muted d-block mt-2">Ref: ${p.referencia_bancaria} | ${p.banco || ''}</small>` : ''}
-                                ${p.observaciones ? `<small class="text-muted d-block"><em>${p.observaciones}</em></small>` : ''}
-                            </div>
-                        `).join('');
-                    } else {
-                        pagosHtml = '<p class="text-muted text-center">No hay pagos registrados</p>';
-                    }
-                    
-                    let prendasHtml = '';
-                    if (prendas && prendas.length > 0) {
-                        prendasHtml = `
-                            <div class="table-responsive">
-                                <table class="table table-sm table-hover">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Código</th>
-                                            <th>Nombre</th>
-                                            <th>Categoría</th>
-                                            <th class="text-end">P. Costo</th>
-                                            <th class="text-center">Estado</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${prendas.map(pr => `
-                                            <tr>
-                                                <td><code>${pr.codigo_prenda}</code></td>
-                                                <td>${pr.nombre}</td>
-                                                <td><span class="badge bg-info">${pr.categoria}</span></td>
-                                                <td class="text-end">$${parseFloat(pr.precio_costo).toFixed(2)}</td>
-                                                <td class="text-center">
-                                                    ${pr.estado === 'DISPONIBLE' 
-                                                        ? '<span class="badge bg-success">Disponible</span>' 
-                                                        : '<span class="badge bg-secondary">Vendida</span>'}
-                                                </td>
-                                            </tr>
-                                        `).join('')}
-                                    </tbody>
-                                </table>
-                            </div>
-                        `;
-                    }
-                    
-                    const html = `
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <h6 class="text-primary mb-3">Información de la Compra</h6>
-                                <p class="mb-2"><strong>Proveedor:</strong> ${c.nombre_proveedor}</p>
-                                <p class="mb-2"><strong>RIF:</strong> ${c.tipo_rif}-${c.proveedor_rif}</p>
-                                <p class="mb-2"><strong>Factura:</strong> #${c.factura_numero}</p>
-                                <p class="mb-2"><strong>Fecha Compra:</strong> ${new Date(c.fecha_compra).toLocaleDateString('es-ES')}</p>
-                                <p class="mb-2"><strong>Vencimiento:</strong> ${new Date(c.fecha_vencimiento).toLocaleDateString('es-ES')}</p>
-                            </div>
-                            <div class="col-md-6">
-                                <h6 class="text-primary mb-3">Resumen Financiero</h6>
-                                <div class="card border-0 shadow-sm">
-                                    <div class="card-body">
-                                        <div class="d-flex justify-content-between mb-2">
-                                            <span>Monto Total:</span>
-                                            <strong>$${total.toFixed(2)}</strong>
-                                        </div>
-                                        <div class="d-flex justify-content-between mb-2">
-                                            <span>Total Pagado:</span>
-                                            <strong class="text-success">$${pagado.toFixed(2)}</strong>
-                                        </div>
-                                        <hr>
-                                        <div class="d-flex justify-content-between">
-                                            <span><strong>Saldo Pendiente:</strong></span>
-                                            <strong class="${saldo > 0 ? 'text-danger' : 'text-success'} fs-5">$${saldo.toFixed(2)}</strong>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        ${c.observaciones ? `
-                        <div class="alert alert-info">
-                            <strong><i class="fas fa-info-circle me-2"></i>Observaciones:</strong>
-                            <p class="mb-0 mt-2">${c.observaciones}</p>
-                        </div>
-                        ` : ''}
-                        
-                        <hr>
-                        
-                        <h6 class="text-primary mb-3">
-                            <i class="fas fa-money-bill-wave me-2"></i>Historial de Pagos (${pagos.length})
-                        </h6>
-                        ${pagosHtml}
-                        
-                        ${prendasHtml ? `
-                        <hr>
-                        <h6 class="text-primary mb-3">
-                            <i class="fas fa-box me-2"></i>Productos de la Compra (${prendas.length})
-                        </h6>
-                        ${prendasHtml}
-                        ` : ''}
-                    `;
-                    
-                    $('#viewAccountContent').html(html);
+                    renderAccountDetails(data.data);
                 } else {
                     $('#viewAccountContent').html('<div class="alert alert-danger">Error al cargar los datos</div>');
                 }
-            },
-            error: () => {
+            })
+            .catch(() => {
                 $('#viewAccountContent').html('<div class="alert alert-danger">Error de conexión</div>');
-            }
-        });
+            });
+    });
+
+    const renderAccountDetails = (data) => {
+        const c = data.cuenta;
+        const pagos = data.pagos;
+        const prendas = data.prendas;
+        
+        const saldo = parseFloat(c.saldo_pendiente || 0);
+        const total = parseFloat(c.monto_total || 0);
+        const pagado = parseFloat(c.total_pagado || 0);
+        
+        let pagosHtml = '';
+        if (pagos.length > 0) {
+            pagosHtml = pagos.map(p => `
+                <div class="pago-item border-bottom py-2">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <small class="text-muted">Fecha</small>
+                            <br><strong>${Helpers.formatDate(p.fecha_pago)}</strong>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted">Monto</small>
+                            <br><strong class="text-success">${Helpers.formatCurrency(p.monto)}</strong>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted">Tipo</small>
+                            <br><span class="badge bg-info">${p.tipo_pago}</span>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted">Estado</small>
+                            <br><span class="badge bg-${p.estado_pago === 'CONFIRMADO' ? 'success' : 'warning'}">${p.estado_pago}</span>
+                        </div>
+                    </div>
+                    ${p.referencia_bancaria ? `<small class="text-muted d-block mt-2">Ref: ${p.referencia_bancaria} | ${p.banco || ''}</small>` : ''}
+                    ${p.observaciones ? `<small class="text-muted d-block"><em>${p.observaciones}</em></small>` : ''}
+                </div>
+            `).join('');
+        } else {
+            pagosHtml = '<p class="text-muted text-center">No hay pagos registrados</p>';
+        }
+        
+        let prendasHtml = '';
+        if (prendas && prendas.length > 0) {
+            prendasHtml = `
+                <hr>
+                <h6 class="text-primary mb-3">
+                    <i class="fas fa-box me-2"></i>Productos de la Compra (${prendas.length})
+                </h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Código</th>
+                                <th>Nombre</th>
+                                <th>Categoría</th>
+                                <th class="text-end">P. Costo</th>
+                                <th class="text-center">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${prendas.map(pr => `
+                                <tr>
+                                    <td><code>${pr.codigo_prenda}</code></td>
+                                    <td>${pr.nombre}</td>
+                                    <td><span class="badge bg-info">${pr.categoria}</span></td>
+                                    <td class="text-end">${Helpers.formatCurrency(pr.precio_costo)}</td>
+                                    <td class="text-center">${Helpers.getBadge(pr.estado)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+        
+        const html = `
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <h6 class="text-primary mb-3">Información de la Compra</h6>
+                    <p class="mb-2"><strong>Proveedor:</strong> ${c.nombre_proveedor}</p>
+                    <p class="mb-2"><strong>RIF:</strong> ${c.tipo_rif}-${c.proveedor_rif}</p>
+                    <p class="mb-2"><strong>Factura:</strong> #${c.factura_numero}</p>
+                    <p class="mb-2"><strong>Fecha Compra:</strong> ${Helpers.formatDate(c.fecha_compra)}</p>
+                    <p class="mb-2"><strong>Vencimiento:</strong> ${Helpers.formatDate(c.fecha_vencimiento)}</p>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-primary mb-3">Resumen Financiero</h6>
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Monto Total:</span>
+                                <strong>${Helpers.formatCurrency(total)}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Total Pagado:</span>
+                                <strong class="text-success">${Helpers.formatCurrency(pagado)}</strong>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between">
+                                <span><strong>Saldo Pendiente:</strong></span>
+                                <strong class="${saldo > 0 ? 'text-danger' : 'text-success'} fs-5">${Helpers.formatCurrency(saldo)}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            ${c.observaciones ? `
+                <div class="alert alert-info">
+                    <strong><i class="fas fa-info-circle me-2"></i>Observaciones:</strong>
+                    <p class="mb-0 mt-2">${c.observaciones}</p>
+                </div>
+            ` : ''}
+            
+            <hr>
+            
+            <h6 class="text-primary mb-3">
+                <i class="fas fa-money-bill-wave me-2"></i>Historial de Pagos (${pagos.length})
+            </h6>
+            ${pagosHtml}
+            
+            ${prendasHtml}
+        `;
+        
+        $('#viewAccountContent').html(html);
     };
 
     // ============================================
     // FILTROS Y BÚSQUEDA
     // ============================================
-    $('#searchInput').on('input', function() {
+    $('#searchInput').on('input', Helpers.debounce(function() {
         const term = $(this).val().toLowerCase();
         const filtered = allAccounts.filter(c => 
             c.factura_numero.includes(term) || 
@@ -575,7 +550,7 @@ $(document).ready(function() {
             (c.proveedor_rif && c.proveedor_rif.toString().includes(term))
         );
         renderAccounts(filtered);
-    });
+    }, 300));
     
     $('#filterEstado').on('change', function() {
         const estado = $(this).val();
@@ -593,17 +568,15 @@ $(document).ready(function() {
         renderAccounts(filtered);
     });
 
-    // Limpiar modales al cerrar
+    // ============================================
+    // LIMPIAR MODALES
+    // ============================================
     $('.modal').on('hidden.bs.modal', function() {
-        $(this).find('form').each(function() {
-            if (this.reset) this.reset();
-            $(this).find('.is-valid, .is-invalid').removeClass('is-valid is-invalid');
-            $(this).find('.invalid-feedback').remove();
-        });
+        Helpers.resetForm($(this).find('form'));
     });
 
     // ============================================
     // INICIALIZAR
     // ============================================
-    fetchAccounts();
+    initAccountsTable();
 });
