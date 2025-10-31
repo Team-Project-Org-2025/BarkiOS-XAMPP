@@ -69,11 +69,6 @@ $(document).ready(function() {
                                     data-imagen="${Helpers.escapeHtml(row.imagen || '')}">
                                 <i class="fas fa-edit"></i> Editar
                             </button>
-                            <button class="btn btn-sm btn-outline-danger btn-delete"
-                                    data-id="${Helpers.escapeHtml(row.prenda_id)}"
-                                    data-nombre="${Helpers.escapeHtml(row.nombre)}">
-                                <i class="fas fa-trash"></i> Eliminar
-                            </button>
                         `;
                     }
                 }
