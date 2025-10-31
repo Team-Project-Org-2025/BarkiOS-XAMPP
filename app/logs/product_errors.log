@@ -1264,3 +1264,20 @@
 [31-Oct-2025 04:40:06 Europe/Berlin] ExchangeRateService [Primary API]: HTTP 403 - Response: <!DOCTYPE html><html lang="en-US"><head><title>Just a moment...</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=Edge"><meta nam
 [31-Oct-2025 04:40:06 Europe/Berlin] ExchangeRateService [Backup API]: Error. cURL: Could not resolve host: pydolarve.org, HTTP: 0
 [31-Oct-2025 04:40:06 Europe/Berlin] ExchangeRateService: Todas las APIs fallaron. Usando FALLBACK_RATE.
+[31-Oct-2025 05:09:50 Europe/Berlin] ImageUploader - Directorio: C:\xampp\htdocs\BarkiOS\public\uploads\products\
+[31-Oct-2025 05:09:50 Europe/Berlin] ImageUploader - Existe: SI
+[31-Oct-2025 05:09:50 Europe/Berlin] ImageUploader - Inicializado correctamente
+[31-Oct-2025 05:09:50 Europe/Berlin] === ImageUploader::upload INICIO ===
+[31-Oct-2025 05:09:50 Europe/Berlin] Product ID: 8
+[31-Oct-2025 05:09:50 Europe/Berlin] ✓ Archivo temporal existe: C:\xampp\tmp\php44CE.tmp
+[31-Oct-2025 05:09:50 Europe/Berlin] ✓ Tamaño válido: 114738 bytes
+[31-Oct-2025 05:09:50 Europe/Berlin] Extensión detectada: jpg
+[31-Oct-2025 05:09:50 Europe/Berlin] ✓ Extensión válida
+[31-Oct-2025 05:09:50 Europe/Berlin] ✓ Imagen válida: image/jpeg
+[31-Oct-2025 05:09:50 Europe/Berlin] Nombre archivo: product_8_1761883790.jpg
+[31-Oct-2025 05:09:50 Europe/Berlin] Ruta destino: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_8_1761883790.jpg
+[31-Oct-2025 05:09:50 Europe/Berlin] Directorio escribible: SI
+[31-Oct-2025 05:09:50 Europe/Berlin] ✓ Archivo movido exitosamente a: C:\xampp\htdocs\BarkiOS\public\uploads\products\product_8_1761883790.jpg
+[31-Oct-2025 05:09:50 Europe/Berlin] Archivo existe después de mover: SI
+[31-Oct-2025 05:09:50 Europe/Berlin] Ruta relativa para BD: public/uploads/products/product_8_1761883790.jpg
+[31-Oct-2025 05:09:50 Europe/Berlin] === ImageUploader::upload FIN ===

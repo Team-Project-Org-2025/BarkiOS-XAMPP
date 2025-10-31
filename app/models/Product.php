@@ -30,15 +30,40 @@ class Product extends Database {
     }
 
     /**
-     * Obtiene productos disponibles
+     * Obtiene productos disponibles CON VALIDACIONES para mostrar al público
+     * - Precio mayor a 0
+     * - Con imagen válida
+     * - Estado DISPONIBLE
+     * - Activo = 1
      */
     public function getDisponibles() {
-        $stmt = $this->db->query("
-            SELECT * FROM prendas
-            WHERE activo = 1 AND estado = 'DISPONIBLE'
-            ORDER BY prenda_id ASC
-        ");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        try {
+            $stmt = $this->db->query("
+                SELECT 
+                    prenda_id,
+                    codigo_prenda,
+                    nombre,
+                    categoria,
+                    tipo,
+                    precio,
+                    imagen,
+                    descripcion,
+                    fecha_creacion
+                FROM prendas 
+                WHERE activo = 1 
+                  AND estado = 'DISPONIBLE'
+                  AND precio > 0
+                  AND imagen IS NOT NULL
+                  AND imagen != ''
+                  AND imagen != 'public/assets/img/no-image.png'
+                ORDER BY fecha_creacion DESC
+            ");
+            
+            return $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
+        } catch (\Throwable $e) {
+            error_log("Error en getDisponibles: " . $e->getMessage());
+            return [];
+        }
     }
 
     /**
@@ -224,31 +249,92 @@ class Product extends Database {
         ");
         return $stmt->execute([':id' => $id]);
     }
-    public function getLatest(int $limit = 8)
-{
-    $stmt = $this->db->prepare("
-        SELECT * FROM prendas
-        WHERE activo = 1 AND estado = 'DISPONIBLE'
-        ORDER BY fecha_creacion DESC
-        LIMIT :limit
-    ");
-    $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
-    $stmt->execute();
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
 
-public function getByCategoria(string $categoria, ?int $limit = null)
-{
-    $sql = "SELECT * FROM prendas
-            WHERE activo = 1 AND estado = 'DISPONIBLE'
-            AND categoria = :categoria
-            ORDER BY fecha_creacion DESC";
-    if ($limit) $sql .= " LIMIT :limit";
+    /**
+     * Obtiene los productos más recientes CON VALIDACIONES
+     * - Precio mayor a 0
+     * - Con imagen válida
+     * - Estado DISPONIBLE
+     */
+    public function getLatest(int $limit = 8) {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT 
+                    prenda_id,
+                    codigo_prenda,
+                    nombre,
+                    categoria,
+                    tipo,
+                    precio,
+                    imagen,
+                    descripcion,
+                    fecha_creacion
+                FROM prendas
+                WHERE activo = 1 
+                  AND estado = 'DISPONIBLE'
+                  AND precio > 0
+                  AND imagen IS NOT NULL
+                  AND imagen != ''
+                  AND imagen != 'public/assets/img/no-image.png'
+                ORDER BY fecha_creacion DESC
+                LIMIT :limit
+            ");
+            
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+            
+            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (\Throwable $e) {
+            error_log("Error en getLatest: " . $e->getMessage());
+            return [];
+        }
+    }
 
-    $stmt = $this->db->prepare($sql);
-    $stmt->bindValue(':categoria', $categoria, PDO::PARAM_STR);
-    if ($limit) $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
-    $stmt->execute();
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
+    /**
+     * Obtiene productos por categoría CON VALIDACIONES
+     * - Precio mayor a 0
+     * - Con imagen válida
+     * - Estado DISPONIBLE
+     */
+    public function getByCategoria(string $categoria, ?int $limit = null) {
+        try {
+            $sql = "SELECT 
+                        prenda_id,
+                        codigo_prenda,
+                        nombre,
+                        categoria,
+                        tipo,
+                        precio,
+                        imagen,
+                        descripcion,
+                        fecha_creacion
+                    FROM prendas
+                    WHERE activo = 1 
+                      AND estado = 'DISPONIBLE'
+                      AND categoria = :categoria
+                      AND precio > 0
+                      AND imagen IS NOT NULL
+                      AND imagen != ''
+                      AND imagen != 'public/assets/img/no-image.png'
+                    ORDER BY fecha_creacion DESC";
+            
+            if ($limit) {
+                $sql .= " LIMIT :limit";
+            }
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->bindValue(':categoria', $categoria, PDO::PARAM_STR);
+            
+            if ($limit) {
+                $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            }
+            
+            $stmt->execute();
+            
+            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (\Throwable $e) {
+            error_log("Error en getByCategoria: " . $e->getMessage());
+            return [];
+        }
+    }
 }
