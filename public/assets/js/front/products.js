@@ -7,13 +7,56 @@ document.addEventListener("DOMContentLoaded", () => {
     .then(res => res.json())
     .then(data => {
       if (data.success) {
-        renderProducts(data.products)
-        initializeProductInteractions()
-        filterProducts()
+        // ✅ Filtrado adicional en frontend por seguridad
+        const validProducts = validateProducts(data.products)
+        
+        if (validProducts.length > 0) {
+          renderProducts(validProducts)
+          initializeProductInteractions()
+          filterProducts()
+        } else {
+          showNoProductsMessage()
+        }
+        
+        // Mostrar info de filtrado en consola (opcional)
+        if (data.filtered_out > 0) {
+          console.info(`✅ ${data.filtered_out} productos excluidos (sin precio o imagen)`)
+        }
       }
     })
-    .catch(error => console.error("Error cargando productos:", error))
+    .catch(error => {
+      console.error("Error cargando productos:", error)
+      showErrorMessage()
+    })
 
+  // ==========================
+  // 🔒 Validación de productos
+  // ==========================
+  function validateProducts(products) {
+    if (!Array.isArray(products)) return []
+    
+    return products.filter(product => {
+      // ✅ Verificar precio válido
+      const precio = parseFloat(product.precio)
+      if (isNaN(precio) || precio <= 0) {
+        console.warn(`Producto "${product.nombre}" excluido: precio inválido (${product.precio})`)
+        return false
+      }
+      
+      // ✅ Verificar imagen válida
+      const hasValidImage = product.imagen && 
+                           product.imagen.trim() !== '' &&
+                           product.imagen !== 'public/assets/img/no-image.png' &&
+                           product.imagen !== 'null'
+      
+      if (!hasValidImage) {
+        console.warn(`Producto "${product.nombre}" excluido: sin imagen válida`)
+        return false
+      }
+      
+      return true
+    })
+  }
 
   // ==========================
   // 🔥 2. Render dynamic products
@@ -23,6 +66,12 @@ document.addEventListener("DOMContentLoaded", () => {
     productsContainer.innerHTML = ""
 
     products.forEach(product => {
+      // Asegurar ruta correcta de imagen
+      let imagePath = product.imagen
+      if (!imagePath.startsWith('/') && !imagePath.startsWith('http')) {
+        imagePath = '/BarkiOS/' + imagePath
+      }
+
       const card = `
         <div class="col-md-4 col-sm-6 product-item" 
           data-category="${product.categoria}"
@@ -31,7 +80,9 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="product-card">
             <div class="product-image">
               <span class="product-badge">Disponible</span>
-              <img src="${product.imagen}" alt="${product.nombre}">
+              <img src="${imagePath}" 
+                   alt="${product.nombre}"
+                   onerror="this.onerror=null; this.src='/BarkiOS/public/assets/img/no-image.png';">
               <div class="product-actions">
                 <button class="action-btn quick-view" data-product-id="${product.id}">
                   <i class="far fa-eye"></i>
@@ -42,7 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="product-info">
               <h4>${product.nombre}</h4>
               <p class="product-category">${product.categoria}</p>
-              <div class="product-price">$${product.precio}</div>
+              <div class="product-price">$${parseFloat(product.precio).toFixed(2)}</div>
             </div>
           </div>
         </div>
@@ -53,6 +104,38 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("product-count").textContent = products.length
   }
 
+  // ==========================
+  // 📭 Mensajes de estado
+  // ==========================
+  function showNoProductsMessage() {
+    const productsContainer = document.querySelector(".products-grid")
+    productsContainer.innerHTML = `
+      <div class="col-12 text-center py-5">
+        <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+        <h4 class="text-muted">No hay productos disponibles</h4>
+        <p class="text-muted">Los productos deben tener precio e imagen válidos para mostrarse</p>
+      </div>
+    `
+    document.getElementById("product-count").textContent = "0"
+  }
+
+  function showErrorMessage() {
+    const productsContainer = document.querySelector(".products-grid")
+    productsContainer.innerHTML = `
+      <div class="col-12 text-center py-5">
+        <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+        <h4 class="text-danger">Error al cargar productos</h4>
+        <p class="text-muted">Por favor, intenta recargar la página</p>
+        <button class="btn btn-primary mt-3" onclick="location.reload()">
+          <i class="fas fa-sync-alt me-2"></i>Recargar
+        </button>
+      </div>
+    `
+  }
+
+  // ==========================
+  // 🎯 Filtros y ordenamiento
+  // ==========================
   const categoryFilters = document.querySelectorAll(".category-filter")
   const todosCheckbox = document.getElementById("category-todos")
   const applyFiltersBtn = document.getElementById("apply-filters")
@@ -133,7 +216,6 @@ document.addEventListener("DOMContentLoaded", () => {
     visibleProducts.forEach(p => grid.appendChild(p))
   }
 
-
   // ==========================
   // 🎯 4. Quick View / Cart / Wishlist
   // ==========================
@@ -185,7 +267,6 @@ document.addEventListener("DOMContentLoaded", () => {
       })
     })
   }
-
 
   // Back to Top Button
   const backToTopButton = document.getElementById("backToTop")

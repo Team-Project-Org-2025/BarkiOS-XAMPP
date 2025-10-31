@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const errorMessage = document.getElementById("error-products");
   const emptyMessage = document.getElementById("empty-products");
 
-  if (!latestContainer) return; // Si no existe, salir
+  if (!latestContainer) return;
 
   // Mostrar el spinner mientras carga
   loadingSpinner.style.display = "block";
@@ -35,33 +35,51 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // Si no hay productos
-      if (data.products.length === 0) {
+      // ✅ Filtrar productos válidos
+      const validProducts = data.products.filter(product => {
+        const precio = parseFloat(product.precio);
+        const hasValidImage = product.imagen && 
+                             product.imagen.trim() !== '' &&
+                             product.imagen !== 'public/assets/img/no-image.png';
+        
+        return precio > 0 && hasValidImage;
+      });
+
+      // Si no hay productos válidos
+      if (validProducts.length === 0) {
         emptyMessage.classList.remove("d-none");
         return;
       }
 
       // Mostrar solo los 4 más recientes
-      const recientes = data.products
-        .slice(-4) // últimos 4
-        .reverse(); // para mostrar del más nuevo al más antiguo
+      const recientes = validProducts
+        .slice(-4)
+        .reverse();
 
       // Renderizar productos
       latestContainer.innerHTML = "";
       recientes.forEach((product, index) => {
+        // Asegurar ruta correcta de imagen
+        let imagePath = product.imagen;
+        if (!imagePath.startsWith('/') && !imagePath.startsWith('http')) {
+          imagePath = '/BarkiOS/' + imagePath;
+        }
+
         const card = `
           <div class="col-md-3" data-aos="fade-up" data-aos-delay="${index * 100}">
             <div class="product-card">
               <div class="product-image">
                 <span class="product-badge bg-danger">Nuevo</span>
-                <img src="/BarkiOS/${product.imagen}" alt="${product.nombre}">
+                <img src="${imagePath}" 
+                     alt="${product.nombre}"
+                     onerror="this.onerror=null; this.src='/BarkiOS/public/assets/img/no-image.png';">
                 <div class="product-actions">
                 </div>
               </div>
               <div class="product-info">
                 <h4>${product.nombre}</h4>
                 <p class="product-category">${product.categoria}</p>
-                <div class="product-price">$${product.precio}</div>
+                <div class="product-price">$${parseFloat(product.precio).toFixed(2)}</div>
               </div>
             </div>
           </div>`;
@@ -70,6 +88,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
       latestContainer.style.display = "flex";
       AOS.refresh();
+      
+      // Log informativo
+      if (data.filtered_out > 0) {
+        console.info(`✅ ${data.filtered_out} productos excluidos por validación`);
+      }
     })
     .catch((err) => {
       console.error("Error cargando novedades:", err);
