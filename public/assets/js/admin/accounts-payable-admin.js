@@ -1,7 +1,7 @@
 /**
  * ============================================
  * MÓDULO DE CUENTAS POR PAGAR - GARAGE BARKI
- * Versión refactorizada v2.0 (ES6 Module)
+ * Versión refactorizada v3.0 (ES6 Module)
  * ============================================
  */
 
@@ -11,7 +11,7 @@ import * as Ajax from '/BarkiOS/public/assets/js/utils/ajax-handler.js';
 
 $(document).ready(function() {
     const baseUrl = window.location.pathname;
-    let allAccounts = [];
+    let accountsTable = null;
     let currentSaldo = 0;
     
     const METODOS_USD = ["EFECTIVO", "TRANSFERENCIA"];
@@ -19,131 +19,101 @@ $(document).ready(function() {
     const MARGEN_ERROR_BS = 10;
 
     // ============================================
-    // CARGAR CUENTAS POR PAGAR
+    // INICIALIZAR DATATABLE
     // ============================================
-    // ============================================
-// INICIALIZAR DATATABLE DE CUENTAS POR PAGAR
-// ============================================
-let accountsTable = null;
-
-const initAccountsTable = () => {
-    accountsTable = $('#accountsTable').DataTable({
-        ajax: {
-            url: `${baseUrl}?action=get_accounts`,
-            method: 'GET',
-            headers: { 'X-Requested-With': 'XMLHttpRequest' },
-            dataSrc: (json) => {
-                if (!json.success) {
-                    Helpers.toast('warning', json.message || 'No se pudieron cargar las cuentas');
-                    return [];
-                }
-                // Actualizar estadísticas
-                allAccounts = json.data || [];
-                if (typeof updateStats === 'function') updateStats();
-                return json.data || [];
-            }
-        },
-        columns: [
-            { data: 'factura_numero', render: d => `<strong>#${d}</strong>`, className: 'px-4' },
-            { data: 'nombre_proveedor', render: (d, t, row) => `
-                <div><strong>${Helpers.escapeHtml(d)}</strong></div>
-                <small class="text-muted">${row.tipo_rif}-${row.proveedor_rif}</small>
-            `},
-            { data: 'fecha_compra', render: d => `<small>${Helpers.formatDate(d)}</small>` },
-            { data: 'fecha_vencimiento', render: d => `<small>${Helpers.formatDate(d)}</small>` },
-            {
-                data: 'monto_total',
-                className: 'text-end',
-                render: d => `<strong>${Helpers.formatCurrency(d)}</strong>`
-            },
-            {
-                data: 'total_pagado',
-                className: 'text-end',
-                render: d => `<span class="text-success">${Helpers.formatCurrency(d)}</span>`
-            },
-            {
-                data: 'saldo_pendiente',
-                className: 'text-end',
-                render: (saldo) => {
-                    const s = parseFloat(saldo) || 0;
-                    return `<strong class="${s > 0 ? 'text-danger' : 'text-success'}">${Helpers.formatCurrency(s)}</strong>`;
-                }
-            },
-            {
-                data: null,
-                className: 'text-center',
-                render: (row) => {
-                    const hoy = new Date();
-                    const vencimiento = new Date(row.fecha_vencimiento);
-                    const diasVencer = Math.ceil((vencimiento - hoy) / (1000 * 60 * 60 * 24));
-
-                    let estadoBadge = '<span class="badge bg-success">Al día</span>';
-                    if (row.estado === 'vencido' || row.vencida) {
-                        estadoBadge = '<span class="badge bg-danger">Vencida</span>';
-                    } else if (diasVencer <= 7 && diasVencer > 0) {
-                        estadoBadge = `<span class="badge bg-warning">Vence en ${diasVencer}d</span>`;
-                    } else if (row.estado === 'pagado') {
-                        estadoBadge = '<span class="badge bg-secondary">Pagando</span>';
+    const initDataTable = () => {
+        accountsTable = $('#accountsTable').DataTable({
+            ajax: {
+                url: `${baseUrl}?action=get_accounts`,
+                method: 'GET',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                dataSrc: (json) => {
+                    if (!json.success) {
+                        Helpers.toast('warning', json.message || 'No se pudieron cargar las cuentas');
+                        return [];
                     }
-                    return estadoBadge;
+                    updateStats(json.data || []);
+                    return json.data || [];
                 }
             },
-            {
-                data: null,
-                className: 'text-center',
-                orderable: false,
-                render: (row) => `
-                    <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-primary btn-view" data-id="${row.cuenta_pagar_id}">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        ${parseFloat(row.saldo_pendiente) > 0 ? `
-                            <button class="btn btn-outline-success btn-pay" 
-                                    data-id="${row.cuenta_pagar_id}"
-                                    data-proveedor="${Helpers.escapeHtml(row.nombre_proveedor)}"
-                                    data-factura="${row.factura_numero}"
-                                    data-total="${row.monto_total}"
-                                    data-saldo="${row.saldo_pendiente}">
-                                <i class="fas fa-dollar-sign"></i>
-                            </button>
-                        ` : ''}
-                    </div>
-                `
-            }
-        ],
-        order: [[3, 'asc']],
-        pageLength: 10,
-        responsive: true,
-        autoWidth: false,
-        language: {
-            url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
-        },
-        dom: '<"d-flex justify-content-between align-items-center mb-2"lfB>tip',
-        buttons: [
-            {
+            columns: [
+                { data: 'factura_numero', render: d => `<strong>#${d}</strong>`, className: 'px-4' },
+                { 
+                    data: 'nombre_proveedor', 
+                    render: (d, t, row) => `<div><strong>${Helpers.escapeHtml(d)}</strong></div><small class="text-muted">${row.tipo_rif}-${row.proveedor_rif}</small>`
+                },
+                { data: 'fecha_compra', render: d => `<small>${Helpers.formatDate(d)}</small>` },
+                { data: 'fecha_vencimiento', render: d => `<small>${Helpers.formatDate(d)}</small>` },
+                { data: 'monto_total', className: 'text-end', render: d => `<strong>${Helpers.formatCurrency(d)}</strong>` },
+                { data: 'total_pagado', className: 'text-end', render: d => `<span class="text-success">${Helpers.formatCurrency(d)}</span>` },
+                {
+                    data: 'saldo_pendiente',
+                    className: 'text-end',
+                    render: (saldo) => {
+                        const s = parseFloat(saldo) || 0;
+                        return `<strong class="${s > 0 ? 'text-danger' : 'text-success'}">${Helpers.formatCurrency(s)}</strong>`;
+                    }
+                },
+                {
+                    data: null,
+                    className: 'text-center',
+                    render: (row) => {
+                        const hoy = new Date();
+                        const vencimiento = new Date(row.fecha_vencimiento);
+                        const diasVencer = Math.ceil((vencimiento - hoy) / (1000 * 60 * 60 * 24));
+
+                        if (row.estado === 'vencido' || row.vencida) return '<span class="badge bg-danger">Vencida</span>';
+                        if (diasVencer <= 7 && diasVencer > 0) return `<span class="badge bg-warning">Vence en ${diasVencer}d</span>`;
+                        if (row.estado === 'pagado') return '<span class="badge bg-secondary">Pagando</span>';
+                        return '<span class="badge bg-success">Al día</span>';
+                    }
+                },
+                {
+                    data: null,
+                    className: 'text-center',
+                    orderable: false,
+                    render: (row) => `
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary btn-view" data-id="${row.cuenta_pagar_id}"><i class="fas fa-eye"></i></button>
+                            ${parseFloat(row.saldo_pendiente) > 0 ? `
+                                <button class="btn btn-outline-success btn-pay" 
+                                        data-id="${row.cuenta_pagar_id}"
+                                        data-proveedor="${Helpers.escapeHtml(row.nombre_proveedor)}"
+                                        data-factura="${row.factura_numero}"
+                                        data-total="${row.monto_total}"
+                                        data-saldo="${row.saldo_pendiente}">
+                                    <i class="fas fa-dollar-sign"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    `
+                }
+            ],
+            order: [[3, 'asc']],
+            pageLength: 10,
+            responsive: true,
+            autoWidth: false,
+            language: { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' },
+            dom: '<"d-flex justify-content-between align-items-center mb-2"lfB>tip',
+            buttons: [{
                 text: '<i class="fas fa-sync-alt"></i> Actualizar',
                 className: 'btn btn-outline-secondary btn-sm',
-                action: function() {
-                    accountsTable.ajax.reload(null, false);
-                }
-            }
-        ]
-    });
-};
+                action: () => accountsTable.ajax.reload(null, false)
+            }]
+        });
+    };
 
     // ============================================
     // ACTUALIZAR ESTADÍSTICAS
     // ============================================
-    const updateStats = () => {
-        let totalCuentas = allAccounts.length;
-        let deudaTotal = 0;
-        let porVencer = 0;
-        let vencidas = 0;
+    const updateStats = (accounts) => {
+        let totalCuentas = accounts.length;
+        let deudaTotal = 0, porVencer = 0, vencidas = 0;
         
         const hoy = new Date();
         const en7Dias = new Date(hoy.getTime() + 7 * 24 * 60 * 60 * 1000);
         
-        allAccounts.forEach(c => {
+        accounts.forEach(c => {
             const saldo = parseFloat(c.saldo_pendiente || 0);
             deudaTotal += saldo;
             
@@ -151,9 +121,7 @@ const initAccountsTable = () => {
                 vencidas++;
             } else if (saldo > 0) {
                 const vencimiento = new Date(c.fecha_vencimiento);
-                if (vencimiento <= en7Dias && vencimiento > hoy) {
-                    porVencer++;
-                }
+                if (vencimiento <= en7Dias && vencimiento > hoy) porVencer++;
             }
         });
         
@@ -168,208 +136,130 @@ const initAccountsTable = () => {
     // ============================================
     $(document).on('click', '.btn-pay', function() {
         const $btn = $(this);
-        const cuentaId = $btn.data('id');
-        const proveedor = $btn.data('proveedor');
-        const factura = $btn.data('factura');
-        const montoTotal = parseFloat($btn.data('total'));
-        const saldo = parseFloat($btn.data('saldo'));
+        currentSaldo = parseFloat($btn.data('saldo'));
+        const saldoBS = currentSaldo * DOLAR_BCV_RATE;
 
-        currentSaldo = saldo;
-        const saldoPendienteBS = saldo * (window.DOLAR_BCV_RATE || 1);
-
-        $('#paymentCuentaId').val(cuentaId);
-        $('#paymentProveedor').text(proveedor);
-        $('#paymentFactura').text(factura);
-        $('#paymentMontoTotal').text(montoTotal.toFixed(2));
-        $('#paymentSaldo').html(`
-            <strong>${Helpers.formatCurrency(saldo)}</strong>
-            <br><small class="text-muted">≈ Bs ${saldoPendienteBS.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</small>
-        `);
+        $('#paymentCuentaId').val($btn.data('id'));
+        $('#paymentProveedor').text($btn.data('proveedor'));
+        $('#paymentFactura').text($btn.data('factura'));
+        $('#paymentMontoTotal').text(parseFloat($btn.data('total')).toFixed(2));
+        $('#paymentSaldo').html(`<strong>${Helpers.formatCurrency(currentSaldo)}</strong><br><small class="text-muted">≈ Bs ${saldoBS.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</small>`);
         
-        $('#addPaymentForm')[0].reset();
-        $('#paymentMontoGeneral').val('').removeClass('is-valid is-invalid');
-        $('#paymentMonto').val('');
+        Helpers.resetForm($('#addPaymentForm'));
         $('#equivInfo').html('').hide();
-        $('#paymentTipo').empty().removeClass('is-valid is-invalid');
-        
         cambiarMoneda("USD");
         $('#addPaymentModal').modal('show');
     });
 
-    // ============================================
-    // CAMBIO DE MONEDA
-    // ============================================
     const cambiarMoneda = (moneda) => {
-        const $tipoPago = $('#paymentTipo');
-        $tipoPago.empty().removeClass('is-valid is-invalid');
-        $tipoPago.append(`<option value="" disabled selected>Seleccione un método de pago</option>`);
-
-        const metodos = moneda === "USD" ? METODOS_USD : METODOS_BS;
-        metodos.forEach(m => $tipoPago.append(`<option value="${m}">${m}</option>`));
-        
-        $('#referenciaField, #bancoField').hide();
-        $('#paymentReferencia, #paymentBanco').val('').removeClass('is-valid is-invalid');
-
-        if (moneda === "BS") {
-            $('#equivInfo').show();
-        } else {
-            $('#equivInfo').hide().html('');
-        }
-    };
+    const $tipo = $('#paymentTipo');
+    $tipo.empty().append(`<option value="">Seleccione un método de pago</option>`);
+    (moneda === "USD" ? METODOS_USD : METODOS_BS).forEach(m => $tipo.append(`<option value="${m}">${m}</option>`));
+    $('#referenciaField, #bancoField').hide().find('input').val('').removeClass('is-valid is-invalid');
+    moneda === "BS" ? $('#equivInfo').show() : $('#equivInfo').hide().html('');
+};
 
     $('#paymentMoneda').on('change', function() {
         cambiarMoneda($(this).val());
-        if ($('#paymentMontoGeneral').val()) {
-            $('#paymentMontoGeneral').trigger('input');
-        }
-        if ($(this).val() === "BS") {
-            $('#paymentSaldo small').text(`≈ Bs ${(currentSaldo * DOLAR_BCV_RATE).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+        $('#paymentMontoGeneral').val() && $('#paymentMontoGeneral').trigger('input');
+    });
+
+    // Validación de monto con margen
+$('#paymentMontoGeneral').on('input', function() {
+    const moneda = $('#paymentMoneda').val();
+    const valor = parseFloat($(this).val());
+    const $equiv = $('#equivInfo');
+
+    $(this).siblings('.invalid-feedback').remove();
+
+    if (!valor || valor <= 0 || isNaN(valor)) {
+        $(this).addClass('is-invalid').removeClass('is-valid').after('<div class="invalid-feedback">Ingrese un monto válido</div>');
+        $('#paymentMonto').val('');
+        $equiv.html('').hide();
+        return;
+    }
+
+    let montoUSD = 0, esValido = false;
+
+    if (moneda === "USD") {
+        montoUSD = valor;
+        if (montoUSD > currentSaldo) {
+            $(this).addClass('is-invalid').removeClass('is-valid').after(`<div class="invalid-feedback">Excede el saldo (${Helpers.formatCurrency(currentSaldo)})</div>`);
         } else {
-            $('#paymentSaldo small').text('');
+            esValido = true;
+            $equiv.html(`<span class="text-info"><i class="fas fa-dollar-sign me-1"></i>Monto USD válido.<br><small class="text-muted">Tasa BCV: Bs ${DOLAR_BCV_RATE.toLocaleString('es-VE', {minimumFractionDigits: 2})}</small></span>`).show();
         }
-    });
+    } else if (moneda === "BS") {
+        montoUSD = valor / DOLAR_BCV_RATE;
+        const difBS = (montoUSD - currentSaldo) * DOLAR_BCV_RATE;
 
-    // ============================================
-    // VALIDACIÓN MONTO CON MARGEN
-    // ============================================
-    $('#paymentMontoGeneral').on('input', function() {
-        const moneda = $('#paymentMoneda').val();
-        const valorIngresado = parseFloat($(this).val());
-
-        $(this).siblings('.invalid-feedback').remove();
-
-        if (!valorIngresado || valorIngresado <= 0 || isNaN(valorIngresado)) {
-            $(this).addClass('is-invalid').removeClass('is-valid');
-            $(this).after('<div class="invalid-feedback">Ingrese un monto válido</div>');
-            $('#paymentMonto').val('');
-            $('#equivInfo').html('').hide();
-            return;
+        if (Math.abs(difBS) <= MARGEN_ERROR_BS) {
+            montoUSD = currentSaldo;
+            esValido = true;
+            $equiv.html(`<span class="text-success"><i class="fas fa-check-circle me-1"></i>Equivale a: <strong>${Helpers.formatCurrency(montoUSD)}</strong></span>`).show();
+        } else if (difBS > MARGEN_ERROR_BS) {
+            $(this).addClass('is-invalid').removeClass('is-valid').after('<div class="invalid-feedback">Excede el saldo</div>');
+            $equiv.html(`<span class="text-danger">Equivale a: ${Helpers.formatCurrency(montoUSD)}</span>`).show();
+        } else {
+            esValido = true;
+            $equiv.html(`<span class="text-info">Equivale a: <strong>${Helpers.formatCurrency(montoUSD)}</strong><br><small class="text-muted">Tasa BCV: Bs ${DOLAR_BCV_RATE.toLocaleString('es-VE', {minimumFractionDigits: 2})}</small></span>`).show();
         }
+    }
 
-        let montoUSD = 0;
-        let esValido = false;
+    if (esValido) {
+        $(this).addClass('is-valid').removeClass('is-invalid');
+        $('#paymentMonto').val(montoUSD.toFixed(4));
+    } else {
+        $('#paymentMonto').val('');
+    }
+});
 
-        if (moneda === "USD") {
-            montoUSD = valorIngresado;
-            
-            if (montoUSD > currentSaldo) {
-                $(this).addClass('is-invalid').removeClass('is-valid');
-                $(this).after(`<div class="invalid-feedback">El monto excede el saldo pendiente (${Helpers.formatCurrency(currentSaldo)})</div>`);
-            } else {
-                esValido = true;
-            }
-
-        } else if (moneda === "BS") {
-            const valorBs = valorIngresado;
-            montoUSD = valorBs / DOLAR_BCV_RATE;
-
-            // Diferencia en Bs entre el monto ingresado y el saldo equivalente
-            const saldoBs = currentSaldo * DOLAR_BCV_RATE;
-            const diferenciaBs = valorBs - saldoBs;
-
-            if (Math.abs(diferenciaBs) <= MARGEN_ERROR_BS) {
-                // ✅ Si la diferencia está dentro del margen permitido, ajustar al saldo real
-                montoUSD = currentSaldo;
-                esValido = true;
-            
-                $('#equivInfo').html(`
-                    <span class="text-success">
-                        <i class="fas fa-check-circle me-1"></i>
-                        Equivale a: <strong>$${montoUSD.toFixed(2)}</strong>
-                        <small class="d-block">Monto dentro del margen de ±${MARGEN_ERROR_BS} Bs</small>
-                    </span>
-                `).show();
-                
-            } else if (valorBs > saldoBs) {
-                // ❌ Monto excede el saldo
-                $(this).addClass('is-invalid').removeClass('is-valid');
-                $(this).after(`<div class="invalid-feedback">El monto excede el saldo pendiente (${saldoBs.toFixed(2)} Bs)</div>`);
-                $('#equivInfo').html(`<span class="text-danger">Equivale a: $${montoUSD.toFixed(2)}</span>`).show();
-            
-            } else {
-                // ✅ Monto menor al saldo
-                esValido = true;
-                $('#equivInfo').html(`
-                    <span class="text-info">
-                        Equivale a: <strong>$${montoUSD.toFixed(2)}</strong>
-                        <small class="d-block">Saldo restante después del pago: 
-                        ${(saldoBs - valorBs).toFixed(2)} Bs</small>
-                    </span>
-                `).show();
-            }
-        }
-    });
-
-    // ============================================
-    // VALIDACIÓN TIPO PAGO Y CAMPOS BANCARIOS
-    // ============================================
+    // Tipo de pago y campos bancarios
     $('#paymentTipo').on('change', function() {
         const tipo = $(this).val();
-        const $refBancaria = $('#referenciaField');
-        const $banco = $('#bancoField');
-        const $refInput = $('#paymentReferencia');
-        const $bancoInput = $('#paymentBanco');
-
         Validations.validateSelect($(this));
 
         if (tipo === 'EFECTIVO' || !tipo) {
-            $refBancaria.hide();
-            $banco.hide();
-            $refInput.val('').removeClass('is-valid is-invalid');
-            $bancoInput.val('').removeClass('is-valid is-invalid');
+            $('#referenciaField, #bancoField').hide().find('input').val('').removeClass('is-valid is-invalid');
         } else {
-            $refBancaria.show();
-            $banco.show();
+            $('#referenciaField, #bancoField').show();
         }
     });
 
-    // Validaciones en tiempo real
-    const setupPaymentValidations = () => {
-        $('#paymentReferencia').on('input', function() {
-            if (!$(this).is(':visible')) return;
-            Validations.validateField($(this), Validations.REGEX.referencia, Validations.MESSAGES.referencia);
-        });
+    $('#paymentReferencia').on('input', function() {
+        $(this).is(':visible') && Validations.validateField($(this), Validations.REGEX.referencia, Validations.MESSAGES.referencia);
+    });
 
-        $('#paymentBanco').on('input', function() {
-            if (!$(this).is(':visible')) return;
-            Validations.validateField($(this), Validations.REGEX.banco, Validations.MESSAGES.banco);
-        });
-    };
+    $('#paymentBanco').on('input', function() {
+        $(this).is(':visible') && Validations.validateField($(this), Validations.REGEX.banco, Validations.MESSAGES.banco);
+    });
 
-    setupPaymentValidations();
-
-    // ============================================
-    // SUBMIT PAGO
-    // ============================================
+    // Submit pago
     $('#addPaymentForm').on('submit', function(e) {
         e.preventDefault();
         
         const montoUSD = parseFloat($('#paymentMonto').val());
-        
         if (!montoUSD || montoUSD <= 0) {
             Helpers.toast('error', 'El monto debe ser acorde al saldo pendiente');
             return;
         }
         
-        if (!$('#paymentTipo').val()) {
+        const tipoPago = $('#paymentTipo').val();
+        if (!tipoPago) {
             Helpers.toast('error', 'Seleccione un método de pago');
             return;
         }
 
-        const tipoPago = $('#paymentTipo').val();
         if (tipoPago !== 'EFECTIVO') {
-            const refBancaria = $('#paymentReferencia').val().trim();
+            const ref = $('#paymentReferencia').val().trim();
             const banco = $('#paymentBanco').val().trim();
 
-            if (!Validations.REGEX.referencia.test(refBancaria)) {
-                $('#paymentReferencia').addClass('is-invalid');
+            if (!Validations.REGEX.referencia.test(ref)) {
                 Helpers.toast('error', 'Referencia bancaria inválida (8-10 dígitos)');
                 return;
             }
-
             if (!Validations.REGEX.banco.test(banco)) {
-                $('#paymentBanco').addClass('is-invalid');
-                Helpers.toast('error', 'El nombre del banco debe tener al menos 3 caracteres válidos');
+                Helpers.toast('error', 'Banco inválido (mínimo 3 caracteres)');
                 return;
             }
         }
@@ -381,9 +271,9 @@ const initAccountsTable = () => {
         Ajax.post(`${baseUrl}?action=add_payment`, $(this).serialize())
             .then(res => {
                 if (res.success) {
-                    Helpers.toast('success', res.message || 'Pago registrado correctamente');
+                    Helpers.toast('success', res.message || 'Pago registrado');
                     $('#addPaymentModal').modal('hide');
-                    if (accountsTable) accountsTable.ajax.reload(null, false);
+                    accountsTable.ajax.reload(null, false);
                 } else {
                     Helpers.toast('error', res.message);
                 }
@@ -403,15 +293,10 @@ const initAccountsTable = () => {
         
         Ajax.get(`${baseUrl}?action=get_account_detail`, { cuenta_pagar_id: cuentaId })
             .then(data => {
-                if (data.success) {
-                    renderAccountDetails(data.data);
-                } else {
-                    $('#viewAccountContent').html('<div class="alert alert-danger">Error al cargar los datos</div>');
-                }
+                if (data.success) renderAccountDetails(data.data);
+                else $('#viewAccountContent').html('<div class="alert alert-danger">Error al cargar datos</div>');
             })
-            .catch(() => {
-                $('#viewAccountContent').html('<div class="alert alert-danger">Error de conexión</div>');
-            });
+            .catch(() => $('#viewAccountContent').html('<div class="alert alert-danger">Error de conexión</div>'));
     });
 
     const renderAccountDetails = (data) => {
@@ -429,20 +314,20 @@ const initAccountsTable = () => {
                 <div class="pago-item border-bottom py-2">
                     <div class="row">
                         <div class="col-md-3">
-                            <small class="text-muted">Fecha</small>
-                            <br><strong>${Helpers.formatDate(p.fecha_pago)}</strong>
+                            <small class="text-muted">Fecha</small><br>
+                            <strong>${Helpers.formatDate(p.fecha_pago)}</strong>
                         </div>
                         <div class="col-md-3">
-                            <small class="text-muted">Monto</small>
-                            <br><strong class="text-success">${Helpers.formatCurrency(p.monto)}</strong>
+                            <small class="text-muted">Monto</small><br>
+                            <strong class="text-success">${Helpers.formatCurrency(p.monto)}</strong>
                         </div>
                         <div class="col-md-3">
-                            <small class="text-muted">Tipo</small>
-                            <br><span class="badge bg-info">${p.tipo_pago}</span>
+                            <small class="text-muted">Tipo</small><br>
+                            <span class="badge bg-info">${p.tipo_pago}</span>
                         </div>
                         <div class="col-md-3">
-                            <small class="text-muted">Estado</small>
-                            <br><span class="badge bg-${p.estado_pago === 'CONFIRMADO' ? 'success' : 'warning'}">${p.estado_pago}</span>
+                            <small class="text-muted">Estado</small><br>
+                            <span class="badge bg-${p.estado_pago === 'CONFIRMADO' ? 'success' : 'warning'}">${p.estado_pago}</span>
                         </div>
                     </div>
                     ${p.referencia_bancaria ? `<small class="text-muted d-block mt-2">Ref: ${p.referencia_bancaria} | ${p.banco || ''}</small>` : ''}
@@ -457,19 +342,11 @@ const initAccountsTable = () => {
         if (prendas && prendas.length > 0) {
             prendasHtml = `
                 <hr>
-                <h6 class="text-primary mb-3">
-                    <i class="fas fa-box me-2"></i>Productos de la Compra (${prendas.length})
-                </h6>
+                <h6 class="text-primary mb-3"><i class="fas fa-box me-2"></i>Productos de la Compra (${prendas.length})</h6>
                 <div class="table-responsive">
                     <table class="table table-sm table-hover">
                         <thead class="table-light">
-                            <tr>
-                                <th>Código</th>
-                                <th>Nombre</th>
-                                <th>Categoría</th>
-                                <th class="text-end">P. Costo</th>
-                                <th class="text-center">Estado</th>
-                            </tr>
+                            <tr><th>Código</th><th>Nombre</th><th>Categoría</th><th class="text-end">P. Costo</th><th class="text-center">Estado</th></tr>
                         </thead>
                         <tbody>
                             ${prendas.map(pr => `
@@ -527,12 +404,8 @@ const initAccountsTable = () => {
             ` : ''}
             
             <hr>
-            
-            <h6 class="text-primary mb-3">
-                <i class="fas fa-money-bill-wave me-2"></i>Historial de Pagos (${pagos.length})
-            </h6>
+            <h6 class="text-primary mb-3"><i class="fas fa-money-bill-wave me-2"></i>Historial de Pagos (${pagos.length})</h6>
             ${pagosHtml}
-            
             ${prendasHtml}
         `;
         
@@ -540,33 +413,11 @@ const initAccountsTable = () => {
     };
 
     // ============================================
-    // FILTROS Y BÚSQUEDA
+    // BÚSQUEDA Y FILTROS
     // ============================================
     $('#searchInput').on('input', Helpers.debounce(function() {
-        const term = $(this).val().toLowerCase();
-        const filtered = allAccounts.filter(c => 
-            c.factura_numero.includes(term) || 
-            c.nombre_proveedor.toLowerCase().includes(term) ||
-            (c.proveedor_rif && c.proveedor_rif.toString().includes(term))
-        );
-        renderAccounts(filtered);
+        accountsTable.search($(this).val()).draw();
     }, 300));
-    
-    $('#filterEstado').on('change', function() {
-        const estado = $(this).val();
-        if (!estado) {
-            renderAccounts(allAccounts);
-            return;
-        }
-        
-        const filtered = allAccounts.filter(c => {
-            if (estado === 'vencido') {
-                return c.estado === 'vencido' || c.vencida;
-            }
-            return c.estado === estado;
-        });
-        renderAccounts(filtered);
-    });
 
     // ============================================
     // LIMPIAR MODALES
@@ -578,5 +429,5 @@ const initAccountsTable = () => {
     // ============================================
     // INICIALIZAR
     // ============================================
-    initAccountsTable();
+    initDataTable();
 });
