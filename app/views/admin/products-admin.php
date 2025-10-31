@@ -26,13 +26,14 @@ require_once __DIR__ . '/../partials/header-admin.php';
                                 <th>Nombre</th>
                                 <th>Tipo</th>
                                 <th>Categoría</th>
-                                <th>Precio USD</th>
+                                <th>Precio Compra</th>
+                                <th>Precio Venta</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="productsTableBody">
                             <tr>
-                                <td colspan="7" class="text-center">
+                                <td colspan="8" class="text-center">
                                     <div class="spinner-border text-primary" role="status">
                                         <span class="visually-hidden">Cargando...</span>
                                     </div>
@@ -106,7 +107,20 @@ require_once __DIR__ . '/../partials/header-admin.php';
                         <div class="invalid-feedback">Por favor seleccione un tipo de prenda</div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Precio (USD)</label>
+                        <label class="form-label">Precio de Compra (USD) - Opcional</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number"
+                                step="0.01" 
+                                class="form-control" 
+                                name="precio_compra"
+                                id="productPriceCompra"
+                                placeholder="0.00">
+                        </div>
+                        <small class="text-muted">Precio al que se compró el producto</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Precio de Venta (USD)</label>
                         <div class="input-group">
                             <span class="input-group-text">$</span>
                             <input type="number"
@@ -120,15 +134,15 @@ require_once __DIR__ . '/../partials/header-admin.php';
                         <small class="text-muted">
                             Equivalente: <span id="addPriceBs" class="fw-bold">Bs. 0.00</span>
                         </small>
-                        <div class="mb-3">
-                            <label class="form-label">Imagen del Producto (Opcional)</label>
-                            <input type="file" 
-                                class="form-control" 
-                                name="imagen" 
-                                id="productImage"
-                                accept="image/*">
-                            <small class="text-muted">JPG, PNG, GIF, WEBP - Máximo 5MB</small>
-                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Imagen del Producto (Opcional)</label>
+                        <input type="file" 
+                            class="form-control" 
+                            name="imagen" 
+                            id="productImage"
+                            accept="image/*">
+                        <small class="text-muted">JPG, PNG, GIF, WEBP - Máximo 5MB</small>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -159,8 +173,8 @@ require_once __DIR__ . '/../partials/header-admin.php';
                         <label class="form-label">Código</label>
                         <input type="text" class="form-control" 
                             id="editProductId"
-                            name="prenda_id" 
                             disabled>
+                        <small class="text-muted">El código no se puede modificar</small>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Nombre</label>
@@ -196,7 +210,20 @@ require_once __DIR__ . '/../partials/header-admin.php';
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Precio (USD)</label>
+                        <label class="form-label">Precio de Compra (USD) - Opcional</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number"
+                                step="0.01" 
+                                class="form-control" 
+                                name="precio_compra"
+                                id="editProductPriceCompra"
+                                placeholder="0.00">
+                        </div>
+                        <small class="text-muted">Precio al que se compró el producto</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Precio de Venta (USD)</label>
                         <div class="input-group">
                             <span class="input-group-text">$</span>
                             <input type="number" 
@@ -211,16 +238,16 @@ require_once __DIR__ . '/../partials/header-admin.php';
                         <small class="text-muted">
                             Equivalente: <span id="editPriceBs" class="fw-bold">Bs. 0.00</span>
                         </small>
-                        <div class="mb-3">
-                            <label class="form-label">Imagen del Producto</label>
-                            <input type="file" 
-                                class="form-control" 
-                                name="imagen" 
-                                id="editProductImage"
-                                accept="image/*">
-                            <small class="text-muted">Dejar vacío para mantener la imagen actual</small>
-                            <div id="currentImagePreview" class="mt-2"></div>
-                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Imagen del Producto</label>
+                        <input type="file" 
+                            class="form-control" 
+                            name="imagen" 
+                            id="editProductImage"
+                            accept="image/*">
+                        <small class="text-muted">Dejar vacío para mantener la imagen actual</small>
+                        <div id="currentImagePreview" class="mt-2"></div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -231,8 +258,6 @@ require_once __DIR__ . '/../partials/header-admin.php';
         </div>
     </div>
 </div>
-
-<!-- ⚠️ IMPORTANTE: Cargar el widget JS ANTES del products-admin.js -->
 <?php 
 // Asegurarse de que las funciones JS estén disponibles
 if (!function_exists('getDolarRate')) {
