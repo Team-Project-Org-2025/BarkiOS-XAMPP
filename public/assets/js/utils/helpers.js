@@ -1,4 +1,5 @@
 //Escapa HTML para prevenir XSS
+
 export const escapeHtml = (str) => {
     const div = document.createElement('div');
     div.textContent = String(str ?? '');
@@ -161,7 +162,6 @@ export const resetForm = ($form) => {
     $form.find('.invalid-feedback').remove();
 };
 
-//Genera badge de estado
 export const getBadge = (estado) => {
     const badges = {
         'DISPONIBLE': 'badge bg-success',
@@ -181,7 +181,6 @@ export const getBadge = (estado) => {
     return `<span class="${cls}">${escapeHtml(estado)}</span>`;
 };
 
-//Obtiene los parámetros de la URL
 export const getUrlParams = () => {
     const params = new URLSearchParams(window.location.search);
     const obj = {};

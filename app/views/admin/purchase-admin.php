@@ -435,7 +435,7 @@
         <div class="row g-2">
             <div class="col-md-4">
                 <label class="form-label small fw-bold">Código <span class="text-danger">*</span></label>
-                <input type="text" class="form-control prenda-codigo" placeholder="PRD001" maxlength="20" required>
+                <input type="text" class="form-control prenda-codigo" placeholder="001" pattern="\d{9}" maxlength="9" required>
             </div>
             <div class="col-md-8">
                 <label class="form-label small fw-bold">Nombre <span class="text-danger">*</span></label>

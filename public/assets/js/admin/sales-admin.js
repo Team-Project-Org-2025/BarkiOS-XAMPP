@@ -1,10 +1,3 @@
-/**
- * ============================================
- * MÓDULO DE VENTAS - GARAGE BARKI
- * Versión refactorizada v3.0 (ES6 Module)
- * ============================================
- */
-
 import * as Validations from '/BarkiOS/public/assets/js/utils/validation.js';
 import * as Helpers from '/BarkiOS/public/assets/js/utils/helpers.js';
 import * as Ajax from '/BarkiOS/public/assets/js/utils/ajax-handler.js';
@@ -15,9 +8,6 @@ $(document).ready(function() {
     let clients = [], employees = [], products = [], cart = [], pid = 0;
     const IVA_DEFAULT = 16.00;
 
-    // ============================================
-    // INICIALIZAR DATATABLE
-    // ============================================
     const initDataTable = () => {
         salesTable = $('#salesTable').DataTable({
             ajax: {
@@ -88,9 +78,7 @@ $(document).ready(function() {
         $('#completedSales').text(completed);
     };
 
-    // ============================================
-    // CARGAR DATOS INICIALES
-    // ============================================
+    //Cargar datos iniciales
     const loadClients = () => {
         Ajax.get(`${baseUrl}?action=get_clients`)
             .then(r => {
@@ -131,9 +119,7 @@ $(document).ready(function() {
             });
     };
 
-    // ============================================
-    // GESTIÓN DE CARRITO
-    // ============================================
+
     const addProductRow = () => {
         if (!products || products.length === 0) {
             Helpers.toast('info', 'No hay productos disponibles');
@@ -249,9 +235,7 @@ $(document).ready(function() {
         $('#iva_percentage').text(ivaPct.toFixed(2));
     };
 
-    // ============================================
-    // CONTROL DE FECHA VENCIMIENTO (CRÉDITO)
-    // ============================================
+    //Control de fecha de vencimiento
     const $tipoVentaSelect = $('[name="tipo_venta"]');
     const $clienteSelect = $('#add_cliente');
     const $fechaVencimientoGroup = $('#fechaVencimientoGroup');
@@ -314,9 +298,7 @@ $(document).ready(function() {
         }
     });
 
-    // ============================================
-    // GUARDAR VENTA
-    // ============================================
+    //Guardar
     $('#addSaleForm').on('submit', function(e) {
         e.preventDefault();
 
@@ -330,7 +312,7 @@ $(document).ready(function() {
             return;
         }
 
-        // ✅ VALIDAR REFERENCIA
+        //Validar
         if (referencia && !Validations.REGEX.referenciaVenta.test(referencia)) {
             Helpers.toast('error', 'Referencia inválida (máx 15 caracteres, solo letras, números y guión)');
             $('#add_referencia').addClass('is-invalid').focus();
@@ -419,9 +401,7 @@ $(document).ready(function() {
         calcTotals();
     };
 
-    // ============================================
-    // VER DETALLES
-    // ============================================
+    //Ver detalles
     $(document).on('click', '.btn-view', function() {
         const id = $(this).data('id');
         if (!id) return;
@@ -504,9 +484,7 @@ $(document).ready(function() {
         $('#saleDetailsContent').html(html);
     };
 
-    // ============================================
-    // ANULAR VENTA
-    // ============================================
+    //Anular venta
     $(document).on('click', '.btn-cancel', function() {
         const ventaId = $(this).data('id');
         if (!ventaId) return;
@@ -531,28 +509,22 @@ $(document).ready(function() {
         );
     });
 
-    // ============================================
-    // GENERAR PDF
-    // ============================================
+    //Generar pdf
     $(document).on('click', '.btn-pdf', function() {
         const ventaId = $(this).data('id');
         if (!ventaId) return;
         window.open(`${baseUrl}?action=generate_pdf&venta_id=${ventaId}`, '_blank');
     });
 
-    // ============================================
-    // BÚSQUEDA
-    // ============================================
+    //Busqueda
     $('#searchInput').on('keyup', Helpers.debounce(function() {
         salesTable.search($(this).val()).draw();
     }, 300));
 
-    // ============================================
-    // EVENTOS
-    // ============================================
+    //Eventos
     $('#btnAddProduct').on('click', addProductRow);
     
-    // ✅ VALIDACIÓN EN TIEMPO REAL DE REFERENCIA
+    //Validacion
     $('#add_referencia').on('input blur', function() {
         const val = $(this).val().trim();
         if (val === '') {
@@ -580,9 +552,6 @@ $(document).ready(function() {
         }
     });
 
-    // ============================================
-    // INICIALIZAR
-    // ============================================
     initDataTable();
     loadClients();
     loadEmployees();
