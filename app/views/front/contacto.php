@@ -170,6 +170,6 @@
     <!-- AOS Animation Library -->
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <!-- Contact Form Script -->
-    <script src="/BarkiOS/public/assets/js/contact.js"></script>
+    <script src="/BarkiOS/public/assets/js/front/contact.js"></script>
 </body>
 </html>

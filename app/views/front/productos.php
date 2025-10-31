@@ -69,11 +69,11 @@
                                 <div class="price-range">
                                     <div class="d-flex justify-content-between mb-2">
                                         <span>$0</span>
-                                        <span>$100</span>
+                                        <span>$200</span>
                                     </div>
-                                    <input type="range" class="form-range" min="0" max="100" step="2" id="price-range">
+                                    <input type="range" class="form-range" min="0" max="200" step="2" id="price-range">
                                     <div class="mt-2">
-                                        <span>Precio máximo: $<span id="price-value">100</span></span>
+                                        <span>Precio máximo: $<span id="price-value">200</span></span>
                                     </div>
                                 </div>
                             </div>
@@ -171,6 +171,6 @@
     <!-- AOS Animation Library -->
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <!-- Controller Scripts -->
-    <script src="/BarkiOS/public/assets/js/products.js"></script>
+    <script src="/BarkiOS/public/assets/js/front/products.js"></script>
 </body>
 </html>
