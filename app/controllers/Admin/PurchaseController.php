@@ -17,9 +17,6 @@ function index() {
 
 handleRequest($purchaseModel, $supplierModel);
 
-// ============================================
-// ENRUTAMIENTO PRINCIPAL
-// ============================================
 function handleRequest($purchaseModel, $supplierModel) {
     $action = $_GET['action'] ?? '';
     $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
@@ -61,9 +58,7 @@ function routeAjax($purchaseModel, $supplierModel, $action) {
     exit();
 }
 
-// ============================================
-// UTILIDADES
-// ============================================
+
 function jsonResponse($data, $statusCode = 200) {
     http_response_code($statusCode);
     echo json_encode($data);
@@ -86,9 +81,7 @@ function sanitizeInput($data) {
     }, $data);
 }
 
-// ============================================
-// VALIDACIONES
-// ============================================
+
 function validarCompra($datos) {
     $errores = [];
 
@@ -140,12 +133,10 @@ function validarPrenda($prenda) {
     return $errores;
 }
 
-// ============================================
-// HANDLERS PRINCIPALES
-// ============================================
+
 function handleAdd($purchaseModel) {
     try {
-        // Sanitizar datos
+
         $datos = sanitizeInput([
             'proveedor_rif' => $_POST['proveedor_rif'] ?? '',
             'factura_numero' => $_POST['factura_numero'] ?? '',
@@ -155,13 +146,11 @@ function handleAdd($purchaseModel) {
             'fecha_vencimiento' => $_POST['fecha_vencimiento'] ?? ''
         ]);
 
-        // Validar datos básicos
         $errores = validarCompra($datos);
         if (!empty($errores)) {
             throw new Exception(implode(', ', $errores));
         }
 
-        // Validar prendas
         $rawPrendas = $_POST['prendas'] ?? [];
         if (empty($rawPrendas) || !is_array($rawPrendas)) {
             throw new Exception('Debe agregar al menos una prenda');
@@ -220,7 +209,6 @@ function handleEdit($purchaseModel) {
             throw new Exception('No se puede editar: la compra tiene prendas vendidas');
         }
 
-        // Datos generales
         $datos = sanitizeInput([
             'proveedor_rif' => $_POST['proveedor_rif'] ?? '',
             'factura_numero' => $_POST['factura_numero'] ?? '',
@@ -237,10 +225,9 @@ function handleEdit($purchaseModel) {
         $montoActual = $purchaseModel->getMontoTotal($id);
         $datos['monto_total'] = $montoActual;
 
-        // Actualizar datos generales
         $purchaseModel->update($id, $datos);
 
-        // Procesar nuevas prendas
+
         $nuevasPrendas = [];
         $rawNuevasPrendas = $_POST['nuevas_prendas'] ?? [];
 
@@ -296,9 +283,6 @@ function handleDelete($purchaseModel) {
     }
 }
 
-// ============================================
-// CONSULTAS
-// ============================================
 function getPurchases($purchaseModel) {
     try {
         $purchases = $purchaseModel->getAll();
@@ -375,18 +359,15 @@ function getStats($purchaseModel) {
     }
 }
 
-// ============================================
-// GENERACIÓN DE PDF
-// ============================================
+
 function generatePdf($purchaseModel) {
     $id = isset($_GET['compra_id']) ? intval($_GET['compra_id']) : (isset($_GET['id']) ? intval($_GET['id']) : null);
     $compra = $purchaseModel->getById($id);
     $prendas = $purchaseModel->getPrendasByCompraId($id);
 
-    // 1) Construyo HTML en el controller
     $html = buildPdfHtml($compra, $prendas);
 
-    // 2) PDF desde HTML
+
     $pdfHelper = new PdfHelper();
     $pdf = $pdfHelper->fromHtml($html);
 

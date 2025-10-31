@@ -5,17 +5,10 @@ use Barkios\core\Database;
 use PDO;
 use Exception;
 
-/**
- * Modelo Sale - Gestión completa de ventas
- * Utiliza código_prenda (VARCHAR 20) como identificador único
- */
 class Sale extends Database
 {
     private const IVA_DEFAULT = 16.00;
 
-    /* =====================================================
-       OBTENER DATOS
-    ===================================================== */
 
     public function getAll()
     {
@@ -60,7 +53,6 @@ class Sale extends Database
         $venta = $this->getById($id);
         if (!$venta) return null;
 
-        // Obtener prendas vendidas (usando código_prenda)
         $stmt = $this->db->prepare("
             SELECT dv.*, 
                    p.codigo_prenda,
@@ -76,26 +68,20 @@ class Sale extends Database
         $stmt->execute([':id' => $id]);
         $venta['prendas'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Obtener pagos
         $venta['pagos'] = $this->getPaymentsBySale($id);
         $venta['total_pagado'] = array_sum(array_column($venta['pagos'], 'monto'));
         
         return $venta;
     }
 
-    /* =====================================================
-       CREAR VENTA
-    ===================================================== */
 
 public function addSale($data)
 {
     try {
         $this->db->beginTransaction();
 
-        // Validar disponibilidad de prendas (por código)
         $this->validateProductsAvailability($data['productos']);
 
-        // Calcular montos
         $subtotal = 0;
         foreach ($data['productos'] as $p) {
             $subtotal += floatval($p['precio_unitario']);
@@ -105,14 +91,12 @@ public function addSale($data)
         $montoIva = round($subtotal * ($ivaPorcentaje / 100), 2);
         $montoTotal = round($subtotal + $montoIva, 2);
 
-        // Generar referencia si no existe
         if (!empty($data['referencia'])) {
             $referencia = trim($data['referencia']);
         } else {
             $referencia = $this->generateReference();
         }
 
-        // Insertar venta
         $stmt = $this->db->prepare("
             INSERT INTO ventas (
                 referencia, empleado_ced, cliente_ced, tipo_venta, 
@@ -143,10 +127,8 @@ public function addSale($data)
 
         $ventaId = $this->db->lastInsertId();
 
-        // Insertar detalles (usando código_prenda)
         $this->addSaleDetails($ventaId, $data['productos']);
 
-        // Crear crédito si es necesario CON FECHA DE VENCIMIENTO
         if ($data['tipo_venta'] === 'credito') {
             $this->createCredit($ventaId, $referencia, $data['fecha_vencimiento']);
         }
@@ -160,24 +142,6 @@ public function addSale($data)
         throw $e;
     }
 }
-/*
-    private function validateClientCredit($clienteCed)
-    {
-        $stmt = $this->db->prepare("
-            SELECT tipo, limite_credito FROM clientes WHERE cliente_ced = :ced
-        ");
-        $stmt->execute([':ced' => $clienteCed]);
-        $cliente = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!$cliente || $cliente['tipo'] !== 'vip') {
-            throw new Exception("Solo clientes VIP pueden comprar a crédito");
-        }
-
-        if (floatval($cliente['limite_credito']) <= 0) {
-            throw new Exception("El cliente no tiene límite de crédito disponible");
-        }
-    }
-*/
 
     private function validateProductsAvailability($productos)
     {
@@ -226,46 +190,9 @@ public function addSale($data)
             $updPrenda->execute([':codigo' => $codigo]);
         }
     }
-/*
-    private function createCredit($ventaId, $referencia)
-    {
-        $refCredito = 'CRE-' . $referencia;
 
-        $stmtCred = $this->db->prepare("
-            INSERT INTO credito (venta_id, referencia_credito) 
-            VALUES (:venta_id, :ref)
-        ");
-        $stmtCred->execute([
-            ':venta_id' => $ventaId,
-            ':ref' => $refCredito
-        ]);
-        $creditoId = $this->db->lastInsertId();
-
-        $stmtCC = $this->db->prepare("
-            INSERT INTO cuentas_cobrar (credito_id, estado, emision)
-            VALUES (:credito_id, 'pendiente', NOW())
-        ");
-        $stmtCC->execute([':credito_id' => $creditoId]);
-        $cuentaId = $this->db->lastInsertId();
-
-        $this->db->prepare("
-            UPDATE credito SET cuenta_cobrar_id = :cuenta WHERE credito_id = :id
-        ")->execute([
-            ':cuenta' => $cuentaId,
-            ':id' => $creditoId
-        ]);
-    }
-*/
-
-    /**
-     * Crea un crédito con fecha de vencimiento para una venta
-     * @param int $ventaId ID de la venta
-     * @param string $referencia Referencia de la venta
-     * @param string $fechaVencimiento Fecha de vencimiento (opcional, por defecto 30 días)
-     */
 private function createCredit($ventaId, $referencia, $fechaVencimiento = null)
 {
-    // Si no se proporciona fecha de vencimiento, calcular 30 días por defecto
     if (empty($fechaVencimiento)) {
         error_log("Fecha de vencimiento no proporcionada.");
     } else {
@@ -273,7 +200,6 @@ private function createCredit($ventaId, $referencia, $fechaVencimiento = null)
     }
 
 
-    // Insertar el crédito vinculado a la venta
     $stmtCred = $this->db->prepare("
         INSERT INTO credito (venta_id, referencia_credito)
         VALUES (:venta_id, :ref)
@@ -285,7 +211,6 @@ private function createCredit($ventaId, $referencia, $fechaVencimiento = null)
 
     $creditoId = $this->db->lastInsertId();
 
-    // Crear la cuenta por cobrar asociada con la fecha de vencimiento
     $stmtCC = $this->db->prepare("
         INSERT INTO cuentas_cobrar (credito_id, estado, emision, vencimiento)
         VALUES (:credito_id, 'pendiente', NOW(), :vencimiento)
@@ -312,10 +237,6 @@ private function createCredit($ventaId, $referencia, $fechaVencimiento = null)
     }
 
 
-
-    /* =====================================================
-       PAGOS
-    ===================================================== */
 
     public function addPayment($data)
     {
@@ -397,9 +318,6 @@ private function createCredit($ventaId, $referencia, $fechaVencimiento = null)
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /* =====================================================
-       CANCELAR VENTA
-    ===================================================== */
 
     public function cancelSale($ventaId)
     {
@@ -457,13 +375,6 @@ private function createCredit($ventaId, $referencia, $fechaVencimiento = null)
         }
     }
 
-    /* =====================================================
-       MÉTODOS AUXILIARES PARA EL CONTROLADOR
-    ===================================================== */
-
-    /**
-     * Obtiene clientes activos
-     */
     public function getClients()
     {
         $stmt = $this->db->query("
@@ -475,9 +386,6 @@ private function createCredit($ventaId, $referencia, $fechaVencimiento = null)
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Obtiene empleados activos
-     */
     public function getEmployees()
     {
         $stmt = $this->db->query("
@@ -489,9 +397,6 @@ private function createCredit($ventaId, $referencia, $fechaVencimiento = null)
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Obtiene productos disponibles con su código
-     */
     public function getProducts()
     {
         $stmt = $this->db->query("
@@ -512,9 +417,6 @@ private function createCredit($ventaId, $referencia, $fechaVencimiento = null)
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Busca prenda por código
-     */
     public function getProductByCode($codigo)
     {
         $stmt = $this->db->prepare("

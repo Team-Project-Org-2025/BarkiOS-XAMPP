@@ -61,9 +61,7 @@ class AccountsReceivable extends Database
         }
     }
 
-    /**
-     * Obtiene una cuenta por cobrar específica con todos sus detalles
-     */
+ 
     public function getById($cuentaId)
     {
         try {
@@ -99,7 +97,7 @@ class AccountsReceivable extends Database
             $cuenta = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if ($cuenta) {
-                // Obtener historial de pagos
+
                 $cuenta['pagos'] = $this->getPaymentsByAccount($cuentaId);
                 $cuenta['total_pagado'] = array_sum(array_column($cuenta['pagos'], 'monto'));
             }
@@ -111,9 +109,7 @@ class AccountsReceivable extends Database
         }
     }
 
-    /**
-     * Obtiene cuentas por cobrar de un cliente específico
-     */
+
     public function getByClient($clienteCed)
     {
         try {
@@ -141,9 +137,6 @@ class AccountsReceivable extends Database
         }
     }
 
-    /**
-     * Obtiene historial de pagos de una cuenta por cobrar
-     */
     public function getPaymentsByAccount($cuentaId)
     {
         try {
@@ -173,13 +166,7 @@ class AccountsReceivable extends Database
         }
     }
 
-    /* =====================================================
-       REGISTRO DE PAGOS
-    ===================================================== */
-
-    /**
-     * Registra un pago para una cuenta por cobrar
-     */
+ 
     public function registerPayment($data)
     {
         try {
@@ -199,7 +186,6 @@ class AccountsReceivable extends Database
                 throw new Exception("No se pueden registrar pagos en cuentas vencidas");
             }
 
-            // Validar monto
             $monto = floatval($data['monto']);
             $saldoPendiente = floatval($cuenta['saldo_pendiente']);
             
@@ -211,8 +197,6 @@ class AccountsReceivable extends Database
                 throw new Exception("El monto ($" . number_format($monto, 2) . ") excede el saldo pendiente ($" . number_format($saldoPendiente, 2) . ")");
             }
 
-            // Insertar pago
-            // Insertar pago
             $stmt = $this->db->prepare("
                 INSERT INTO pagos (
                     venta_id, credito_id, monto, tipo_pago,
@@ -236,7 +220,6 @@ class AccountsReceivable extends Database
 
             $pagoId = $this->db->lastInsertId();
 
-            // Actualizar saldo en venta
             $nuevoSaldo = max(0, $saldoPendiente - $monto);
             $this->db->prepare("
                 UPDATE ventas 
@@ -278,13 +261,7 @@ class AccountsReceivable extends Database
         }
     }
 
-    /* =====================================================
-       GESTIÓN DE VENCIMIENTOS
-    ===================================================== */
 
-    /**
-     * Actualiza el vencimiento de una cuenta por cobrar
-     */
     public function updateDueDate($cuentaId, $nuevaFecha)
     {
         try {
@@ -315,7 +292,6 @@ class AccountsReceivable extends Database
                 throw new Exception("No se pudo actualizar la fecha (verifica que la cuenta esté pendiente)");
             }
 
-            // Si estaba vencida, cambiar estado a pendiente
             $this->db->prepare("
                 UPDATE cuentas_cobrar 
                 SET estado = 'pendiente'
@@ -339,15 +315,12 @@ class AccountsReceivable extends Database
         }
     }
 
-    /**
-     * Procesa cuentas vencidas (debe ejecutarse diariamente)
-     */
+
     public function processExpiredAccounts()
     {
         try {
             $this->db->beginTransaction();
 
-            // Marcar cuentas como vencidas
             $this->db->query("
                 UPDATE cuentas_cobrar 
                 SET estado = 'vencido',
@@ -356,7 +329,7 @@ class AccountsReceivable extends Database
                   AND estado = 'pendiente'
             ");
 
-            // Anular ventas con cuentas vencidas
+
             $this->db->query("
                 UPDATE ventas v
                 INNER JOIN credito cr ON v.venta_id = cr.venta_id
@@ -368,7 +341,6 @@ class AccountsReceivable extends Database
                   AND v.estado_venta = 'pendiente'
             ");
 
-            // Liberar prendas de ventas anuladas
             $this->db->query("
                 UPDATE prendas p
                 INNER JOIN detalle_venta dv ON p.codigo_prenda = dv.codigo_prenda
@@ -402,19 +374,12 @@ class AccountsReceivable extends Database
         }
     }
 
-    /* =====================================================
-       ELIMINACIÓN LÓGICA
-    ===================================================== */
 
-    /**
-     * Elimina lógicamente una cuenta por cobrar
-     */
     public function delete($cuentaId)
     {
         try {
             $this->db->beginTransaction();
 
-            // Verificar que la cuenta existe y está pendiente
             $cuenta = $this->getById($cuentaId);
             if (!$cuenta) {
                 throw new Exception("Cuenta por cobrar no encontrada");
@@ -424,7 +389,6 @@ class AccountsReceivable extends Database
                 throw new Exception("No se puede eliminar una cuenta ya pagada");
             }
 
-            // Marcar cuenta como eliminada
             $this->db->prepare("
                 UPDATE cuentas_cobrar 
                 SET estado = 'eliminado',
@@ -432,7 +396,6 @@ class AccountsReceivable extends Database
                 WHERE cuenta_cobrar_id = :id
             ")->execute([':id' => $cuentaId]);
 
-            // Anular venta relacionada
             $this->db->prepare("
                 UPDATE ventas 
                 SET estado_venta = 'cancelada',
@@ -441,7 +404,6 @@ class AccountsReceivable extends Database
                 WHERE venta_id = :venta_id
             ")->execute([':venta_id' => $cuenta['venta_id']]);
 
-            // Liberar prendas
             $this->db->prepare("
                 UPDATE prendas p
                 INNER JOIN detalle_venta dv ON p.codigo_prenda = dv.codigo_prenda
@@ -467,13 +429,6 @@ class AccountsReceivable extends Database
         }
     }
 
-    /* =====================================================
-       ESTADÍSTICAS
-    ===================================================== */
-
-    /**
-     * Obtiene estadísticas generales de cuentas por cobrar
-     */
     public function getStats()
     {
         try {

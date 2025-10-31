@@ -1,5 +1,5 @@
 <?php
-// app/controllers/admin/ProductsController.php
+
 use Barkios\models\Product;
 use Barkios\helpers\ImageUploader;
 
@@ -12,7 +12,6 @@ if (file_exists($helperPath)) {
     require_once $helperPath;
 }
 
-// Protege todo el módulo
 checkAuth();
 
 try {
@@ -79,9 +78,6 @@ function handleRequest($productModel) {
     }
 }
 
-/**
- * Agregar/Editar producto (AJAX)
- */
 function handleAddEditAjax($productModel, $mode) {
     // Validar campos requeridos
     $fields = ['prenda_id','nombre','tipo','categoria','precio'];
@@ -153,9 +149,7 @@ function handleAddEditAjax($productModel, $mode) {
     exit();
 }
 
-/**
- * Eliminar producto (AJAX)
- */
+
 function handleDeleteAjax($productModel) {
     if (empty($_POST['prenda_id']) || !is_numeric($_POST['prenda_id'])) {
         throw new Exception("ID inválido");
@@ -181,9 +175,7 @@ function handleDeleteAjax($productModel) {
     exit();
 }
 
-/**
- * Eliminar solo la imagen de un producto (AJAX)
- */
+
 function handleDeleteImageAjax($productModel) {
     if (empty($_POST['prenda_id']) || !is_numeric($_POST['prenda_id'])) {
         throw new Exception("ID inválido");
@@ -211,9 +203,7 @@ function handleDeleteImageAjax($productModel) {
     exit();
 }
 
-/**
- * Obtener productos (AJAX)
- */
+
 function getProductsAjax($productModel) {
     if (isset($_GET['prenda_id']) && is_numeric($_GET['prenda_id'])) {
         $product = $productModel->getById((int)$_GET['prenda_id']);
@@ -227,9 +217,7 @@ function getProductsAjax($productModel) {
     exit();
 }
 
-/**
- * Agregar/Editar producto (Form normal - sin AJAX)
- */
+
 function handleAddEdit($productModel, $mode) {
     $fields = ['prenda_id','nombre','tipo','categoria','precio'];
     foreach ($fields as $f) {

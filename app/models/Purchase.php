@@ -4,14 +4,10 @@ use Barkios\core\Database;
 use PDO;
 use Exception;
 
-/**
- * Modelo Compras - Solo lógica de negocio y BD
- */
+
 class Purchase extends Database {
     
-    /**
-     * Verifica si una factura ya existe
-     */
+
     public function facturaExiste($numeroFactura, $excludeId = null) {
         try {
             $sql = "SELECT COUNT(*) FROM compras 
@@ -36,9 +32,6 @@ class Purchase extends Database {
         }
     }
 
-    /**
-     * Verifica si un código de prenda ya existe
-     */
     public function codigoPrendaExiste($codigo) {
         try {
             $stmt = $this->db->prepare("
@@ -53,9 +46,7 @@ class Purchase extends Database {
         }
     }
 
-    /**
-     * Verifica si un proveedor existe
-     */
+
     public function proveedorExiste($proveedorRif) {
         try {
             $stmt = $this->db->prepare("
@@ -70,9 +61,6 @@ class Purchase extends Database {
         }
     }
 
-    /**
-     * Obtiene el monto total actual de una compra
-     */
     public function getMontoTotal($compraId) {
         try {
             $stmt = $this->db->prepare("
@@ -88,9 +76,7 @@ class Purchase extends Database {
         }
     }
 
-    /**
-     * Obtiene todas las compras con estado de pago
-     */
+
     public function getAll() {
         try {
             $stmt = $this->db->query("
@@ -138,9 +124,7 @@ class Purchase extends Database {
         }
     }
 
-    /**
-     * Obtiene una compra específica con cuenta por pagar
-     */
+
     public function getById($id) {
         try {
             $stmt = $this->db->prepare("
@@ -183,9 +167,7 @@ class Purchase extends Database {
         }
     }
 
-    /**
-     * Obtiene prendas de una compra
-     */
+
     public function getPrendasByCompraId($compraId) {
         try {
             $stmt = $this->db->prepare("
@@ -217,18 +199,15 @@ class Purchase extends Database {
         }
     }
 
-    /**
-     * Inserta una prenda en la base de datos
-     */
+
     private function insertarPrenda($compraId, $prenda) {
         $codigoPrenda = strtoupper(trim($prenda['codigo_prenda']));
         
-        // Verificar código único (regla de negocio)
+
         if ($this->codigoPrendaExiste($codigoPrenda)) {
             throw new Exception("El código '$codigoPrenda' ya existe en el inventario");
         }
 
-        // Insertar en prendas
         $stmtPrenda = $this->db->prepare("
             INSERT INTO prendas (
                 codigo_prenda, compra_id, nombre, categoria, tipo, 
@@ -251,7 +230,6 @@ class Purchase extends Database {
             ':descripcion' => $prenda['descripcion']
         ]);
 
-        // Insertar en detalle_compra
         $stmtDetalle = $this->db->prepare("
             INSERT INTO detalle_compra (
                 compra_id, codigo_prenda, precio_compra
@@ -270,9 +248,6 @@ class Purchase extends Database {
         return floatval($prenda['precio_costo']);
     }
 
-    /**
-     * Crea una cuenta por pagar para la compra
-     */
     private function crearCuentaPorPagar($compraId, $datos) {
         $fechaVencimiento = $datos['fecha_vencimiento'] ?? date('Y-m-d', strtotime('+30 days'));
         
@@ -297,12 +272,9 @@ class Purchase extends Database {
         ]);
     }
 
-    /**
-     * Agrega una nueva compra (validaciones de negocio)
-     */
+
     public function add($datos) {
         try {
-            // Validaciones de negocio
             if ($this->facturaExiste($datos['factura_numero'])) {
                 throw new Exception('Ya existe una compra con este número de factura');
             }
@@ -326,7 +298,6 @@ class Purchase extends Database {
 
             $this->db->beginTransaction();
 
-            // Insertar compra
             $stmt = $this->db->prepare("
                 INSERT INTO compras (
                     proveedor_rif, factura_numero, fecha_compra, 
@@ -349,10 +320,9 @@ class Purchase extends Database {
 
             $compraId = $this->db->lastInsertId();
 
-            // Crear cuenta por pagar
             $this->crearCuentaPorPagar($compraId, $datos);
 
-            // Insertar prendas
+
             foreach ($datos['prendas'] as $prenda) {
                 $this->insertarPrenda($compraId, $prenda);
             }
@@ -366,12 +336,10 @@ class Purchase extends Database {
         }
     }
 
-    /**
-     * Actualiza datos generales de una compra
-     */
+
     public function update($id, $datos) {
         try {
-            // Validaciones de negocio
+
             if ($this->facturaExiste($datos['factura_numero'], $id)) {
                 throw new Exception('Ya existe otra compra con este número de factura');
             }
@@ -382,7 +350,7 @@ class Purchase extends Database {
 
             $this->db->beginTransaction();
 
-            // Actualizar compra
+
             $stmt = $this->db->prepare("
                 UPDATE compras
                 SET proveedor_rif = :proveedor_rif,
@@ -405,7 +373,6 @@ class Purchase extends Database {
                 ':observaciones' => $datos['observaciones']
             ]);
 
-            // Actualizar cuenta por pagar
             $stmtCuenta = $this->db->prepare("
                 UPDATE cuentas_pagar
                 SET proveedor_rif = :proveedor_rif,
@@ -429,16 +396,13 @@ class Purchase extends Database {
         }
     }
 
-    /**
-     * Agrega nuevas prendas a una compra existente
-     */
+
     public function addPrendasToCompra($compraId, $prendas) {
         try {
             if (empty($prendas) || !is_array($prendas)) {
                 return 0;
             }
 
-            // Verificar códigos duplicados en el lote
             $codigos = array_map(function($p) {
                 return strtoupper(trim($p['codigo_prenda']));
             }, $prendas);
@@ -454,7 +418,7 @@ class Purchase extends Database {
                 $montoTotal += $this->insertarPrenda($compraId, $prenda);
             }
 
-            // Actualizar monto total de la compra
+
             $montoActual = $this->getMontoTotal($compraId);
             $nuevoMonto = $montoActual + $montoTotal;
 
@@ -469,7 +433,6 @@ class Purchase extends Database {
                 ':monto_total' => $nuevoMonto
             ]);
 
-            // Actualizar cuenta por pagar
             $stmt = $this->db->prepare("
                 UPDATE cuentas_pagar
                 SET monto = :monto,
@@ -490,14 +453,11 @@ class Purchase extends Database {
         }
     }
 
-    /**
-     * Elimina una compra (soft delete)
-     */
+
     public function delete($id) {
         try {
             $this->db->beginTransaction();
 
-            // Verificar prendas vendidas (regla de negocio)
             $stmt = $this->db->prepare("
                 SELECT COUNT(*) as vendidas
                 FROM prendas
@@ -510,7 +470,6 @@ class Purchase extends Database {
                 throw new Exception('No se puede eliminar: hay ' . $vendidas . ' prenda(s) vendida(s)');
             }
 
-            // Verificar pagos (regla de negocio)
             $stmtPagos = $this->db->prepare("
                 SELECT COUNT(*) as total_pagos
                 FROM pagos_compras pc
@@ -524,7 +483,6 @@ class Purchase extends Database {
                 throw new Exception('No se puede eliminar: la compra tiene pagos registrados');
             }
 
-            // Desactivar compra
             $stmt = $this->db->prepare("
                 UPDATE compras 
                 SET activo = 0, fec_actualizacion = CURRENT_TIMESTAMP
@@ -532,7 +490,6 @@ class Purchase extends Database {
             ");
             $stmt->execute([':id' => $id]);
 
-            // Anular cuenta por pagar
             $stmt = $this->db->prepare("
                 UPDATE cuentas_pagar 
                 SET estado = 'cancelado', fec_actualizacion = CURRENT_TIMESTAMP
@@ -540,7 +497,6 @@ class Purchase extends Database {
             ");
             $stmt->execute([':id' => $id]);
 
-            // Desactivar prendas
             $stmt = $this->db->prepare("
                 UPDATE prendas 
                 SET activo = 0, estado = 'ELIMINADA'
@@ -557,9 +513,7 @@ class Purchase extends Database {
         }
     }
 
-    /**
-     * Obtiene pagos de una compra
-     */
+
     public function getPagosByCompraId($compraId) {
         try {
             $stmt = $this->db->prepare("
@@ -580,9 +534,7 @@ class Purchase extends Database {
         }
     }
 
-    /**
-     * Marca PDF como generado
-     */
+
     public function markPdfGenerated($id) {
         try {
             $stmt = $this->db->prepare("
@@ -597,9 +549,7 @@ class Purchase extends Database {
         }
     }
 
-    /**
-     * Obtiene estadísticas completas
-     */
+
     public function getEstadisticas() {
         try {
             $stmt = $this->db->query("
@@ -639,9 +589,7 @@ class Purchase extends Database {
         }
     }
 
-    /**
-     * Valida si una compra puede editarse
-     */
+
     public function canEdit($compraId) {
         try {
             $stmt = $this->db->prepare("

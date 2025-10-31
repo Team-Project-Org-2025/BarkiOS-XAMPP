@@ -5,18 +5,9 @@ use Barkios\core\Database;
 use PDO;
 use Exception;
 
-/**
- * Modelo Employees
- * 
- * Proporciona métodos para gestionar empleados en la base de datos,
- * incluyendo operaciones CRUD y utilidades de consulta.
- */
+
 class Employees extends Database {
-    /**
-     * Obtiene todos los empleados activos registrados en la base de datos.
-     * 
-     * @return array Lista de empleados (cada empleado es un array asociativo).
-     */
+
     public function getAll() {
         try {
             $stmt = $this->db->query("
@@ -32,24 +23,13 @@ class Employees extends Database {
         }
     }
 
-    /**
-     * Verifica si un empleado existe por su cédula.
-     * 
-     * @param int|string $cedula Cédula del empleado.
-     * @return bool True si existe, false si no.
-     */
     public function employeeExists($cedula) {
         $stmt = $this->db->prepare("SELECT COUNT(*) FROM empleados WHERE empleado_ced = :empleado_ced");
         $stmt->execute([':empleado_ced' => $cedula]);
         return $stmt->fetchColumn() > 0;
     }
 
-    /**
-     * Obtiene un empleado por su cédula.
-     * 
-     * @param int|string $cedula Cédula del empleado.
-     * @return array|null Array asociativo con los datos del empleado o null si no existe.
-     */
+
     public function getById($cedula) {
         $stmt = $this->db->prepare("
             SELECT empleado_ced, nombre, telefono, cargo, fecha_ingreso 
@@ -60,16 +40,6 @@ class Employees extends Database {
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
-    /**
-     * Agrega un nuevo empleado a la base de datos.
-     * 
-     * @param int|string $cedula Cédula del empleado.
-     * @param string $nombre Nombre completo del empleado.
-     * @param string $telefono Teléfono del empleado.
-     * @param string $cargo Cargo del empleado (por defecto: 'Empleado').
-     * @return bool True si se insertó correctamente, false en caso contrario.
-     * @throws Exception Si el empleado ya existe.
-     */
     public function add($cedula, $nombre, $telefono, $cargo = 'Empleado') {
         if ($this->employeeExists($cedula)) {
             throw new Exception("Ya existe un empleado con esta cédula");
@@ -90,16 +60,7 @@ class Employees extends Database {
         ]);
     }
 
-    /**
-     * Actualiza los datos de un empleado existente.
-     * 
-     * @param int|string $cedula Cédula del empleado.
-     * @param string $nombre Nombre completo del empleado.
-     * @param string $telefono Teléfono del empleado.
-     * @param string $cargo Cargo del empleado.
-     * @return bool True si se actualizó correctamente, false en caso contrario.
-     * @throws Exception Si el empleado no existe.
-     */
+
     public function update($cedula, $nombre, $telefono, $cargo = 'Empleado') {
         if (!$this->employeeExists($cedula)) {
             throw new Exception("No existe un empleado con esta cédula");
@@ -120,24 +81,11 @@ class Employees extends Database {
         ]);
     }
 
-    /**
-     * Elimina lógicamente un empleado por su cédula (marcándolo como inactivo).
-     * 
-     * @param int|string $cedula Cédula del empleado a eliminar.
-     * @return bool True si se eliminó correctamente, false en caso contrario.
-     */
     public function delete($cedula) {
         $stmt = $this->db->prepare("UPDATE empleados SET activo = 0 WHERE empleado_ced = :empleado_ced");
         return $stmt->execute([':empleado_ced' => $cedula]);
     }
 
-    /**
-     * Busca empleados por nombre (autocompletado).
-     * Realiza búsqueda incremental filtrando solo empleados activos.
-     * 
-     * @param string $query Texto de búsqueda para filtrar por nombre.
-     * @return array Lista de empleados que coinciden con la búsqueda.
-     */
     public function searchEmployees($query) {
         try {
             $stmt = $this->db->prepare("

@@ -1,5 +1,4 @@
 <?php
-// filepath: app/controllers/Admin/AccountsPayableController.php
 
 use Barkios\models\AccountsPayable;
 use Barkios\models\Purchase;
@@ -51,9 +50,6 @@ function handleRequest($accountsModel, $purchaseModel) {
     }
 }
 
-/**
- * Obtiene todas las cuentas por pagar
- */
 function getAccountsAjax($accountsModel) {
     try {
         $accounts = $accountsModel->getAll();
@@ -68,9 +64,6 @@ function getAccountsAjax($accountsModel) {
     exit();
 }
 
-/**
- * Obtiene el detalle de una cuenta por pagar con sus pagos
- */
 function getAccountDetailAjax($accountsModel, $purchaseModel) {
     $id = isset($_GET['cuenta_pagar_id']) ? intval($_GET['cuenta_pagar_id']) : null;
     
@@ -86,10 +79,8 @@ function getAccountDetailAjax($accountsModel, $purchaseModel) {
             exit();
         }
 
-        // Obtener pagos
         $pagos = $accountsModel->getPagosByCuentaId($id);
         
-        // Obtener prendas de la compra
         $prendas = [];
         if ($cuenta['compra_id']) {
             $prendas = $purchaseModel->getPrendasByCompraId($cuenta['compra_id']);
@@ -110,9 +101,6 @@ function getAccountDetailAjax($accountsModel, $purchaseModel) {
     exit();
 }
 
-/**
- * Registra un pago a una cuenta por pagar
- */
 function addPaymentAjax($accountsModel) {
     $required = ['cuenta_pagar_id', 'monto', 'fecha_pago', 'tipo_pago', 'moneda_pago'];
     

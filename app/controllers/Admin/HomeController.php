@@ -282,9 +282,6 @@ function exportReport($model) {
     }
 }
 
-/**
- * Genera reporte en PDF - Estilo simplificado similar a ventas
- */
 function generatePdfReport($model) {
     try {
         $filter = $_GET['filter'] ?? 'month';
