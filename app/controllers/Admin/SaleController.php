@@ -2,7 +2,6 @@
 use Barkios\models\Sale;
 use Barkios\helpers\PdfHelper;
 
-// Proteger el módulo (requiere autenticación)
 require_once __DIR__ . '/LoginController.php';
 checkAuth();
 
@@ -10,10 +9,6 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 
 $saleModel = new Sale();
 handleRequest($saleModel);
-
-/**
- * Función principal de enrutamiento
- */
 
 function handleRequest($model)
 {
@@ -34,7 +29,6 @@ function handleRequest($model)
             header('Content-Type: application/json; charset=utf-8');
             handleAjax($model, $action);
         } elseif ($action === 'generate_pdf') {
-            // ✅ AGREGAR ESTA LÍNEA
             generateSalePdf($model);
         } else {
             if (empty($action)) {
@@ -58,9 +52,6 @@ function handleRequest($model)
     }
 }
 
-/**
- * Manejador de peticiones AJAX
- */
 function handleAjax($model, $action)
 {
     $method = $_SERVER['REQUEST_METHOD'];
@@ -151,9 +142,6 @@ function validarVenta($datos) {
     return $errores;
 }
 
-/* ============================================================
-   ENDPOINTS GET
-============================================================ */
 
 function getSales($model)
 {
@@ -247,9 +235,6 @@ function getProductByCode($model)
     }
 }
 
-/* ============================================================
-   ENDPOINTS POST
-============================================================ */
 
 function addSale($model)
 {
@@ -387,9 +372,6 @@ function cancelSale($model)
     }
 }
 
-/* ============================================================
-   MOSTRAR VISTA
-============================================================ */
 
 function index()
 {
@@ -409,9 +391,6 @@ function index()
 }
 
 
-/* ============================================================
-   GENERACIÓN DE PDF
-============================================================ */
 
 function generateSalePdf($model) {
     try {

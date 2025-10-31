@@ -1,46 +1,24 @@
 <?php
 use Barkios\models\Supplier;
-// ✅ Importa el controlador de login (para usar checkAuth)
+
 require_once __DIR__ . '/LoginController.php';
 
 
-// ✅ Protege todo el módulo
 checkAuth();
 
 $supplierModel = New Supplier();
 
 handleRequest($supplierModel);
-/**
- * index
- * 
- * Acción principal.
- * Muestra la vista de administración de proveedores.
- * 
- * Palabras clave: vista, administración, proveedores.
- * 
- * @return void
- */
+
 function index() {
     require __DIR__ . '/../../views/admin/supplier-admin.php';
 }
 
-/**
- * handleRequest
- * 
- * Enrutador principal de solicitudes.
- * Determina el tipo de solicitud (AJAX o normal) y la acción a ejecutar.
- * 
- * Palabras clave: enrutamiento, AJAX, POST, GET, acción, logging, manejo de errores.
- * 
- * @param Supplier $supplierModel Instancia del modelo de proveedores.
- * @return void
- */
 function handleRequest($supplierModel) {
     $action = $_GET['action'] ?? '';
     $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
              strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
     
-    // Logging de la solicitud recibida
     error_log("Solicitud recibida - Acción: $action, Método: " . $_SERVER['REQUEST_METHOD'] . ", AJAX: " . ($isAjax ? 'Sí' : 'No'));
     
     try {

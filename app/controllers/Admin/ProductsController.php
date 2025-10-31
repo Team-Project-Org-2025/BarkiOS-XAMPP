@@ -1,16 +1,14 @@
 <?php
-// app/controllers/admin/ProductsController.php
+
 use Barkios\models\Product;
 use Barkios\helpers\ImageUploader;
 
-// Habilitar logs de errores
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../../logs/product_errors.log');
 
-// Función de log personalizada
 function logDebug($message, $data = null) {
     $logFile = __DIR__ . '/../../logs/product_debug.log';
     $logDir = dirname($logFile);
@@ -45,7 +43,6 @@ if (file_exists($helperPath)) {
     error_log("ERROR: No se encuentra ImageUploader.php en: " . $helperPath);
 }
 
-// Protege todo el módulo
 checkAuth();
 
 try {
@@ -137,9 +134,6 @@ function handleRequest($productModel) {
     }
 }
 
-/**
- * Agregar/Editar producto (AJAX)
- */
 function handleAddEditAjax($productModel, $mode) {
     logDebug("=== INICIO handleAddEditAjax ===", $mode);
     
@@ -171,7 +165,6 @@ function handleAddEditAjax($productModel, $mode) {
         'precio' => $precio
     ]);
 
-    // Procesar imagen si existe
     if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] !== UPLOAD_ERR_NO_FILE) {
         logDebug("Procesando imagen", $_FILES['imagen']);
         
@@ -192,8 +185,7 @@ function handleAddEditAjax($productModel, $mode) {
                 $imagen = $uploadResult['data']['url'];
                 $updateImage = true;
                 logDebug("Imagen subida correctamente", $imagen);
-                
-                // Si es edición, eliminar imagen anterior
+
                 if ($mode === 'edit') {
                     $oldProduct = $productModel->getById($id);
                     if ($oldProduct && !empty($oldProduct['imagen'])) {
@@ -217,7 +209,6 @@ function handleAddEditAjax($productModel, $mode) {
         logDebug("No hay imagen para procesar", $_FILES['imagen']['error'] ?? 'NO_FILE');
     }
 
-    // Guardar en BD
     try {
         if ($mode === 'add') {
             logDebug("Verificando si existe producto", $id);
@@ -259,9 +250,7 @@ function handleAddEditAjax($productModel, $mode) {
     }
 }
 
-/**
- * Eliminar producto (AJAX)
- */
+
 function handleDeleteAjax($productModel) {
     logDebug("=== handleDeleteAjax ===");
     
@@ -289,9 +278,7 @@ function handleDeleteAjax($productModel) {
     exit();
 }
 
-/**
- * Eliminar solo la imagen de un producto (AJAX)
- */
+
 function handleDeleteImageAjax($productModel) {
     if (empty($_POST['prenda_id']) || !is_numeric($_POST['prenda_id'])) {
         throw new Exception("ID inválido");
@@ -319,9 +306,7 @@ function handleDeleteImageAjax($productModel) {
     exit();
 }
 
-/**
- * Obtener productos (AJAX)
- */
+
 function getProductsAjax($productModel) {
     logDebug("=== getProductsAjax ===");
     
@@ -338,9 +323,7 @@ function getProductsAjax($productModel) {
     exit();
 }
 
-/**
- * Agregar/Editar producto (Form normal - sin AJAX)
- */
+
 function handleAddEdit($productModel, $mode) {
     $fields = ['prenda_id','nombre','tipo','categoria','precio'];
     foreach ($fields as $f) {

@@ -20,16 +20,6 @@ class User extends Database {
         }
     }
 
-    // =============================================================
-    // ✅ AUTENTICACIÓN SEGURA CON PASSWORD_VERIFY
-    // =============================================================
-
-    /**
-     * Autentica un usuario verificando email y contraseña hasheada
-     * @param string $email
-     * @param string $password Contraseña en texto plano
-     * @return array|null Datos del usuario si es válido, null si no
-     */
     public function authenticate($email, $password) {
         try {
             $sql = "SELECT id, email, password_hash, nombre FROM users WHERE email = :email";
@@ -38,9 +28,8 @@ class User extends Database {
             $user = $stmt->fetch(\PDO::FETCH_ASSOC);
 
             if ($user) {
-                // ✅ VERIFICACIÓN SEGURA: Compara la contraseña con el hash
                 if (password_verify($password, $user['password_hash'])) {
-                    // Si el hash usa un algoritmo antiguo, lo actualizamos
+
                     if (password_needs_rehash($user['password_hash'], PASSWORD_DEFAULT)) {
                         $this->updatePasswordHash($user['id'], $password);
                     }
@@ -56,11 +45,6 @@ class User extends Database {
         }
     }
 
-    /**
-     * Actualiza el hash de contraseña (para rehashing automático)
-     * @param int $userId
-     * @param string $plainPassword
-     */
     private function updatePasswordHash(int $userId, string $plainPassword): void {
         try {
             $newHash = password_hash($plainPassword, PASSWORD_DEFAULT);
@@ -71,13 +55,6 @@ class User extends Database {
         }
     }
 
-    // =============================================================
-    // ✅ MÉTODOS CRUD CON HASHING SEGURO
-    // =============================================================
-    
-    /**
-     * Obtiene todos los usuarios/empleados registrados.
-     */
     public function getAll() {
         try {
             $stmt = $this->db->query("SELECT id, email, nombre FROM users ORDER BY id ASC");
@@ -88,9 +65,7 @@ class User extends Database {
         }
     }
 
-    /**
-     * Verifica si un usuario existe por su ID o Email.
-     */
+
     public function userExists(int $id = null, string $email = null): bool {
         try {
             if ($id !== null) {
@@ -109,9 +84,7 @@ class User extends Database {
         }
     }
 
-    /**
-     * Obtiene un usuario por su ID.
-     */
+
     public function getById(int $id) {
         try {
             $stmt = $this->db->prepare("SELECT id, email, nombre FROM users WHERE id = :id");
@@ -123,19 +96,11 @@ class User extends Database {
         }
     }
 
-    /**
-     * ✅ Agrega un nuevo usuario con contraseña hasheada
-     * @param string $nombre
-     * @param string $email
-     * @param string $password Contraseña en texto plano (se hasheará automáticamente)
-     * @throws Exception
-     */
     public function add(string $nombre, string $email, string $password) {
         if ($this->userExists(null, $email)) {
             throw new Exception("Ya existe un usuario con este email.");
         }
         
-        // ✅ HASHEAR LA CONTRASEÑA DE FORMA SEGURA
         $passwordHash = password_hash($password, PASSWORD_DEFAULT);
         
         if ($passwordHash === false) {
@@ -154,14 +119,7 @@ class User extends Database {
         ]);
     }
 
-    /**
-     * ✅ Actualiza los datos de un usuario existente con contraseña hasheada
-     * @param int $id
-     * @param string $nombre
-     * @param string $email
-     * @param string|null $password Contraseña en texto plano (opcional)
-     * @throws Exception
-     */
+
     public function update(int $id, string $nombre, string $email, string $password = null) {
         if (!$this->userExists($id)) {
             throw new Exception("No existe el usuario con ID: $id");
@@ -175,7 +133,6 @@ class User extends Database {
         ];
 
         if ($password !== null && $password !== '') {
-            // ✅ HASHEAR LA NUEVA CONTRASEÑA
             $passwordHash = password_hash($password, PASSWORD_DEFAULT);
             
             if ($passwordHash === false) {
@@ -192,9 +149,7 @@ class User extends Database {
         return $stmt->execute($params);
     }
 
-    /**
-     * Elimina físicamente un usuario por su ID.
-     */
+
     public function delete(int $id) {
         try {
             $stmt = $this->db->prepare("DELETE FROM users WHERE id = :id"); 
@@ -205,13 +160,7 @@ class User extends Database {
         }
     }
 
-    /**
-     * ✅ Verifica si una contraseña cumple con los requisitos de seguridad
-     * @param string $password
-     * @return bool
-     */
     public function isPasswordStrong(string $password): bool {
-        // Mínimo 8 caracteres, mayúsculas, minúsculas, números y símbolos
         return preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&._-])[A-Za-z\d@$!%*?&._-]{8,}$/', $password) === 1;
     }
 }

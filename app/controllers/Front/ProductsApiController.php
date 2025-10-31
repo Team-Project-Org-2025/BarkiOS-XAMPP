@@ -10,15 +10,10 @@ try {
     exit;
 }
 
-// ================================
-// PARÁMETROS (POST)
-// ================================
+
 $categoria = $_POST['categoria'] ?? null;
 $limit = isset($_POST['limit']) ? (int)$_POST['limit'] : null;
 
-// ================================
-// CONSULTA SEGÚN PARÁMETROS
-// ================================
 try {
     if ($categoria) {
         $products = $productModel->getByCategoria($categoria, $limit ?? 12);

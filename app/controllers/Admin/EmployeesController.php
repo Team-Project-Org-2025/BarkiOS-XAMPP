@@ -1,11 +1,9 @@
 <?php
-// filepath: c:\xampp\htdocs\BarkiOS\app\controllers\Admin\EmployeesController.php
+
 use Barkios\models\Employees;
 
-// ✅ Importa el controlador de login (para usar checkAuth)
 require_once __DIR__ . '/LoginController.php';
 
-// ✅ Protege todo el módulo
 checkAuth();
 
 $employeeModel = new Employees();

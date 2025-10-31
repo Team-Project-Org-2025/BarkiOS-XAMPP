@@ -4,15 +4,9 @@ use Barkios\core\Database;
 use PDO;
 use Exception;
 
-/**
- * Modelo Cuentas por Pagar
- * Gestiona las deudas con proveedores y pagos
- */
+
 class AccountsPayable extends Database {
     
-    /**
-     * Obtiene todas las cuentas por pagar con información completa
-     */
     public function getAll() {
         try {
             $stmt = $this->db->query("
@@ -59,14 +53,13 @@ class AccountsPayable extends Database {
             
             $cuentas = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            // Actualizar estado de vencidas automáticamente
+
             foreach ($cuentas as &$cuenta) {
                 if ($cuenta['vencida'] == 1 && $cuenta['estado'] == 'pendiente') {
                     $this->updateEstado($cuenta['cuenta_pagar_id'], 'vencido');
                     $cuenta['estado'] = 'vencido';
                 }
                 
-                // Si está completamente pagada, marcar como pagado
                 $saldo = floatval($cuenta['saldo_pendiente']);
                 if ($saldo <= 0 && $cuenta['estado'] != 'pagado') {
                     $this->updateEstado($cuenta['cuenta_pagar_id'], 'pagado');
@@ -81,9 +74,6 @@ class AccountsPayable extends Database {
         }
     }
 
-    /**
-     * Obtiene una cuenta por pagar específica
-     */
     public function getById($id) {
         try {
             $stmt = $this->db->prepare("
@@ -127,9 +117,6 @@ class AccountsPayable extends Database {
         }
     }
 
-    /**
-     * Obtiene los pagos de una cuenta por pagar
-     */
     public function getPagosByCuentaId($cuentaId) {
         try {
             $stmt = $this->db->prepare("
@@ -148,14 +135,10 @@ class AccountsPayable extends Database {
         }
     }
 
-    /**
-     * Registra un pago a una cuenta por pagar
-     */
     public function addPago($datos) {
         try {
             $this->db->beginTransaction();
 
-            // Insertar el pago
             $stmt = $this->db->prepare("
                 INSERT INTO pagos_compras (
                     cuenta_pagar_id, compra_id, fecha_pago, monto, 
@@ -188,12 +171,11 @@ class AccountsPayable extends Database {
 
             $pagoId = $this->db->lastInsertId();
 
-            // Verificar si la cuenta está completamente pagada
             $cuenta = $this->getById($datos['cuenta_pagar_id']);
             $saldoPendiente = floatval($cuenta['saldo_pendiente']) - floatval($datos['monto']);
 
             if ($saldoPendiente <= 0) {
-                // Marcar como pagada
+
                 $this->updateEstado($datos['cuenta_pagar_id'], 'pagado');
             }
 
@@ -206,9 +188,6 @@ class AccountsPayable extends Database {
         }
     }
 
-    /**
-     * Actualiza el estado de una cuenta por pagar
-     */
     public function updateEstado($cuentaId, $nuevoEstado) {
         try {
             $stmt = $this->db->prepare("
@@ -227,14 +206,10 @@ class AccountsPayable extends Database {
         }
     }
 
-    /**
-     * Anula un pago
-     */
     public function anularPago($pagoId) {
         try {
             $this->db->beginTransaction();
 
-            // Obtener info del pago
             $stmt = $this->db->prepare("
                 SELECT cuenta_pagar_id, monto 
                 FROM pagos_compras 
@@ -247,7 +222,6 @@ class AccountsPayable extends Database {
                 throw new Exception('Pago no encontrado');
             }
 
-            // Anular el pago
             $stmt = $this->db->prepare("
                 UPDATE pagos_compras
                 SET estado_pago = 'ANULADO',
@@ -256,12 +230,11 @@ class AccountsPayable extends Database {
             ");
             $stmt->execute([':id' => $pagoId]);
 
-            // Verificar estado de la cuenta
             $cuenta = $this->getById($pago['cuenta_pagar_id']);
             $saldoPendiente = floatval($cuenta['saldo_pendiente']) + floatval($pago['monto']);
 
             if ($saldoPendiente > 0 && $cuenta['estado'] == 'pagado') {
-                // Volver a pendiente o vencido
+
                 $estado = strtotime($cuenta['fecha_vencimiento']) < time() ? 'vencido' : 'pendiente';
                 $this->updateEstado($pago['cuenta_pagar_id'], $estado);
             }
@@ -275,9 +248,6 @@ class AccountsPayable extends Database {
         }
     }
 
-    /**
-     * Obtiene estadísticas de cuentas por pagar
-     */
     public function getEstadisticas() {
         try {
             $stmt = $this->db->query("
