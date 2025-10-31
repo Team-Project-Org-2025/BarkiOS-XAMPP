@@ -41,27 +41,20 @@ html, body {
         <div class="card mt-3">
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle text-center">
-                        <thead>
-                            <tr>
-                                <th>Nº Factura</th>
-                                <th>Cliente</th>
-                                <th>Emisión</th>
-                                <th>Monto</th>
-                                <th>Vencimiento</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="accountsTableBody">
-                            <tr>
-                                <td colspan="7" class="text-center">
-                                    <div class="spinner-border text-primary" role="status">
-                                        <span class="visually-hidden">Cargando...</span>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
+                    <table id="accountsTable" class="table table-striped table-bordered nowrap" style="width:100%">
+                      <thead>
+                        <tr>
+                          <th>Referencia</th>
+                          <th>Cliente</th>
+                          <th>Emisión</th>
+                          <th>Saldo Pendiente</th>
+                          <th>Vencimiento</th>
+                          <th>Estado</th>
+                          <th>Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody id="accountsTableBody">
+                      </tbody>
                     </table>
                 </div>
             </div>
@@ -277,11 +270,12 @@ if (!function_exists('getDolarRate')) {
 </script>
 
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="/BarkiOS/public/assets/js/accounts-receivable-admin.js"></script>
-
-<script src="/BarkiOS/public/assets/js/logout.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.3/dist/sweetalert2.all.min.js"></script>
+<script type="module" src="/BarkiOS/public/assets/js/admin/accounts-receivable-admin.js"></script>
+<script src="/BarkiOS/public/assets/js/admin/logout.js"></script>
 
 </body>
 </html>
