@@ -1281,3 +1281,12 @@
 [31-Oct-2025 05:09:50 Europe/Berlin] Archivo existe después de mover: SI
 [31-Oct-2025 05:09:50 Europe/Berlin] Ruta relativa para BD: public/uploads/products/product_8_1761883790.jpg
 [31-Oct-2025 05:09:50 Europe/Berlin] === ImageUploader::upload FIN ===
+[31-Oct-2025 05:41:12 Europe/Berlin] ExchangeRateService [Primary API]: HTTP 403 - Response: <!DOCTYPE html><html lang="en-US"><head><title>Just a moment...</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=Edge"><meta nam
+[31-Oct-2025 05:41:12 Europe/Berlin] ExchangeRateService [Backup API]: Error. cURL: Could not resolve host: pydolarve.org, HTTP: 0
+[31-Oct-2025 05:41:12 Europe/Berlin] ExchangeRateService: Todas las APIs fallaron. Usando FALLBACK_RATE.
+[31-Oct-2025 05:42:47 Europe/Berlin] ExchangeRateService [Primary API]: HTTP 403 - Response: <!DOCTYPE html><html lang="en-US"><head><title>Just a moment...</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=Edge"><meta nam
+[31-Oct-2025 05:42:47 Europe/Berlin] ExchangeRateService [Backup API]: Error. cURL: Could not resolve host: pydolarve.org, HTTP: 0
+[31-Oct-2025 05:42:47 Europe/Berlin] ExchangeRateService: Todas las APIs fallaron. Usando FALLBACK_RATE.
+[31-Oct-2025 05:44:01 Europe/Berlin] ExchangeRateService [Primary API]: HTTP 403 - Response: <!DOCTYPE html><html lang="en-US"><head><title>Just a moment...</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=Edge"><meta nam
+[31-Oct-2025 05:44:01 Europe/Berlin] ExchangeRateService [Backup API]: Error. cURL: Could not resolve host: pydolarve.org, HTTP: 0
+[31-Oct-2025 05:44:01 Europe/Berlin] ExchangeRateService: Todas las APIs fallaron. Usando FALLBACK_RATE.

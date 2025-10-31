@@ -159,6 +159,7 @@ function handleAddEditAjax($productModel, $mode) {
     $tipo = trim($_POST['tipo']);
     $categoria = trim($_POST['categoria']);
     $precio = (float)$_POST['precio'];
+    $precio_compra = !empty($_POST['precio_compra']) ? (float)$_POST['precio_compra'] : null;
     $descripcion = trim($_POST['descripcion'] ?? '');
     $imagen = null;
     $updateImage = false;
@@ -168,7 +169,8 @@ function handleAddEditAjax($productModel, $mode) {
         'nombre' => $nombre,
         'tipo' => $tipo,
         'categoria' => $categoria,
-        'precio' => $precio
+        'precio' => $precio,
+        'precio_compra' => $precio_compra
     ]);
 
     // Procesar imagen si existe
@@ -226,7 +228,7 @@ function handleAddEditAjax($productModel, $mode) {
             }
             
             logDebug("Llamando a productModel->add()");
-            $result = $productModel->add($id, $nombre, $tipo, $categoria, $precio, $imagen, $descripcion);
+            $result = $productModel->add($id, $nombre, $tipo, $categoria, $precio, $imagen, $descripcion, $precio_compra);
             logDebug("Resultado de add()", $result);
             $msg = 'Producto agregado correctamente';
         } else {
@@ -236,7 +238,7 @@ function handleAddEditAjax($productModel, $mode) {
             }
             
             logDebug("Llamando a productModel->update()");
-            $result = $productModel->update($id, $nombre, $tipo, $categoria, $precio, $imagen, $descripcion, $updateImage);
+            $result = $productModel->update($id, $nombre, $tipo, $categoria, $precio, $imagen, $descripcion, $updateImage, $precio_compra);
             logDebug("Resultado de update()", $result);
             $msg = 'Producto actualizado correctamente';
         }
@@ -352,6 +354,7 @@ function handleAddEdit($productModel, $mode) {
     $tipo = trim($_POST['tipo']);
     $categoria = trim($_POST['categoria']);
     $precio = (float)$_POST['precio'];
+    $precio_compra = !empty($_POST['precio_compra']) ? (float)$_POST['precio_compra'] : null;
     $descripcion = trim($_POST['descripcion'] ?? '');
     $imagen = null;
 
@@ -370,11 +373,11 @@ function handleAddEdit($productModel, $mode) {
         if ($productModel->productExists($id)) {
             header("Location: products-admin.php?error=id_duplicado&prenda_id=$id"); exit();
         }
-        $productModel->add($id, $nombre, $tipo, $categoria, $precio, $imagen, $descripcion);
+        $productModel->add($id, $nombre, $tipo, $categoria, $precio, $imagen, $descripcion, $precio_compra);
         header("Location: products-admin.php?success=add"); exit();
     } else {
         $updateImage = ($imagen !== null);
-        $productModel->update($id, $nombre, $tipo, $categoria, $precio, $imagen, $descripcion, $updateImage);
+        $productModel->update($id, $nombre, $tipo, $categoria, $precio, $imagen, $descripcion, $updateImage, $precio_compra);
         header("Location: products-admin.php?success=edit"); exit();
     }
 }

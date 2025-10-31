@@ -20,7 +20,7 @@ class Product extends Database {
             $stmt = $this->db->query("
                 SELECT * FROM prendas 
                 WHERE activo = 1 AND estado IN ('DISPONIBLE', 'VENDIDA')
-                ORDER BY prenda_id ASC
+                ORDER BY codigo_prenda ASC
             ");
             return $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
         } catch (\Throwable $e) {
@@ -30,40 +30,15 @@ class Product extends Database {
     }
 
     /**
-     * Obtiene productos disponibles CON VALIDACIONES para mostrar al público
-     * - Precio mayor a 0
-     * - Con imagen válida
-     * - Estado DISPONIBLE
-     * - Activo = 1
+     * Obtiene productos disponibles
      */
     public function getDisponibles() {
-        try {
-            $stmt = $this->db->query("
-                SELECT 
-                    prenda_id,
-                    codigo_prenda,
-                    nombre,
-                    categoria,
-                    tipo,
-                    precio,
-                    imagen,
-                    descripcion,
-                    fecha_creacion
-                FROM prendas 
-                WHERE activo = 1 
-                  AND estado = 'DISPONIBLE'
-                  AND precio > 0
-                  AND imagen IS NOT NULL
-                  AND imagen != ''
-                  AND imagen != 'public/assets/img/no-image.png'
-                ORDER BY fecha_creacion DESC
-            ");
-            
-            return $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
-        } catch (\Throwable $e) {
-            error_log("Error en getDisponibles: " . $e->getMessage());
-            return [];
-        }
+        $stmt = $this->db->query("
+            SELECT * FROM prendas
+            WHERE activo = 1 AND estado = 'DISPONIBLE'
+            ORDER BY codigo_prenda ASC
+        ");
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**
@@ -88,9 +63,9 @@ class Product extends Database {
     }
 
     /**
-     * Agrega un nuevo producto CON imagen
+     * Agrega un nuevo producto CON imagen y precio de compra
      */
-    public function add(int $id, string $nombre, string $tipo, string $categoria, float $precio, ?string $imagen = null, ?string $descripcion = null) {
+    public function add(int $id, string $nombre, string $tipo, string $categoria, float $precio, ?string $imagen = null, ?string $descripcion = null, ?float $precio_compra = null) {
         // Verificar si existe por prenda_id
         if ($this->productExists($id)) {
             throw new Exception("Ya existe un producto con este código (prenda_id: $id).");
@@ -104,8 +79,8 @@ class Product extends Database {
         }
 
         $stmt = $this->db->prepare("
-            INSERT INTO prendas (codigo_prenda, nombre, tipo, categoria, precio, imagen, descripcion, activo, estado)
-            VALUES (:codigo_prenda, :nombre, :tipo, :categoria, :precio, :imagen, :descripcion, 1, 'DISPONIBLE')
+            INSERT INTO prendas (codigo_prenda, nombre, tipo, categoria, precio, precio_compra, imagen, descripcion, activo, estado)
+            VALUES (:codigo_prenda, :nombre, :tipo, :categoria, :precio, :precio_compra, :imagen, :descripcion, 1, 'DISPONIBLE')
         ");
         
         return $stmt->execute([
@@ -114,6 +89,7 @@ class Product extends Database {
             ':tipo' => $tipo,
             ':categoria' => $categoria,
             ':precio' => $precio,
+            ':precio_compra' => $precio_compra,
             ':imagen' => $imagen,
             ':descripcion' => $descripcion
         ]);
@@ -123,7 +99,7 @@ class Product extends Database {
      * Actualiza un producto existente
      * $updateImage: si es true, actualiza la imagen; si es false, mantiene la actual
      */
-    public function update(int $id, string $nombre, string $tipo, string $categoria, float $precio, ?string $imagen = null, ?string $descripcion = null, bool $updateImage = false) {
+    public function update(int $id, string $nombre, string $tipo, string $categoria, float $precio, ?string $imagen = null, ?string $descripcion = null, bool $updateImage = false, ?float $precio_compra = null) {
         if (!$this->productExists($id)) {
             throw new Exception("No existe el producto con ID: $id");
         }
@@ -141,6 +117,7 @@ class Product extends Database {
                     tipo = :tipo, 
                     categoria = :categoria, 
                     precio = :precio,
+                    precio_compra = :precio_compra,
                     imagen = :imagen,
                     descripcion = :descripcion,
                     fec_actualizacion = NOW()
@@ -152,6 +129,7 @@ class Product extends Database {
                 ':tipo' => $tipo,
                 ':categoria' => $categoria,
                 ':precio' => $precio,
+                ':precio_compra' => $precio_compra,
                 ':imagen' => $imagen,
                 ':descripcion' => $descripcion
             ];
@@ -162,6 +140,7 @@ class Product extends Database {
                     tipo = :tipo, 
                     categoria = :categoria, 
                     precio = :precio,
+                    precio_compra = :precio_compra,
                     descripcion = :descripcion,
                     fec_actualizacion = NOW()
                     WHERE prenda_id = :prenda_id";
@@ -172,6 +151,7 @@ class Product extends Database {
                 ':tipo' => $tipo,
                 ':categoria' => $categoria,
                 ':precio' => $precio,
+                ':precio_compra' => $precio_compra,
                 ':descripcion' => $descripcion
             ];
         }
@@ -251,90 +231,34 @@ class Product extends Database {
     }
 
     /**
-     * Obtiene los productos más recientes CON VALIDACIONES
-     * - Precio mayor a 0
-     * - Con imagen válida
-     * - Estado DISPONIBLE
+     * Obtiene los productos más recientes
      */
     public function getLatest(int $limit = 8) {
-        try {
-            $stmt = $this->db->prepare("
-                SELECT 
-                    prenda_id,
-                    codigo_prenda,
-                    nombre,
-                    categoria,
-                    tipo,
-                    precio,
-                    imagen,
-                    descripcion,
-                    fecha_creacion
-                FROM prendas
-                WHERE activo = 1 
-                  AND estado = 'DISPONIBLE'
-                  AND precio > 0
-                  AND imagen IS NOT NULL
-                  AND imagen != ''
-                  AND imagen != 'public/assets/img/no-image.png'
-                ORDER BY fecha_creacion DESC
-                LIMIT :limit
-            ");
-            
-            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
-            $stmt->execute();
-            
-            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-        } catch (\Throwable $e) {
-            error_log("Error en getLatest: " . $e->getMessage());
-            return [];
-        }
+        $stmt = $this->db->prepare("
+            SELECT * FROM prendas
+            WHERE activo = 1 AND estado = 'DISPONIBLE'
+            ORDER BY fecha_creacion DESC
+            LIMIT :limit
+        ");
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**
-     * Obtiene productos por categoría CON VALIDACIONES
-     * - Precio mayor a 0
-     * - Con imagen válida
-     * - Estado DISPONIBLE
+     * Obtiene productos por categoría
      */
     public function getByCategoria(string $categoria, ?int $limit = null) {
-        try {
-            $sql = "SELECT 
-                        prenda_id,
-                        codigo_prenda,
-                        nombre,
-                        categoria,
-                        tipo,
-                        precio,
-                        imagen,
-                        descripcion,
-                        fecha_creacion
-                    FROM prendas
-                    WHERE activo = 1 
-                      AND estado = 'DISPONIBLE'
-                      AND categoria = :categoria
-                      AND precio > 0
-                      AND imagen IS NOT NULL
-                      AND imagen != ''
-                      AND imagen != 'public/assets/img/no-image.png'
-                    ORDER BY fecha_creacion DESC";
-            
-            if ($limit) {
-                $sql .= " LIMIT :limit";
-            }
+        $sql = "SELECT * FROM prendas
+                WHERE activo = 1 AND estado = 'DISPONIBLE'
+                AND categoria = :categoria
+                ORDER BY fecha_creacion DESC";
+        if ($limit) $sql .= " LIMIT :limit";
 
-            $stmt = $this->db->prepare($sql);
-            $stmt->bindValue(':categoria', $categoria, PDO::PARAM_STR);
-            
-            if ($limit) {
-                $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
-            }
-            
-            $stmt->execute();
-            
-            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-        } catch (\Throwable $e) {
-            error_log("Error en getByCategoria: " . $e->getMessage());
-            return [];
-        }
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':categoria', $categoria, PDO::PARAM_STR);
+        if ($limit) $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
