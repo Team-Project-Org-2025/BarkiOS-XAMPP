@@ -1,10 +1,3 @@
-/**
- * ============================================
- * MÓDULO DE CUENTAS POR PAGAR - GARAGE BARKI
- * Versión refactorizada v3.0 (ES6 Module)
- * ============================================
- */
-
 import * as Validations from '/BarkiOS/public/assets/js/utils/validation.js';
 import * as Helpers from '/BarkiOS/public/assets/js/utils/helpers.js';
 import * as Ajax from '/BarkiOS/public/assets/js/utils/ajax-handler.js';
@@ -18,9 +11,6 @@ $(document).ready(function() {
     const METODOS_BS = ["EFECTIVO", "PAGO MOVIL", "TRANSFERENCIA"];
     const MARGEN_ERROR_BS = 10;
 
-    // ============================================
-    // INICIALIZAR DATATABLE
-    // ============================================
     const initDataTable = () => {
         accountsTable = $('#accountsTable').DataTable({
             ajax: {
@@ -103,9 +93,7 @@ $(document).ready(function() {
         });
     };
 
-    // ============================================
-    // ACTUALIZAR ESTADÍSTICAS
-    // ============================================
+    //Actualizar estadisticas
     const updateStats = (accounts) => {
         let totalCuentas = accounts.length;
         let deudaTotal = 0, porVencer = 0, vencidas = 0;
@@ -131,9 +119,7 @@ $(document).ready(function() {
         $('#statVencidas').text(vencidas);
     };
 
-    // ============================================
-    // REGISTRAR PAGO
-    // ============================================
+    //Registrar pago
     $(document).on('click', '.btn-pay', function() {
         const $btn = $(this);
         currentSaldo = parseFloat($btn.data('saldo'));
@@ -282,9 +268,7 @@ $('#paymentMontoGeneral').on('input', function() {
             .finally(() => $btn.prop('disabled', false).html(btnText));
     });
 
-    // ============================================
-    // VER DETALLE
-    // ============================================
+    //Ver detalle
     $(document).on('click', '.btn-view', function() {
         const cuentaId = $(this).data('id');
         
@@ -412,22 +396,14 @@ $('#paymentMontoGeneral').on('input', function() {
         $('#viewAccountContent').html(html);
     };
 
-    // ============================================
-    // BÚSQUEDA Y FILTROS
-    // ============================================
+    //Busqueda y filtros
     $('#searchInput').on('input', Helpers.debounce(function() {
         accountsTable.search($(this).val()).draw();
     }, 300));
 
-    // ============================================
-    // LIMPIAR MODALES
-    // ============================================
     $('.modal').on('hidden.bs.modal', function() {
         Helpers.resetForm($(this).find('form'));
     });
 
-    // ============================================
-    // INICIALIZAR
-    // ============================================
     initDataTable();
 });
