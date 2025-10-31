@@ -154,7 +154,7 @@ require_once __DIR__ . '/../partials/navbar.php';
 <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 <!-- Main JS con funcionalidad de productos -->
 
-<script src="/BarkiOS/public/assets/js/novedades.js"></script>
+<script src="/BarkiOS/public/assets/js/front/novedades.js"></script>
 
 </body>
 </html>

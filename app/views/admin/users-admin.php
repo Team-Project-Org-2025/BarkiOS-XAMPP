@@ -25,27 +25,19 @@
           <i class="fas fa-list me-2 text-primary"></i> Lista de Usuarios
         </h5>
       </div>
-      <div class="card-body p-0">
+      <div class="card-body p-3">
         <div class="table-responsive">
-          <table class="table table-hover align-middle text-center mb-0">
-            <thead class="table-primary">
-              <tr>
-                <th>ID</th>
-                <th>Nombre</th>
-                <th>Email</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody id="usersTableBody">
-              <tr>
-                <td colspan="4" class="py-4">
-                  <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Cargando...</span>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <table id="usersTable" class="table table-hover align-middle text-center mb-0">
+          <thead class="table-primary">
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Email</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
         </div>
       </div>
     </div>
@@ -129,9 +121,12 @@
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.3/dist/sweetalert2.all.min.js"></script>
-<script src="/BarkiOS/public/assets/js/users-admin.js"></script>
-<script src="/BarkiOS/public/assets/js/logout.js"></script>
+<script type="module" src="/BarkiOS/public/assets/js/admin/users-admin.js"></script>
+<script src="/BarkiOS/public/assets/js/admin/logout.js"></script>
+
 </body>
 </html>
