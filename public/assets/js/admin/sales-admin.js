@@ -1,7 +1,7 @@
 /**
  * ============================================
  * MÓDULO DE VENTAS - GARAGE BARKI
- * Versión refactorizada v2.0 (ES6 Module)
+ * Versión refactorizada v3.0 (ES6 Module)
  * ============================================
  */
 
@@ -9,107 +9,88 @@ import * as Validations from '/BarkiOS/public/assets/js/utils/validation.js';
 import * as Helpers from '/BarkiOS/public/assets/js/utils/helpers.js';
 import * as Ajax from '/BarkiOS/public/assets/js/utils/ajax-handler.js';
 
-
 $(document).ready(function() {
     const baseUrl = '/BarkiOS/admin/sale';
+    let salesTable = null;
     let clients = [], employees = [], products = [], cart = [], pid = 0;
     const IVA_DEFAULT = 16.00;
 
     // ============================================
-    // CARGA INICIAL DE DATOS
+    // INICIALIZAR DATATABLE
     // ============================================
-    // ============================================
-// INICIALIZAR DATATABLE DE VENTAS
-// ============================================
-let salesTable = null;
-
-const initSalesTable = () => {
-    if ($.fn.DataTable.isDataTable('#salesTable')) {
-        $('#salesTable').DataTable().destroy();
-    }
-
-    salesTable = $('#salesTable').DataTable({
-        ajax: {
-            url: `${baseUrl}?action=get_sales`,
-            method: 'GET',
-            headers: { 'X-Requested-With': 'XMLHttpRequest' },
-            dataSrc: (json) => {
-                if (!json.success) {
-                    Helpers.toast('warning', json.message || 'No se pudieron cargar las ventas');
-                    return [];
-                }
-                // Actualiza estadísticas si existe updateStats()
-                if (typeof updateStats === 'function') updateStats(json.sales || []);
-                return json.sales || [];
-            }
-        },
-        columns: [
-            { data: 'venta_id', className: 'text-center d-none d-md-table-cell' },
-            { data: 'referencia', render: (d) => `<code>${Helpers.escapeHtml(d ?? '')}</code>` },
-            { data: 'nombre_cliente', className: 'd-none d-lg-table-cell' },
-            { data: 'nombre_empleado', className: 'd-none d-xl-table-cell' },
-            {
-                data: 'fecha',
-                className: 'd-none d-md-table-cell',
-                render: (data) => Helpers.formatDate(data, true)
-            },
-            {
-                data: 'monto_total',
-                className: 'text-end',
-                render: (data) => Helpers.formatCurrency(parseFloat(data) || 0)
-            },
-            {
-                data: 'estado_venta',
-                className: 'text-center d-none d-sm-table-cell',
-                render: (estado) => {
-                    const color = estado === 'Completada'
-                        ? 'success'
-                        : estado === 'Pendiente'
-                        ? 'warning'
-                        : 'secondary';
-                    return `<span class="badge bg-${color}">${Helpers.escapeHtml(estado)}</span>`;
+    const initDataTable = () => {
+        salesTable = $('#salesTable').DataTable({
+            ajax: {
+                url: `${baseUrl}?action=get_sales`,
+                method: 'GET',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                dataSrc: (json) => {
+                    if (!json.success) {
+                        Helpers.toast('warning', json.message || 'No se pudieron cargar las ventas');
+                        return [];
+                    }
+                    updateStats(json.sales || []);
+                    return json.sales || [];
                 }
             },
-            {
-                data: null,
-                className: 'text-center',
-                orderable: false,
-                render: (data, type, row) => `
-                    <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-info btn-view" data-id="${row.venta_id}">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="btn btn-outline-success btn-pdf" data-id="${row.venta_id}">
-                            <i class="fas fa-file-pdf"></i>
-                        </button>
-                        ${(row.estado_venta || '').toLowerCase() !== 'cancelada' ? `
-                            <button class="btn btn-outline-danger btn-cancel" data-id="${row.venta_id}">
-                                <i class="fas fa-ban"></i>
-                            </button>` : ''}
-                    </div>
-                `
-            }
-        ],
-        pageLength: 10,
-        responsive: true,
-        autoWidth: false,
-        language: {
-            url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
-        },
-        dom: '<"d-flex justify-content-between align-items-center mb-2"lfB>tip',
-        buttons: [
-            {
+            columns: [
+                { data: 'venta_id', className: 'text-center d-none d-md-table-cell' },
+                { data: 'referencia', render: d => `<code>${Helpers.escapeHtml(d ?? '')}</code>` },
+                { data: 'nombre_cliente', className: 'd-none d-lg-table-cell' },
+                { data: 'nombre_empleado', className: 'd-none d-xl-table-cell' },
+                { data: 'fecha', className: 'd-none d-md-table-cell', render: d => Helpers.formatDate(d, true) },
+                { data: 'monto_total', className: 'text-end', render: d => Helpers.formatCurrency(parseFloat(d) || 0) },
+                {
+                    data: 'estado_venta',
+                    className: 'text-center d-none d-sm-table-cell',
+                    render: estado => {
+                        const color = estado === 'Completada' ? 'success' : estado === 'Pendiente' ? 'warning' : 'secondary';
+                        return `<span class="badge bg-${color}">${Helpers.escapeHtml(estado)}</span>`;
+                    }
+                },
+                {
+                    data: null,
+                    className: 'text-center',
+                    orderable: false,
+                    render: (data, type, row) => `
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-info btn-view" data-id="${row.venta_id}"><i class="fas fa-eye"></i></button>
+                            <button class="btn btn-outline-success btn-pdf" data-id="${row.venta_id}"><i class="fas fa-file-pdf"></i></button>
+                            ${(row.estado_venta || '').toLowerCase() !== 'cancelada' ? `
+                                <button class="btn btn-outline-danger btn-cancel" data-id="${row.venta_id}"><i class="fas fa-ban"></i></button>
+                            ` : ''}
+                        </div>
+                    `
+                }
+            ],
+            pageLength: 10,
+            responsive: true,
+            autoWidth: false,
+            language: { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' },
+            dom: '<"d-flex justify-content-between align-items-center mb-2"lfB>tip',
+            buttons: [{
                 text: '<i class="fas fa-sync-alt"></i> Actualizar',
                 className: 'btn btn-outline-secondary btn-sm',
-                action: function() {
-                    salesTable.ajax.reload(null, false);
-                }
-            }
-        ]
-    });
-};
+                action: () => salesTable.ajax.reload(null, false)
+            }]
+        });
+    };
 
+    const updateStats = (sales) => {
+        const totalSales = sales.length;
+        const revenue = sales.reduce((acc, s) => acc + (parseFloat(s.monto_total ?? 0) || 0), 0);
+        const pending = sales.reduce((acc, s) => acc + (parseFloat(s.saldo_pendiente || 0) || 0), 0);
+        const completed = sales.filter(s => (s.estado_venta || '').toLowerCase() === 'completada').length;
 
+        $('#totalSales').text(totalSales);
+        $('#totalRevenue').text(Helpers.formatCurrency(revenue));
+        $('#totalPending').text(Helpers.formatCurrency(pending));
+        $('#completedSales').text(completed);
+    };
+
+    // ============================================
+    // CARGAR DATOS INICIALES
+    // ============================================
     const loadClients = () => {
         Ajax.get(`${baseUrl}?action=get_clients`)
             .then(r => {
@@ -117,8 +98,7 @@ const initSalesTable = () => {
                     clients = r.clients || [];
                     const opts = clients.map(c => 
                         `<option value="${Helpers.escapeHtml(c.cliente_ced)}" data-tipo="${Helpers.escapeHtml(c.tipo)}">
-                            ${Helpers.escapeHtml(c.nombre_cliente)} (${Helpers.escapeHtml(c.cliente_ced)}) 
-                            ${c.tipo === 'vip' ? '⭐' : ''}
+                            ${Helpers.escapeHtml(c.nombre_cliente)} (${Helpers.escapeHtml(c.cliente_ced)}) ${c.tipo === 'vip' ? '⭐' : ''}
                         </option>`
                     ).join('');
                     $('#add_cliente').html('<option value="">Seleccione...</option>' + opts);
@@ -146,84 +126,13 @@ const initSalesTable = () => {
             .then(r => {
                 if (r?.success) {
                     products = r.products || [];
-                    updateProductCount(products.length);
+                    $('#productsCount').text(`${products.length} disponibles`).toggleClass('text-danger', products.length === 0);
                 }
             });
     };
 
-    const updateProductCount = (count) => {
-        const $badge = $('#productsCount');
-        if ($badge.length) {
-            $badge.text(`${count} disponibles`).toggleClass('text-danger', count === 0);
-        }
-    };
-
     // ============================================
-    // RENDERIZAR VENTAS
-    // ============================================
-    const renderSales = (sales) => {
-        if (!sales || sales.length === 0) {
-            $('#salesTableBody').html(Helpers.emptyHtml(8, 'No hay ventas registradas'));
-            updateStats([]);
-            return;
-        }
-
-        const rows = sales.map((s, i) => {
-            const ventaId = s.venta_id ?? s.id ?? '';
-            const estadoBadge = {
-                'completada': 'success',
-                'pendiente': 'warning',
-                'cancelada': 'danger'
-            }[(s.estado_venta || '').toLowerCase()] || 'secondary';
-
-            return `
-                <tr>
-                    <td class="text-center d-none d-md-table-cell">${i + 1}</td>
-                    <td><code>${Helpers.escapeHtml(s.referencia ?? 'N/A')}</code></td>
-                    <td class="d-none d-lg-table-cell">${Helpers.escapeHtml(s.nombre_cliente ?? '')}</td>
-                    <td class="d-none d-xl-table-cell">${Helpers.escapeHtml(s.nombre_empleado ?? '')}</td>
-                    <td class="d-none d-md-table-cell">${Helpers.formatDate(s.fecha, true)}</td>
-                    <td class="text-end"><strong>${Helpers.formatCurrency(s.monto_total ?? 0)}</strong></td>
-                    <td class="text-center d-none d-sm-table-cell">
-                        <span class="badge bg-${estadoBadge}">${Helpers.escapeHtml(s.estado_venta ?? '')}</span>
-                    </td>
-                    <td class="text-center">
-                        <div class="btn-group btn-group-sm">
-                            <button class="btn btn-outline-info btn-view" data-id="${ventaId}">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            <button class="btn btn-outline-success btn-pdf" data-id="${ventaId}">
-                                <i class="fas fa-file-pdf"></i>
-                            </button>
-                            ${(s.estado_venta || '').toLowerCase() !== 'cancelada' ? `
-                                <button class="btn btn-outline-danger btn-cancel" data-id="${ventaId}">
-                                    <i class="fas fa-ban"></i>
-                                </button>
-                            ` : ''}
-                        </div>
-                    </td>
-                </tr>
-            `;
-        }).join('');
-
-        $('#salesTableBody').html(rows);
-        updateStats(sales);
-    };
-
-    const updateStats = (sales) => {
-        const totalSales = (sales || []).length;
-        const revenue = (sales || []).reduce((acc, s) => acc + (parseFloat(s.monto_total ?? 0) || 0), 0);
-        const pending = (sales || []).reduce((acc, s) => acc + (parseFloat(s.saldo_pendiente || 0) || 0), 0);
-        const completed = (sales || []).filter(s => (s.estado_venta || '').toLowerCase() === 'completada').length;
-
-        $('#totalSales').text(totalSales);
-        $('#totalRevenue').text(Helpers.formatCurrency(revenue));
-        $('#totalPending').text(Helpers.formatCurrency(pending));
-        $('#completedSales').text(completed);
-    };
-
-    // ============================================
-    // GESTIÓN DE PRODUCTOS EN CARRITO
+    // GESTIÓN DE CARRITO
     // ============================================
     const addProductRow = () => {
         if (!products || products.length === 0) {
@@ -341,7 +250,7 @@ const initSalesTable = () => {
     };
 
     // ============================================
-    // CONTROL DE FECHA VENCIMIENTO
+    // CONTROL DE FECHA VENCIMIENTO (CRÉDITO)
     // ============================================
     const $tipoVentaSelect = $('[name="tipo_venta"]');
     const $clienteSelect = $('#add_cliente');
@@ -399,7 +308,7 @@ const initSalesTable = () => {
         
         if (selectedDate <= today) {
             $(this).addClass('is-invalid').removeClass('is-valid');
-            Helpers.toast('error', 'La fecha de vencimiento debe ser posterior a hoy');
+            Helpers.toast('error', 'La fecha debe ser posterior a hoy');
         } else {
             $(this).addClass('is-valid').removeClass('is-invalid');
         }
@@ -414,9 +323,17 @@ const initSalesTable = () => {
         const cliente = $clienteSelect.val();
         const empleado = $('#add_empleado').val();
         const tipo = $tipoVentaSelect.val();
+        const referencia = $('#add_referencia').val().trim();
 
         if (!cliente || !empleado) {
             Helpers.toast('error', 'Seleccione cliente y vendedor');
+            return;
+        }
+
+        // ✅ VALIDAR REFERENCIA
+        if (referencia && !Validations.REGEX.referenciaVenta.test(referencia)) {
+            Helpers.toast('error', 'Referencia inválida (máx 15 caracteres, solo letras, números y guión)');
+            $('#add_referencia').addClass('is-invalid').focus();
             return;
         }
 
@@ -446,7 +363,7 @@ const initSalesTable = () => {
             today.setHours(0, 0, 0, 0);
             
             if (selectedDate <= today) {
-                Helpers.toast('error', 'La fecha de vencimiento debe ser posterior a hoy');
+                Helpers.toast('error', 'La fecha debe ser posterior a hoy');
                 $fechaVencimientoInput.focus();
                 return;
             }
@@ -461,7 +378,7 @@ const initSalesTable = () => {
             cliente_ced: cliente,
             empleado_ced: empleado,
             tipo_venta: tipo,
-            referencia: $('#add_referencia').val().trim() || '',
+            referencia: referencia,
             iva_porcentaje: $('#add_iva').val() || IVA_DEFAULT,
             observaciones: $('[name="observaciones"]').val() || '',
             productos: JSON.stringify(productosPayload)
@@ -479,16 +396,9 @@ const initSalesTable = () => {
             .then(r => {
                 if (r?.success) {
                     Helpers.toast('success', r.message || 'Venta registrada');
-                    $(this)[0].reset();
-                    $('#productsContainer').empty();
-                    cart = [];
-                    pid = 0;
-                    $('#noProductsAlert').show();
-                    $fechaVencimientoGroup.hide();
-                    $fechaVencimientoInput.prop('required', false).val('');
-                    calcTotals();
+                    resetSaleForm();
                     $('#addSaleModal').modal('hide');
-                    initSalesTable();
+                    salesTable.ajax.reload(null, false);
                     loadProducts();
                 } else {
                     Helpers.toast('error', r?.message || 'Error al guardar venta');
@@ -497,6 +407,17 @@ const initSalesTable = () => {
             .catch(msg => Helpers.toast('error', msg))
             .finally(() => $btn.prop('disabled', false).html(btnText));
     });
+
+    const resetSaleForm = () => {
+        $('#addSaleForm')[0].reset();
+        $('#productsContainer').empty();
+        cart = [];
+        pid = 0;
+        $('#noProductsAlert').show();
+        $fechaVencimientoGroup.hide();
+        $fechaVencimientoInput.prop('required', false).val('');
+        calcTotals();
+    };
 
     // ============================================
     // VER DETALLES
@@ -510,15 +431,10 @@ const initSalesTable = () => {
 
         Ajax.get(`${baseUrl}?action=get_by_id&id=${encodeURIComponent(id)}`)
             .then(r => {
-                if (r?.success && r.venta) {
-                    renderSaleDetails(r.venta);
-                } else {
-                    $('#saleDetailsContent').html('<p class="text-center text-muted">No se encontraron detalles</p>');
-                }
+                if (r?.success && r.venta) renderSaleDetails(r.venta);
+                else $('#saleDetailsContent').html('<p class="text-center text-muted">No se encontraron detalles</p>');
             })
-            .catch(msg => {
-                $('#saleDetailsContent').html(`<p class="text-center text-muted">${Helpers.escapeHtml(msg)}</p>`);
-            });
+            .catch(msg => $('#saleDetailsContent').html(`<p class="text-center text-muted">${Helpers.escapeHtml(msg)}</p>`));
     });
 
     const renderSaleDetails = (s) => {
@@ -553,27 +469,23 @@ const initSalesTable = () => {
                     <tr><th>Código</th><th>Producto</th><th>Tipo</th><th>Categoría</th><th class="text-end">Precio</th></tr>
                 </thead>
                 <tbody>
-        `;
+                    ${(s.prendas ?? s.items ?? []).map(it => {
+                        const codigo = it.codigo_prenda ?? it.codigo ?? 'N/A';
+                        const name = it.nombre_prenda ?? it.nombre ?? '';
+                        const tipo = it.tipo ?? it.tipo_prenda ?? 'N/A';
+                        const categoria = it.categoria ?? it.categoria_prenda ?? '';
+                        const precio = parseFloat(it.precio_unitario ?? it.subtotal ?? it.precio ?? 0);
 
-        (s.prendas ?? s.items ?? []).forEach(it => {
-            const codigo = it.codigo_prenda ?? it.codigo ?? 'N/A';
-            const name = it.nombre_prenda ?? it.nombre ?? '';
-            const tipo = it.tipo ?? it.tipo_prenda ?? 'N/A';
-            const categoria = it.categoria ?? it.categoria_prenda ?? '';
-            const precio = parseFloat(it.precio_unitario ?? it.subtotal ?? it.precio ?? 0);
-
-            html += `
-                <tr>
-                    <td><code>${Helpers.escapeHtml(codigo)}</code></td>
-                    <td>${Helpers.escapeHtml(name)}</td>
-                    <td>${Helpers.escapeHtml(tipo)}</td>
-                    <td><small class="text-muted">${Helpers.escapeHtml(categoria)}</small></td>
-                    <td class="text-end">${Helpers.formatCurrency(precio)}</td>
-                </tr>
-            `;
-        });
-
-        html += `
+                        return `
+                            <tr>
+                                <td><code>${Helpers.escapeHtml(codigo)}</code></td>
+                                <td>${Helpers.escapeHtml(name)}</td>
+                                <td>${Helpers.escapeHtml(tipo)}</td>
+                                <td><small class="text-muted">${Helpers.escapeHtml(categoria)}</small></td>
+                                <td class="text-end">${Helpers.formatCurrency(precio)}</td>
+                            </tr>
+                        `;
+                    }).join('')}
                 </tbody>
             </table>
             <div class="row">
@@ -607,7 +519,7 @@ const initSalesTable = () => {
                     .then(r => {
                         if (r?.success) {
                             Helpers.toast('success', r.message || 'Venta anulada');
-                            initSalesTable();
+                            salesTable.ajax.reload(null, false);
                             loadProducts();
                         } else {
                             Helpers.toast('error', r?.message || 'Error al anular venta');
@@ -632,17 +544,28 @@ const initSalesTable = () => {
     // BÚSQUEDA
     // ============================================
     $('#searchInput').on('keyup', Helpers.debounce(function() {
-        const q = $(this).val().toLowerCase();
-        $('#salesTableBody tr').each(function() {
-            const text = $(this).text().toLowerCase();
-            $(this).toggle(text.indexOf(q) !== -1);
-        });
+        salesTable.search($(this).val()).draw();
     }, 300));
 
     // ============================================
     // EVENTOS
     // ============================================
     $('#btnAddProduct').on('click', addProductRow);
+    
+    // ✅ VALIDACIÓN EN TIEMPO REAL DE REFERENCIA
+    $('#add_referencia').on('input blur', function() {
+        const val = $(this).val().trim();
+        if (val === '') {
+            $(this).removeClass('is-valid is-invalid');
+            return;
+        }
+        
+        if (Validations.REGEX.referenciaVenta.test(val)) {
+            $(this).addClass('is-valid').removeClass('is-invalid');
+        } else {
+            $(this).addClass('is-invalid').removeClass('is-valid');
+        }
+    });
     
     $('#add_iva').on('input', function() {
         const val = parseFloat($(this).val());
@@ -652,26 +575,15 @@ const initSalesTable = () => {
     });
 
     $('#addSaleModal, #viewSaleModal').on('hidden.bs.modal', function() {
-        $(this).find('form').each(function() {
-            if (this.reset) this.reset();
-            $(this).find('.is-valid, .is-invalid').removeClass('is-valid is-invalid');
-        });
-        
         if ($(this).attr('id') === 'addSaleModal') {
-            $('#productsContainer').empty();
-            cart = [];
-            pid = 0;
-            $('#noProductsAlert').show();
-            $fechaVencimientoGroup.hide();
-            $fechaVencimientoInput.prop('required', false).val('');
-            calcTotals();
+            resetSaleForm();
         }
     });
 
     // ============================================
-    // INICIALIZACIÓN
+    // INICIALIZAR
     // ============================================
-    initSalesTable();   // ✅ Inicializa la tabla con DataTables
+    initDataTable();
     loadClients();
     loadEmployees();
     loadProducts();

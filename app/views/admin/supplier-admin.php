@@ -19,8 +19,9 @@
         <div class="card mt-3">
             <div class="card-body p-3">
                 <div class="table-responsive">
-                    <table id="suppliersTable" class="table table-hover align-middle text-center">
-                        <thead>
+                    <table id="suppliersTable"
+                           class="table table-striped table-bordered table-hover align-middle text-center w-100">
+                        <thead class="table-light">
                             <tr>
                                 <th>RIF</th>
                                 <th>Tipo RIF</th>
@@ -180,8 +181,8 @@
 <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.3/dist/sweetalert2.all.min.js"></script>
-<script src="/BarkiOS/public/assets/js/suppliers-admin.js"></script>
-<script src="/BarkiOS/public/assets/js/logout.js"></script>
+<script type="module" src="/BarkiOS/public/assets/js/admin/suppliers-admin.js"></script>
+<script src="/BarkiOS/public/assets/js/admin/logout.js"></script>
 
 </body>
 </html>
