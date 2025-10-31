@@ -39,6 +39,13 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link <?php echo isActiveRoute('admin/employees') ? 'active' : ''; ?>" 
+                       href="/BarkiOS/admin/employees">
+                        <i class="fas fa-user-tie"></i>
+                        Empleados
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link <?php echo isActiveRoute('admin/users') ? 'active' : ''; ?>" 
                        href="/BarkiOS/admin/users">
                         <i class="fas fa-user-shield"></i>

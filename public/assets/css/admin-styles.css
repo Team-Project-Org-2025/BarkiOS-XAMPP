@@ -1,4 +1,6 @@
-/* Variables */
+/* ============================================
+   VARIABLES
+   ============================================ */
 :root {
   --primary-color: #2c3e50;
   --secondary-color: #f5f5f5;
@@ -13,7 +15,14 @@
   --info-color: #17a2b8;
 }
 
-/* General Styles - Wireframe Look */
+/* ============================================
+   GENERAL STYLES
+   ============================================ */
+html, body {
+  height: 100%;
+  overflow-y: auto;
+}
+
 body {
   font-family: "Poppins", sans-serif;
   background-color: var(--secondary-color);
@@ -53,7 +62,285 @@ body {
   font-weight: 600;
 }
 
-/* Login Page */
+/* ============================================
+   MAIN CONTENT AREA
+   ============================================ */
+.main-content {
+  margin-left: 250px;
+  padding: 2rem;
+  transition: all 0.3s;
+  overflow-y: auto;
+  max-height: calc(100vh - 80px);
+  padding-bottom: 2rem;
+}
+
+/* ============================================
+   MODALS
+   ============================================ */
+.modal-dialog-scrollable .modal-body {
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+}
+
+/* ============================================
+   STAT CARDS (Para todas las vistas)
+   ============================================ */
+.stat-card {
+  transition: transform 0.2s, box-shadow 0.2s;
+  border-left: 4px solid;
+  cursor: pointer;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15) !important;
+}
+
+.stat-card.primary { border-left-color: #0d6efd; }
+.stat-card.success { border-left-color: #198754; }
+.stat-card.warning { border-left-color: #ffc107; }
+.stat-card.danger { border-left-color: #dc3545; }
+.stat-card.info { border-left-color: #0dcaf0; }
+
+/* Dashboard Cards - Wireframe Style */
+.dashboard-card {
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  border-left: 4px solid var(--primary-color);
+}
+
+.dashboard-card.sales { border-left-color: var(--success-color); }
+.dashboard-card.orders { border-left-color: var(--warning-color); }
+.dashboard-card.products { border-left-color: var(--info-color); }
+.dashboard-card.users { border-left-color: var(--danger-color); }
+
+.dashboard-card .card-body {
+  padding: 1.5rem;
+}
+
+.dashboard-card .icon {
+  font-size: 2rem;
+  color: var(--light-gray);
+}
+
+.dashboard-card h5 {
+  font-size: 1rem;
+  color: var(--gray-color);
+}
+
+.dashboard-card h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 0;
+}
+
+/* ============================================
+   CUENTAS POR PAGAR - ESTILOS ESPECÍFICOS
+   ============================================ */
+.cuenta-row {
+  transition: all 0.2s ease;
+}
+
+.cuenta-row:hover {
+  background-color: #f8f9fa;
+  transform: translateX(2px);
+}
+
+.cuenta-row.vencida {
+  border-left: 4px solid #dc3545;
+}
+
+.cuenta-row.por-vencer {
+  border-left: 4px solid #ffc107;
+}
+
+.cuenta-row.al-dia {
+  border-left: 4px solid #198754;
+}
+
+.badge-estado {
+  font-size: 0.75rem;
+  padding: 0.35em 0.65em;
+}
+
+.pago-item {
+  background: #f8f9fa;
+  border-left: 3px solid #0d6efd;
+  padding: 10px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+}
+
+/* ============================================
+   CUENTAS POR COBRAR - ESTILOS ESPECÍFICOS
+   ============================================ */
+.badge-vigente { 
+  background-color: #28a745; 
+}
+
+.badge-por-vencer { 
+  background-color: #ffc107; 
+}
+
+.badge-vencido { 
+  background-color: #dc3545; 
+}
+
+.badge-pagado { 
+  background-color: #17a2b8; 
+}
+
+/* ============================================
+   DASHBOARD - ESTILOS ESPECÍFICOS
+   ============================================ */
+.stat-card.ventas { border-left-color: #28a745; }
+.stat-card.compras { border-left-color: #dc3545; }
+.stat-card.cuentas-cobrar { border-left-color: #ffc107; }
+.stat-card.cuentas-pagar { border-left-color: #17a2b8; }
+.stat-card.inventario { border-left-color: #6f42c1; }
+
+.chart-container {
+  position: relative;
+  height: 320px;
+}
+
+.filter-btn-group .btn {
+  border-radius: 20px;
+  padding: 0.4rem 1rem;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.filter-btn-group .btn.active {
+  transform: scale(1.05);
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.metric-icon {
+  font-size: 2.5rem;
+  opacity: 0.2;
+  position: absolute;
+  right: 15px;
+  top: 15px;
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255,255,255,0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: 0.375rem;
+}
+
+.trend-badge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.transaction-row {
+  transition: background-color 0.2s;
+}
+
+.transaction-row:hover {
+  background-color: #f8f9fa;
+}
+
+.period-indicator {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: #e9ecef;
+  border-radius: 15px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* ============================================
+   COMPRAS - ESTILOS ESPECÍFICOS
+   ============================================ */
+.prenda-row {
+  transition: all 0.3s ease;
+  border-left: 4px solid transparent;
+}
+
+.prenda-row:hover {
+  border-left-color: #0d6efd;
+  box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+}
+
+#supplierResults, 
+#editSupplierResults {
+  max-height: 300px;
+  overflow-y: auto;
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+  border-radius: 0.375rem;
+}
+
+.supplier-item:hover {
+  background-color: #f8f9fa;
+}
+
+.purchase-row {
+  transition: all 0.2s ease;
+}
+
+.purchase-row:hover {
+  background-color: #f8f9fa;
+  transform: translateX(2px);
+}
+
+.badge-pago {
+  font-size: 0.75rem;
+  padding: 0.35em 0.65em;
+}
+
+#prendasContainer, 
+#editPrendasContainer {
+  max-height: 500px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+/* ============================================
+   SCROLLBAR PERSONALIZADO
+   ============================================ */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.sidebar-sticky::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-sticky::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.15);
+  border-radius: 6px;
+}
+
+/* ============================================
+   LOGIN PAGE
+   ============================================ */
 .login-container {
   height: 100vh;
   display: flex;
@@ -78,7 +365,9 @@ body {
   color: var(--primary-color);
 }
 
-/* Sidebar */
+/* ============================================
+   SIDEBAR
+   ============================================ */
 .sidebar {
   position: fixed;
   top: 0;
@@ -108,38 +397,25 @@ body {
   min-height: 0;
 }
 
-/* === FORZAR color rojo al botón Cerrar Sesión === */
 .sidebar-footer a.nav-link {
-  color: #2c3e50 !important;          /* rojo base */
+  color: #2c3e50 !important;
   font-weight: 600;
   transition: all 0.3s ease;
 }
 
 .sidebar-footer a.nav-link i {
-  color: #2c3e50 !important;          /* icono rojo también */
+  color: #2c3e50 !important;
 }
 
 .sidebar-footer a.nav-link:hover {
-  color: #a71d2a !important;          /* rojo más oscuro */
-  background-color: rgba(220, 53, 69, 0.08); /* fondo leve */
+  color: #a71d2a !important;
+  background-color: rgba(220, 53, 69, 0.08);
 }
 
 .sidebar-footer a.nav-link:hover i {
-  color: #a71d2a !important;          /* icono rojo oscuro al hover */
+  color: #a71d2a !important;
 }
 
-
-/* Scrollbar personalizado (opcional) */
-.sidebar-sticky::-webkit-scrollbar {
-  width: 6px;
-}
-
-.sidebar-sticky::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.15);
-  border-radius: 6px;
-}
-
-/* Links del menú */
 .sidebar .nav-link {
   font-weight: 500;
   color: var(--gray-color);
@@ -165,63 +441,9 @@ body {
   text-align: center;
 }
 
-/* Main Content */
-.main-content {
-  margin-left: 250px;
-  padding: 2rem;
-  transition: all 0.3s;
-}
-
-/* Dashboard Cards - Wireframe Style */
-.dashboard-card {
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  border-left: 4px solid var(--primary-color);
-}
-
-.dashboard-card.sales {
-  border-left-color: var(--success-color);
-}
-
-.dashboard-card.orders {
-  border-left-color: var(--warning-color);
-}
-
-.dashboard-card.products {
-  border-left-color: var(--info-color);
-}
-
-.dashboard-card.users {
-  border-left-color: var(--danger-color);
-}
-
-.dashboard-card .card-body {
-  padding: 1.5rem;
-}
-
-.dashboard-card .icon {
-  font-size: 2rem;
-  color: var(--light-gray);
-}
-
-.dashboard-card h5 {
-  font-size: 1rem;
-  color: var(--gray-color);
-}
-
-.dashboard-card h2 {
-  font-size: 1.75rem;
-  font-weight: 700;
-  margin-bottom: 0;
-}
-
-/* Charts - Wireframe Style */
-.chart-container {
-  position: relative;
-  height: 300px;
-  width: 100%;
-}
-
+/* ============================================
+   CHARTS
+   ============================================ */
 .placeholder-chart {
   width: 100%;
   height: 100%;
@@ -234,7 +456,9 @@ body {
   color: var(--gray-color);
 }
 
-/* Tables - Wireframe Style */
+/* ============================================
+   TABLES
+   ============================================ */
 .table-responsive {
   border-radius: 4px;
   overflow: hidden;
@@ -278,7 +502,15 @@ body {
   border-radius: 6px;
 }
 
-/* Badges de Estatus */
+/* Tabla Detalle de Venta */
+#saleDetailsContent table {
+  width: 100% !important;
+  margin: 0;
+}
+
+/* ============================================
+   BADGES
+   ============================================ */
 .badge-status {
   padding: 0.4rem 0.6rem;
   font-size: 0.75rem;
@@ -301,7 +533,9 @@ body {
   color: var(--gray-color);
 }
 
-/* Forms */
+/* ============================================
+   FORMS
+   ============================================ */
 .form-label {
   font-weight: 500;
 }
@@ -317,7 +551,9 @@ body {
   border: 1px solid var(--border-color);
 }
 
-/* Color y Talla */
+/* ============================================
+   COLOR Y TALLA
+   ============================================ */
 .color-option {
   display: inline-block;
   width: 25px;
@@ -353,29 +589,9 @@ body {
   border-color: var(--primary-color);
 }
 
-/* Responsive */
-@media (max-width: 767.98px) {
-  .sidebar {
-    width: 0;
-    padding: 0;
-    overflow: hidden;
-  }
-
-  .sidebar.show {
-    width: 250px;
-  }
-
-  .main-content {
-    margin-left: 0;
-    padding: 1rem;
-  }
-
-  .navbar-toggler {
-    display: block;
-  }
-}
-
-/* Navbar */
+/* ============================================
+   NAVBAR
+   ============================================ */
 .navbar {
   background-color: var(--white-color);
   box-shadow: none;
@@ -428,36 +644,9 @@ body {
   width: 250px;
 }
 
-@media (max-width: 767.98px) {
-  .search-container {
-    width: 100%;
-  }
-}
-
-/* Utilities */
-.text-primary {
-  color: var(--primary-color) !important;
-}
-
-.bg-primary {
-  background-color: var(--primary-color) !important;
-}
-
-.border-primary {
-  border-color: var(--primary-color) !important;
-}
-
-/* Wireframe Placeholder */
-.placeholder-img {
-  background-color: var(--light-gray);
-  border: 1px dashed var(--gray-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--gray-color);
-}
-
-/* Cuentas por cobrar */
+/* ============================================
+   CLIENT RESULTS (Autocomplete)
+   ============================================ */
 #clientResults {
   max-height: 200px;
   overflow-y: auto;
@@ -514,9 +703,65 @@ body {
   }
 }
 
+/* ============================================
+   UTILITIES
+   ============================================ */
+.text-primary {
+  color: var(--primary-color) !important;
+}
 
-/* Tabla Detalle de Venta */
-#saleDetailsContent table {
-  width: 100% !important;
-  margin: 0;
+.bg-primary {
+  background-color: var(--primary-color) !important;
+}
+
+.border-primary {
+  border-color: var(--primary-color) !important;
+}
+
+.placeholder-img {
+  background-color: var(--light-gray);
+  border: 1px dashed var(--gray-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-color);
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+@media (max-width: 767.98px) {
+  .sidebar {
+    width: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .sidebar.show {
+    width: 250px;
+  }
+
+  .main-content {
+    margin-left: 0;
+    padding: 1rem;
+  }
+
+  .navbar-toggler {
+    display: block;
+  }
+
+  .search-container {
+    width: 100%;
+  }
+
+  .filter-btn-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .filter-btn-group .btn {
+    flex: 1 1 auto;
+    min-width: calc(50% - 0.25rem);
+  }
 }
