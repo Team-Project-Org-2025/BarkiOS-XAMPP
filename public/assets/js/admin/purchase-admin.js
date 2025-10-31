@@ -17,6 +17,12 @@ $(document).ready(function() {
         Fiesta: ["Vestido", "Falda", "Blusa", "Enterizo"]
     };
 
+    const reloadPurchases = () => {
+        if (purchasesTable) {
+            purchasesTable.ajax.reload(() => updateStats(), false);
+        }
+    };
+
     // ============================================
     // CARGAR COMPRAS
     // ============================================
@@ -31,7 +37,17 @@ const initPurchaseTable = () => {
             url: `${baseUrl}?action=get_purchases`,
             method: 'GET',
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
-            dataSrc: data => data.success ? data.data : []
+            dataSrc: data => {
+                if (data.success) {
+                    allPurchases = data.data;   // ✅ Guarda las compras globalmente
+                    updateStats();              // ✅ Actualiza estadísticas con esos datos
+                    return data.data;
+                } else {
+                    allPurchases = [];
+                    updateStats();              // ✅ Limpia estadísticas si no hay datos
+                    return [];
+                }
+            }
         },
         columns: [
             { 
@@ -86,34 +102,44 @@ const initPurchaseTable = () => {
     });
 };
 
-// ✅ Para recargar la tabla sin perder paginación
-const reloadPurchases = () => {
-    if (purchasesTable) purchasesTable.ajax.reload(null, false);
-};
 
 
     // ============================================
     // ACTUALIZAR ESTADÍSTICAS
     // ============================================
-    const updateStats = () => {
-        let totalPagado = 0, totalPendiente = 0, montoTotal = 0;
+const updateStats = () => {
+    let totalPagado = 0, totalPendiente = 0, montoTotal = 0;
+    let totalCompras = allPurchases.length;
+    let valorInventario = 0;
 
-        allPurchases.forEach(p => {
-            totalPagado += parseFloat(p.total_pagado || 0);
-            totalPendiente += parseFloat(p.saldo_pendiente || 0);
-            montoTotal += parseFloat(p.monto_total || 0);
-        });
+    allPurchases.forEach(p => {
+        totalPagado += parseFloat(p.total_pagado || 0);
+        totalPendiente += parseFloat(p.saldo_pendiente || 0);
+        montoTotal += parseFloat(p.monto_total || 0);
 
-        $('#statMontoPagado').text(`Pagado: ${Helpers.formatCurrency(totalPagado)}`);
-        $('#statSaldoPendiente').text(Helpers.formatCurrency(totalPendiente));
-        $('#statMontoTotal').text(Helpers.formatCurrency(montoTotal));
+        // Si tu backend devuelve "valor_inventario" por compra, úsalo
+        // o calcula usando prendas disponibles * precio_costo promedio
+        if (p.valor_inventario) {
+            valorInventario += parseFloat(p.valor_inventario);
+        } else if (p.monto_total && p.prendas_disponibles) {
+            valorInventario += (parseFloat(p.monto_total) / (p.total_prendas || 1)) * (p.prendas_disponibles || 0);
+        }
+    });
 
-        const porcentaje = montoTotal > 0 ? (totalPagado / montoTotal) * 100 : 0;
-        const offset = 220 - (220 * porcentaje / 100);
+    // Actualizar las estadísticas visuales
+    $('#statTotalCompras').text(totalCompras);
+    $('#statValorInventario').text(Helpers.formatCurrency(valorInventario));
 
-        $('#progressBar').css('stroke-dashoffset', offset);
-        $('#progressPercent').text(Math.round(porcentaje) + '%');
-    };
+    $('#statMontoPagado').text(`Pagado: ${Helpers.formatCurrency(totalPagado)}`);
+    $('#statSaldoPendiente').text(Helpers.formatCurrency(totalPendiente));
+    $('#statMontoTotal').text(Helpers.formatCurrency(montoTotal));
+
+    const porcentaje = montoTotal > 0 ? (totalPagado / montoTotal) * 100 : 0;
+    const offset = 220 - (220 * porcentaje / 100);
+    $('#progressBar').css('stroke-dashoffset', offset);
+    $('#progressPercent').text(Math.round(porcentaje) + '%');
+};
+
 
     // ============================================
     // GESTIÓN DE PRENDAS
