@@ -1,4 +1,5 @@
 $(document).ready(function() {
+  // Initialize AOS animation library
   AOS.init({
     duration: 800,
     easing: "ease-in-out",
@@ -6,165 +7,142 @@ $(document).ready(function() {
     mirror: false,
   });
 
+  // Hide preloader when page is loaded
   setTimeout(function() {
-    const $preloader = $("#preloader");
-    if ($preloader.length) {
-      $preloader.css({
-        opacity: "0",
-        transition: "opacity 0.5s ease"
-      });
+    $("#preloader").css({
+      opacity: "0",
+      transition: "opacity 0.5s ease"
+    });
 
-      setTimeout(function() {
-        $preloader.hide();
-      }, 500);
-    }
+    setTimeout(function() {
+      $("#preloader").css("display", "none");
+    }, 500);
   }, 1000);
 
-  const $backToTopButton = $("#backToTop");
+  // Back to top button
+  $(window).on("scroll", function() {
+    if ($(window).scrollTop() > 300) {
+      $("#backToTop").addClass("active");
+    } else {
+      $("#backToTop").removeClass("active");
+    }
+  });
 
-  if ($backToTopButton.length) {
-    $(window).on("scroll", function() {
-      if ($(window).scrollTop() > 300) {
-        $backToTopButton.addClass("active");
-      } else {
-        $backToTopButton.removeClass("active");
-      }
-    });
+  $("#backToTop").on("click", function(e) {
+    e.preventDefault();
+    $("html, body").animate({
+      scrollTop: 0
+    }, 600);
+  });
 
-    $backToTopButton.on("click", function(e) {
-      e.preventDefault();
-      $("html, body").animate({
-        scrollTop: 0
-      }, 500);
-    });
-  }
-
+  // Testimonial Slider
   const $testimonialItems = $(".testimonial-item");
-  const $testimonialPrev = $(".testimonial-prev");
-  const $testimonialNext = $(".testimonial-next");
-
+  
   if ($testimonialItems.length > 0) {
     let currentTestimonial = 0;
 
-    $testimonialItems.each(function(index) {
-      if (index !== 0) {
-        $(this).hide();
-      }
-    });
+    // Hide all testimonials except the first one
+    $testimonialItems.not(":first").hide();
 
-    $testimonialPrev.on("click", function() {
+    // Previous testimonial
+    $(".testimonial-prev").on("click", function() {
       $testimonialItems.eq(currentTestimonial).hide();
       currentTestimonial = (currentTestimonial - 1 + $testimonialItems.length) % $testimonialItems.length;
       $testimonialItems.eq(currentTestimonial).show();
     });
 
-    $testimonialNext.on("click", function() {
+    // Next testimonial
+    $(".testimonial-next").on("click", function() {
       $testimonialItems.eq(currentTestimonial).hide();
       currentTestimonial = (currentTestimonial + 1) % $testimonialItems.length;
       $testimonialItems.eq(currentTestimonial).show();
     });
   }
 
-  const $quickViewButtons = $(".quick-view");
-  const $quickViewModal = $("#quickViewModal");
+  // Quick View Modal
+  $(document).on("click", ".quick-view", function() {
+    const productId = $(this).data("product-id");
+    const $productCard = $(this).closest(".product-card");
+    const productTitle = $productCard.find("h4").text();
+    const productPrice = $productCard.find(".product-price").text();
+    const productCategory = $productCard.find(".product-category").text();
+    const productImage = $productCard.find("img").attr("src");
 
-  if ($quickViewButtons.length > 0 && $quickViewModal.length) {
-    const $quickViewTitle = $("#quickViewTitle");
-    const $quickViewPrice = $("#quickViewPrice");
-    const $quickViewCategory = $("#quickViewCategory");
-    const $quickViewCategoryText = $("#quickViewCategoryText");
-    const $quickViewImage = $("#quickViewImage").find("img");
-    const $quickViewSku = $("#quickViewSku");
-
-    $quickViewButtons.on("click", function() {
-      const productId = $(this).attr("data-product-id");
-      const $productCard = $(this).closest(".product-card");
-      const productTitle = $productCard.find("h4").text();
-      const productPrice = $productCard.find(".product-price").text();
-      const productCategory = $productCard.find(".product-category").text();
-      const productImage = $productCard.find("img").attr("src");
-
-      $quickViewTitle.text(productTitle);
-      $quickViewPrice.text(productPrice);
-      $quickViewCategory.text(productCategory);
-      $quickViewCategoryText.text(productCategory);
-      $quickViewImage.attr("src", productImage).attr("alt", productTitle);
-      $quickViewSku.text("GB-" + productId + "-" + Math.floor(Math.random() * 1000));
-
-      const modal = new bootstrap.Modal($quickViewModal[0]);
-      modal.show();
+    // Set modal content
+    $("#quickViewTitle").text(productTitle);
+    $("#quickViewPrice").text(productPrice);
+    $("#quickViewCategory").text(productCategory);
+    $("#quickViewCategoryText").text(productCategory);
+    $("#quickViewImage img").attr({
+      src: productImage,
+      alt: productTitle
     });
+    $("#quickViewSku").text("GB-" + productId + "-" + Math.floor(Math.random() * 1000));
 
-    const $decrementBtn = $("#decrementBtn");
-    const $incrementBtn = $("#incrementBtn");
-    const $quantityInput = $("#quantityInput");
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById("quickViewModal"));
+    modal.show();
+  });
 
-    if ($decrementBtn.length && $incrementBtn.length && $quantityInput.length) {
-      $decrementBtn.on("click", function() {
-        let value = parseInt($quantityInput.val());
-        if (value > 1) {
-          value--;
-          $quantityInput.val(value);
-        }
-      });
-
-      $incrementBtn.on("click", function() {
-        let value = parseInt($quantityInput.val());
-        value++;
-        $quantityInput.val(value);
-      });
+  // Quantity increment/decrement
+  $("#decrementBtn").on("click", function() {
+    const $input = $("#quantityInput");
+    let value = parseInt($input.val());
+    if (value > 1) {
+      value--;
+      $input.val(value);
     }
-  }
+  });
 
-  const $addToCartButtons = $(".add-to-cart");
+  $("#incrementBtn").on("click", function() {
+    const $input = $("#quantityInput");
+    let value = parseInt($input.val());
+    value++;
+    $input.val(value);
+  });
 
-  if ($addToCartButtons.length > 0) {
-    $addToCartButtons.on("click", function() {
-      const productId = $(this).attr("data-product-id");
-      const $productCard = $(this).closest(".product-card");
-      const productTitle = $productCard.find("h4").text();
+  // Add to Cart
+  $(document).on("click", ".add-to-cart", function() {
+    const productId = $(this).data("product-id");
+    const $productCard = $(this).closest(".product-card");
+    const productTitle = $productCard.find("h4").text();
 
-      alert(`"${productTitle}" ha sido añadido al carrito.`);
+    // Show notification
+    alert(`"${productTitle}" ha sido añadido al carrito.`);
 
+    // Update cart count
+    const $cartBadge = $(".fa-shopping-bag").next(".badge");
+    if ($cartBadge.length) {
+      const count = parseInt($cartBadge.text());
+      $cartBadge.text(count + 1);
+    }
+  });
 
-      const $cartBadge = $(".fa-shopping-bag").siblings(".badge");
-      if ($cartBadge.length) {
-        const count = parseInt($cartBadge.text());
-        $cartBadge.text(count + 1);
-      }
-    });
-  }
+  // Add to Wishlist
+  $(document).on("click", ".add-to-wishlist", function() {
+    const $icon = $(this).find("i");
 
-  const $addToWishlistButtons = $(".add-to-wishlist");
+    if ($icon.hasClass("far")) {
+      $icon.removeClass("far").addClass("fas");
+      alert("Producto añadido a favoritos.");
+    } else {
+      $icon.removeClass("fas").addClass("far");
+      alert("Producto eliminado de favoritos.");
+    }
+  });
 
-  if ($addToWishlistButtons.length > 0) {
-    $addToWishlistButtons.on("click", function() {
-      const $icon = $(this).find("i");
+  // Newsletter Form
+  $("#newsletterForm").on("submit", function(e) {
+    e.preventDefault();
+    const $emailInput = $(this).find('input[type="email"]');
 
-      if ($icon.hasClass("far")) {
-        $icon.removeClass("far").addClass("fas");
-        alert("Producto añadido a favoritos.");
-      } else {
-        $icon.removeClass("fas").addClass("far");
-        alert("Producto eliminado de favoritos.");
-      }
-    });
-  }
+    if ($emailInput.val().trim() !== "") {
+      alert("¡Gracias por suscribirte a nuestro newsletter!");
+      $emailInput.val("");
+    }
+  });
 
-  const $newsletterForm = $("#newsletterForm");
-
-  if ($newsletterForm.length) {
-    $newsletterForm.on("submit", function(e) {
-      e.preventDefault();
-      const $emailInput = $(this).find('input[type="email"]');
-
-      if ($emailInput.val().trim() !== "") {
-        alert("¡Gracias por suscribirte a nuestro newsletter!");
-        $emailInput.val("");
-      }
-    });
-  }
-
+  // Load Featured Products
   const $featuredContainer = $("#featuredProducts");
 
   if ($featuredContainer.length) {
@@ -205,13 +183,16 @@ $(document).ready(function() {
     });
   }
 
+  // Load Latest Products
   const $latestContainer = $("#latest-products");
 
   if ($latestContainer.length) {
     $.ajax({
       url: "/BarkiOS/app/controllers/front/ProductsApiController.php",
       method: "POST",
-      data: { limit: 8 },
+      data: {
+        limit: 8
+      },
       dataType: "json",
       success: function(data) {
         if (!data.success || data.products.length === 0) {
