@@ -65,7 +65,7 @@
 
     <!-- Tabla -->
     <div class="card shadow-sm border-0">
-      <div class="card-body p-0">
+      <div class="card-body p-3">
         <div class="table-responsive">
           <table id="salesTable" class="table table-hover align-middle mb-0 table-modern">
             <thead class="table-light">
