@@ -65,7 +65,7 @@
 
     <!-- Tabla -->
     <div class="card shadow-sm border-0">
-      <div class="card-body p-0">
+      <div class="card-body p-3">
         <div class="table-responsive">
           <table id="salesTable" class="table table-hover align-middle mb-0 table-modern">
             <thead class="table-light">
@@ -142,11 +142,6 @@
 
           <div class="row g-3 mb-3">
             <div class="col-12 col-md-6">
-              <label class="form-label fw-bold">IVA (%)</label>
-              <input type="number" id="add_iva" class="form-control" name="iva_porcentaje" 
-                     min="0" max="100" step="0.01" value="16.00">
-            </div>
-            <div class="col-12 col-md-6">
               <label class="form-label fw-bold">Observaciones</label>
               <textarea name="observaciones" class="form-control" rows="1"></textarea>
             </div>
@@ -181,16 +176,16 @@
               <div class="card bg-light border-0">
                 <div class="card-body">
                   <div class="d-flex justify-content-between mb-2">
-                    <span>Subtotal:</span>
+                    <span>Subtotal (Base sin IVA):</span>
                     <strong id="summary_subtotal">$0.00</strong>
                   </div>
                   <div class="d-flex justify-content-between mb-2">
-                    <span>IVA (<span id="iva_percentage">16</span>%):</span>
+                    <span>IVA (16%):</span>
                     <strong id="summary_iva">$0.00</strong>
                   </div>
                   <hr class="my-2">
                   <div class="d-flex justify-content-between">
-                    <span class="fs-5 fw-bold">Total:</span>
+                    <span class="fs-5 fw-bold">Total a Pagar:</span>
                     <strong class="fs-5 text-primary" id="summary_total">$0.00</strong>
                   </div>
                   <div class="d-flex justify-content-between mt-1">

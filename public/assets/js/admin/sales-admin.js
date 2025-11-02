@@ -78,7 +78,6 @@ $(document).ready(function() {
         $('#completedSales').text(completed);
     };
 
-    //Cargar datos iniciales
     const loadClients = () => {
         Ajax.get(`${baseUrl}?action=get_clients`)
             .then(r => {
@@ -119,7 +118,6 @@ $(document).ready(function() {
             });
     };
 
-
     const addProductRow = () => {
         if (!products || products.length === 0) {
             Helpers.toast('info', 'No hay productos disponibles');
@@ -131,33 +129,33 @@ $(document).ready(function() {
         const rowId = `prod_${pid}`;
 
         const productSelect = products.map(p => {
-            const price = parseFloat(p.precio ?? 0);
+            const priceWithIva = parseFloat(p.precio ?? 0); 
+            const priceBase = priceWithIva / 1.16; 
             const codigo = p.codigo_prenda ?? '';
             const name = p.nombre ?? `ID:${p.prenda_id || ''}`;
-            return `<option value="${Helpers.escapeHtml(codigo)}" data-price="${price}" data-name="${Helpers.escapeHtml(name)}">
-                ${Helpers.escapeHtml(codigo)} - ${Helpers.escapeHtml(name)} - ${Helpers.formatCurrency(price)}
+            
+            return `<option value="${Helpers.escapeHtml(codigo)}" data-price="${priceWithIva}" data-name="${Helpers.escapeHtml(name)}">
+                ${Helpers.escapeHtml(codigo)} - ${Helpers.escapeHtml(name)} - ${Helpers.formatCurrency(priceBase)} + IVA
             </option>`;
         }).join('');
 
         const html = `
             <div class="product-row mb-3 border rounded p-3" id="${rowId}">
                 <div class="row g-2 align-items-center">
-                    <div class="col-12 col-md-6">
+                    <div class="col-12 col-md-5">
                         <label class="form-label small">Producto</label>
                         <select class="form-select form-select-sm product-select" data-row="${rowId}">
                             <option value="">Seleccione...</option>
                             ${productSelect}
                         </select>
                     </div>
-                    <div class="col-6 col-md-3">
+                    <div class="col-6 col-md-2 text-end">
                         <label class="form-label small">Precio</label>
-                        <input type="number" step="0.01" class="form-control form-control-sm product-price" data-row="${rowId}" readonly>
+                        <div class="fw-bold text-primary product-subtotal" data-row="${rowId}">
+                            ${Helpers.formatCurrency(0)}
+                        </div>
                     </div>
-                    <div class="col-4 col-md-2">
-                        <label class="form-label small">Subtotal</label>
-                        <div class="fw-bold text-primary product-subtotal" data-row="${rowId}">${Helpers.formatCurrency(0)}</div>
-                    </div>
-                    <div class="col-2 col-md-1 text-end">
+                    <div class="col-6 col-md-1 text-end">
                         <label class="form-label small d-block">&nbsp;</label>
                         <button type="button" class="btn btn-sm btn-danger remove-product" data-row="${rowId}">
                             <i class="fas fa-trash"></i>
@@ -165,6 +163,7 @@ $(document).ready(function() {
                     </div>
                 </div>
                 <input type="hidden" class="product-code" data-row="${rowId}">
+                <input type="hidden" class="product-price-total" data-row="${rowId}">
             </div>
         `;
 
@@ -174,7 +173,7 @@ $(document).ready(function() {
             const r = $(this).data('row');
             const codigo = $(this).val();
             const $opt = $(this).find('option:selected');
-            const price = parseFloat($opt.data('price') || 0);
+            const priceWithIva = parseFloat($opt.data('price') || 0);
             const name = $opt.data('name') || '';
             
             if (codigo && cart.some(c => c.codigo_prenda === codigo && c.id !== r)) {
@@ -184,7 +183,7 @@ $(document).ready(function() {
                 return;
             }
 
-            updateProductRow(r, codigo, name, price);
+            updateProductRow(r, codigo, name, priceWithIva);
         });
 
         $(`#${rowId} .remove-product`).on('click', function() {
@@ -194,8 +193,20 @@ $(document).ready(function() {
         calcTotals();
     };
 
-    const updateProductRow = (rowId, codigo, name, price) => {
-        const item = { id: rowId, codigo_prenda: codigo, name: name, price: price, subtotal: price };
+    const updateProductRow = (rowId, codigo, name, priceWithIva) => {
+        const priceBase = priceWithIva / 1.16;
+        const ivaAmount = priceWithIva - priceBase;
+        
+        const item = { 
+            id: rowId, 
+            codigo_prenda: codigo, 
+            name: name, 
+            price: priceWithIva,        
+            priceBase: priceBase,      
+            iva: ivaAmount,             
+            subtotal: priceWithIva      
+        };
+        
         const existingIndex = cart.findIndex(c => c.id === rowId);
         
         if (existingIndex >= 0) {
@@ -205,8 +216,11 @@ $(document).ready(function() {
         }
 
         $(`#${rowId} .product-code`).val(codigo);
-        $(`#${rowId} .product-price`).val(price ? price.toFixed(2) : '');
-        $(`#${rowId} .product-subtotal`).text(Helpers.formatCurrency(price));
+        $(`#${rowId} .product-price-base`).val(priceBase ? priceBase.toFixed(2) : '');
+        $(`#${rowId} .product-iva`).val(ivaAmount ? ivaAmount.toFixed(2) : '');
+        $(`#${rowId} .product-subtotal`).text(Helpers.formatCurrency(priceWithIva));
+        $(`#${rowId} .product-price-total`).val(priceWithIva);
+        
         calcTotals();
     };
 
@@ -218,24 +232,23 @@ $(document).ready(function() {
     };
 
     const calcTotals = () => {
-        const subtotal = cart.reduce((acc, i) => acc + (parseFloat(i.subtotal || 0) || 0), 0);
-        const ivaPct = parseFloat($('#add_iva').val() || IVA_DEFAULT);
-        const ivaAmount = subtotal * (ivaPct / 100);
-        const total = subtotal + ivaAmount;
+
+        const totalConIva = cart.reduce((acc, i) => acc + (parseFloat(i.price || 0) || 0), 0);
+        
+        const subtotal = totalConIva / 1.16;
+        
+        const ivaAmount = totalConIva - subtotal;
 
         $('#summary_subtotal').text(Helpers.formatCurrency(subtotal));
         $('#summary_iva').text(Helpers.formatCurrency(ivaAmount));
-        $('#summary_total').text(Helpers.formatCurrency(total));
+        $('#summary_total').text(Helpers.formatCurrency(totalConIva));
         
         if (typeof DOLAR_BCV_RATE !== 'undefined') {
-            const totalBs = total * DOLAR_BCV_RATE;
+            const totalBs = totalConIva * DOLAR_BCV_RATE;
             $('#summary_total_bs').text(Helpers.formatCurrencyBs(totalBs));
         }
-        
-        $('#iva_percentage').text(ivaPct.toFixed(2));
     };
 
-    //Control de fecha de vencimiento
     const $tipoVentaSelect = $('[name="tipo_venta"]');
     const $clienteSelect = $('#add_cliente');
     const $fechaVencimientoGroup = $('#fechaVencimientoGroup');
@@ -298,7 +311,6 @@ $(document).ready(function() {
         }
     });
 
-    //Guardar
     $('#addSaleForm').on('submit', function(e) {
         e.preventDefault();
 
@@ -312,7 +324,6 @@ $(document).ready(function() {
             return;
         }
 
-        //Validar
         if (referencia && !Validations.REGEX.referenciaVenta.test(referencia)) {
             Helpers.toast('error', 'Referencia inválida (máx 15 caracteres, solo letras, números y guión)');
             $('#add_referencia').addClass('is-invalid').focus();
@@ -351,9 +362,10 @@ $(document).ready(function() {
             }
         }
 
+        // Enviar precio CON IVA al backend
         const productosPayload = cart.map(i => ({
             codigo_prenda: i.codigo_prenda,
-            precio_unitario: i.price
+            precio_unitario: i.price  // CON IVA
         }));
 
         const data = {
@@ -361,7 +373,7 @@ $(document).ready(function() {
             empleado_ced: empleado,
             tipo_venta: tipo,
             referencia: referencia,
-            iva_porcentaje: $('#add_iva').val() || IVA_DEFAULT,
+            iva_porcentaje: 16.00,
             observaciones: $('[name="observaciones"]').val() || '',
             productos: JSON.stringify(productosPayload)
         };
@@ -401,7 +413,6 @@ $(document).ready(function() {
         calcTotals();
     };
 
-    //Ver detalles
     $(document).on('click', '.btn-view', function() {
         const id = $(this).data('id');
         if (!id) return;
@@ -444,9 +455,15 @@ $(document).ready(function() {
                 </div>
             </div>
             <h6 class="border-bottom pb-2">Productos</h6>
-            <table class="table table-sm">
+            <table class="table table-sm table-striped">
                 <thead>
-                    <tr><th>Código</th><th>Producto</th><th>Tipo</th><th>Categoría</th><th class="text-end">Precio</th></tr>
+                    <tr>
+                        <th>Código</th>
+                        <th>Producto</th>
+                        <th>Tipo</th>
+                        <th>Categoria</th>
+                        <th class="text-end">Total</th>
+                    </tr>
                 </thead>
                 <tbody>
                     ${(s.prendas ?? s.items ?? []).map(it => {
@@ -454,15 +471,17 @@ $(document).ready(function() {
                         const name = it.nombre_prenda ?? it.nombre ?? '';
                         const tipo = it.tipo ?? it.tipo_prenda ?? 'N/A';
                         const categoria = it.categoria ?? it.categoria_prenda ?? '';
-                        const precio = parseFloat(it.precio_unitario ?? it.subtotal ?? it.precio ?? 0);
-
+                        
+                        const precioConIva = parseFloat(it.precio_con_iva ?? it.precio_unitario ?? 0);
+                        const precioBase = precioConIva / 1.16;
+                        const ivaProducto = precioConIva - precioBase;
                         return `
                             <tr>
                                 <td><code>${Helpers.escapeHtml(codigo)}</code></td>
                                 <td>${Helpers.escapeHtml(name)}</td>
-                                <td>${Helpers.escapeHtml(tipo)}</td>
+                                <td><small>${Helpers.escapeHtml(tipo)}</small></td>
                                 <td><small class="text-muted">${Helpers.escapeHtml(categoria)}</small></td>
-                                <td class="text-end">${Helpers.formatCurrency(precio)}</td>
+                                <td class="text-end"><strong>${Helpers.formatCurrency(precioConIva)}</strong></td>
                             </tr>
                         `;
                     }).join('')}
@@ -484,7 +503,6 @@ $(document).ready(function() {
         $('#saleDetailsContent').html(html);
     };
 
-    //Anular venta
     $(document).on('click', '.btn-cancel', function() {
         const ventaId = $(this).data('id');
         if (!ventaId) return;
@@ -509,22 +527,18 @@ $(document).ready(function() {
         );
     });
 
-    //Generar pdf
     $(document).on('click', '.btn-pdf', function() {
         const ventaId = $(this).data('id');
         if (!ventaId) return;
         window.open(`${baseUrl}?action=generate_pdf&venta_id=${ventaId}`, '_blank');
     });
 
-    //Busqueda
     $('#searchInput').on('keyup', Helpers.debounce(function() {
         salesTable.search($(this).val()).draw();
     }, 300));
 
-    //Eventos
     $('#btnAddProduct').on('click', addProductRow);
     
-    //Validacion
     $('#add_referencia').on('input blur', function() {
         const val = $(this).val().trim();
         if (val === '') {
@@ -537,13 +551,6 @@ $(document).ready(function() {
         } else {
             $(this).addClass('is-invalid').removeClass('is-valid');
         }
-    });
-    
-    $('#add_iva').on('input', function() {
-        const val = parseFloat($(this).val());
-        $(this).toggleClass('is-invalid', isNaN(val) || val < 0 || val > 100);
-        $(this).toggleClass('is-valid', !isNaN(val) && val >= 0 && val <= 100);
-        calcTotals();
     });
 
     $('#addSaleModal, #viewSaleModal').on('hidden.bs.modal', function() {

@@ -60,11 +60,14 @@ class Sale extends Database
                    p.tipo, 
                    p.categoria,
                    p.descripcion,
-                   dv.precio_unitario as subtotal
+                   dv.precio_unitario as precio_con_iva,
+                   ROUND(dv.precio_unitario / 1.16, 2) as precio_base,
+                   ROUND(dv.precio_unitario - (dv.precio_unitario / 1.16), 2) as iva_producto
             FROM detalle_venta dv
             JOIN prendas p ON p.codigo_prenda = dv.codigo_prenda
             WHERE dv.venta_id = :id
         ");
+
         $stmt->execute([':id' => $id]);
         $venta['prendas'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -87,9 +90,12 @@ public function addSale($data)
             $subtotal += floatval($p['precio_unitario']);
         }
 
-        $ivaPorcentaje = $data['iva_porcentaje'] ?? self::IVA_DEFAULT;
-        $montoIva = round($subtotal * ($ivaPorcentaje / 100), 2);
-        $montoTotal = round($subtotal + $montoIva, 2);
+        $subtotalSinIva = round($subtotal / 1.16, 2);
+        $ivaPorcentaje = 16.00;
+        $montoIva = round($subtotalSinIva * ($ivaPorcentaje / 100), 2);
+        $montoTotal = round($subtotalSinIva + $montoIva, 2);
+
+        $subtotal = $subtotalSinIva;
 
         if (!empty($data['referencia'])) {
             $referencia = trim($data['referencia']);
