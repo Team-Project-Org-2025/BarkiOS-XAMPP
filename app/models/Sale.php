@@ -7,10 +7,23 @@ use Exception;
 
 class Sale extends Database
 {
-    private const IVA_DEFAULT = 16.00;
+    // ==================== CONSTANTES ====================
+    private const IVA_RATE = 16.00;
+    private const IVA_MULTIPLIER = 1.16;
+    
+    private const ESTADO_PENDIENTE = 'pendiente';
+    private const ESTADO_COMPLETADA = 'completada';
+    private const ESTADO_CANCELADA = 'cancelada';
+    
+    private const TIPO_CONTADO = 'contado';
+    private const TIPO_CREDITO = 'credito';
+    
+    private const REFERENCE_PREFIX = 'VEN-';
+    private const CREDIT_REFERENCE_PREFIX = 'CRE-';
 
-
-    public function getAll()
+    // ==================== SECCIÓN 1: CONSULTAS BÁSICAS ====================
+    
+    public function getAll(): array
     {
         $sql = "
             SELECT v.*, 
@@ -21,15 +34,17 @@ class Sale extends Database
             LEFT JOIN clientes c ON v.cliente_ced = c.cliente_ced
             LEFT JOIN empleados e ON v.empleado_ced = e.empleado_ced
             LEFT JOIN detalle_venta dv ON v.venta_id = dv.venta_id
-            WHERE v.estado_venta != 'cancelada'
+            WHERE v.estado_venta != :estado_cancelada
             GROUP BY v.venta_id
             ORDER BY v.fecha DESC
         ";
-        $stmt = $this->db->query($sql);
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':estado_cancelada' => self::ESTADO_CANCELADA]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getById($id)
+    public function getById(int $id): ?array
     {
         $stmt = $this->db->prepare("
             SELECT v.*, 
@@ -44,11 +59,13 @@ class Sale extends Database
             LEFT JOIN empleados e ON v.empleado_ced = e.empleado_ced
             WHERE v.venta_id = :id
         ");
+        
         $stmt->execute([':id' => $id]);
-        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result ?: null;
     }
 
-    public function getSaleWithDetails($id)
+    public function getSaleWithDetails(int $id): ?array
     {
         $venta = $this->getById($id);
         if (!$venta) return null;
@@ -60,90 +77,331 @@ class Sale extends Database
                    p.tipo, 
                    p.categoria,
                    p.descripcion,
-                   dv.precio_unitario as subtotal
+                   dv.precio_unitario as precio_con_iva,
+                   (dv.precio_unitario / :iva_multiplier) as precio_base,
+                   (dv.precio_unitario - (dv.precio_unitario / :iva_multiplier)) as iva_producto
             FROM detalle_venta dv
             JOIN prendas p ON p.codigo_prenda = dv.codigo_prenda
             WHERE dv.venta_id = :id
         ");
-        $stmt->execute([':id' => $id]);
-        $venta['prendas'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+        $stmt->execute([
+            ':id' => $id,
+            ':iva_multiplier' => self::IVA_MULTIPLIER
+        ]);
+        
+        $venta['prendas'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $venta['pagos'] = $this->getPaymentsBySale($id);
         $venta['total_pagado'] = array_sum(array_column($venta['pagos'], 'monto'));
         
         return $venta;
     }
 
-
-public function addSale($data)
-{
-    try {
-        $this->db->beginTransaction();
-
-        $this->validateProductsAvailability($data['productos']);
-
-        $subtotal = 0;
-        foreach ($data['productos'] as $p) {
-            $subtotal += floatval($p['precio_unitario']);
-        }
-
-        $ivaPorcentaje = $data['iva_porcentaje'] ?? self::IVA_DEFAULT;
-        $montoIva = round($subtotal * ($ivaPorcentaje / 100), 2);
-        $montoTotal = round($subtotal + $montoIva, 2);
-
-        if (!empty($data['referencia'])) {
-            $referencia = trim($data['referencia']);
-        } else {
-            $referencia = $this->generateReference();
-        }
-
+    public function getPaymentsBySale(int $ventaId): array
+    {
         $stmt = $this->db->prepare("
-            INSERT INTO ventas (
-                referencia, empleado_ced, cliente_ced, tipo_venta, 
-                estado_venta, monto_subtotal, iva_porcentaje, 
-                monto_iva, monto_total, saldo_pendiente, observaciones
-            ) VALUES (
-                :ref, :empleado, :cliente, :tipo, :estado, 
-                :subtotal, :iva_pct, :iva_monto, :total, :saldo, :obs
-            )
+            SELECT * FROM pagos 
+            WHERE venta_id = :id 
+            ORDER BY fecha_pago DESC
         ");
+        
+        $stmt->execute([':id' => $ventaId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 
-        $estado = $data['tipo_venta'] === 'credito' ? 'pendiente' : 'completada';
-        $saldo = $data['tipo_venta'] === 'credito' ? $montoTotal : 0.00;
+    // ==================== SECCIÓN 2: BÚSQUEDAS ====================
+    
+    public function searchClients(string $query): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT 
+                cliente_ced, 
+                nombre_cliente, 
+                tipo, 
+                telefono, 
+                correo,
+                limite_credito
+            FROM clientes 
+            WHERE activo = 1 
+            AND (
+                nombre_cliente LIKE :query 
+                OR CAST(cliente_ced AS CHAR) LIKE :query
+                OR telefono LIKE :query
+            )
+            ORDER BY nombre_cliente
+            LIMIT 10
+        ");
+        
+        $searchTerm = "%{$query}%";
+        $stmt->execute([':query' => $searchTerm]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 
-        $stmt->execute([
-            ':ref' => $referencia,
-            ':empleado' => $data['empleado_ced'],
-            ':cliente' => $data['cliente_ced'],
-            ':tipo' => $data['tipo_venta'],
-            ':estado' => $estado,
-            ':subtotal' => $subtotal,
-            ':iva_pct' => $ivaPorcentaje,
-            ':iva_monto' => $montoIva,
-            ':total' => $montoTotal,
-            ':saldo' => $saldo,
-            ':obs' => $data['observaciones'] ?? null
-        ]);
+    public function searchEmployees(string $query): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT 
+                empleado_ced, 
+                nombre, 
+                cargo, 
+                telefono
+            FROM empleados 
+            WHERE activo = 1 
+            AND (
+                nombre LIKE :query 
+                OR CAST(empleado_ced AS CHAR) LIKE :query
+                OR cargo LIKE :query
+            )
+            ORDER BY nombre
+            LIMIT 10
+        ");
+        
+        $searchTerm = "%{$query}%";
+        $stmt->execute([':query' => $searchTerm]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 
-        $ventaId = $this->db->lastInsertId();
+    public function searchProducts(string $query): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT 
+                prenda_id,
+                codigo_prenda,
+                nombre,
+                categoria,
+                tipo,
+                precio,
+                descripcion,
+                precio_compra,
+                (precio - COALESCE(precio_compra, 0)) as margen
+            FROM prendas 
+            WHERE estado = 'DISPONIBLE' 
+            AND activo = 1
+            AND (
+                codigo_prenda LIKE :query 
+                OR nombre LIKE :query
+            )
+            ORDER BY fecha_creacion DESC
+            LIMIT 20
+        ");
+        
+        $searchTerm = "%{$query}%";
+        $stmt->execute([':query' => $searchTerm]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 
-        $this->addSaleDetails($ventaId, $data['productos']);
+    // ==================== SECCIÓN 3: OPERACIONES PRINCIPALES ====================
+    
+    public function addSale(array $data): int
+    {
+        try {
+            $this->db->beginTransaction();
 
-        if ($data['tipo_venta'] === 'credito') {
-            $this->createCredit($ventaId, $referencia, $data['fecha_vencimiento']);
+            $this->validateSaleData($data);
+            $this->validateProductsAvailability($data['productos']);
+
+            // Calcular totales
+            $subtotal = 0;
+            foreach ($data['productos'] as $p) {
+                $subtotal += floatval($p['precio_unitario']);
+            }
+
+            $subtotalSinIva = $subtotal / self::IVA_MULTIPLIER;
+            $montoIva = $subtotalSinIva * (self::IVA_RATE / 100);
+            $montoTotal = $subtotalSinIva + $montoIva;
+
+            $referencia = !empty($data['referencia']) 
+                ? trim($data['referencia']) 
+                : $this->generateReference();
+
+            $stmt = $this->db->prepare("
+                INSERT INTO ventas (
+                    referencia, empleado_ced, cliente_ced, tipo_venta, 
+                    estado_venta, monto_subtotal, iva_porcentaje, 
+                    monto_iva, monto_total, saldo_pendiente, observaciones
+                ) VALUES (
+                    :ref, :empleado, :cliente, :tipo, :estado, 
+                    :subtotal, :iva_pct, :iva_monto, :total, :saldo, :obs
+                )
+            ");
+
+            $estado = $data['tipo_venta'] === self::TIPO_CREDITO 
+                ? self::ESTADO_PENDIENTE 
+                : self::ESTADO_COMPLETADA;
+                
+            $saldo = $data['tipo_venta'] === self::TIPO_CREDITO 
+                ? $montoTotal 
+                : 0.00;
+
+            $stmt->execute([
+                ':ref' => $referencia,
+                ':empleado' => $data['empleado_ced'],
+                ':cliente' => $data['cliente_ced'],
+                ':tipo' => $data['tipo_venta'],
+                ':estado' => $estado,
+                ':subtotal' => $subtotalSinIva,
+                ':iva_pct' => self::IVA_RATE,
+                ':iva_monto' => $montoIva,
+                ':total' => $montoTotal,
+                ':saldo' => $saldo,
+                ':obs' => $data['observaciones'] ?? null
+            ]);
+
+            $ventaId = $this->db->lastInsertId();
+
+            $this->addSaleDetails($ventaId, $data['productos']);
+
+            if ($data['tipo_venta'] === self::TIPO_CREDITO) {
+                $this->createCredit($ventaId, $referencia, $data['fecha_vencimiento'] ?? null);
+            }
+
+            $this->db->commit();
+            return $ventaId;
+
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            error_log("Sale::addSale - " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    public function addPayment(array $data): bool
+    {
+        try {
+            $this->db->beginTransaction();
+
+            $venta = $this->getById($data['venta_id']);
+            if (!$venta) {
+                throw new Exception("Venta no encontrada");
+            }
+
+            $monto = floatval($data['monto']);
+            if ($monto <= 0 || $monto > floatval($venta['saldo_pendiente'])) {
+                throw new Exception("Monto de pago inválido");
+            }
+
+            $stmt = $this->db->prepare("
+                INSERT INTO pagos (venta_id, monto, observaciones)
+                VALUES (:venta_id, :monto, :obs)
+            ");
+            
+            $stmt->execute([
+                ':venta_id' => $data['venta_id'],
+                ':monto' => $monto,
+                ':obs' => $data['observaciones'] ?? null
+            ]);
+
+            $this->db->prepare("
+                UPDATE ventas 
+                SET saldo_pendiente = GREATEST(saldo_pendiente - :monto, 0),
+                    fec_actualizacion = NOW()
+                WHERE venta_id = :id
+            ")->execute([
+                ':monto' => $monto,
+                ':id' => $data['venta_id']
+            ]);
+
+            $this->db->prepare("
+                UPDATE ventas
+                SET estado_venta = :estado_completada
+                WHERE venta_id = :id AND saldo_pendiente <= 0
+            ")->execute([
+                ':id' => $data['venta_id'],
+                ':estado_completada' => self::ESTADO_COMPLETADA
+            ]);
+
+            $this->updateCreditStatus($data['venta_id']);
+
+            $this->db->commit();
+            return true;
+
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            error_log("Sale::addPayment - " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    public function cancelSale(int $ventaId): bool
+    {
+        try {
+            $this->db->beginTransaction();
+
+            $venta = $this->getById($ventaId);
+            if (!$venta) {
+                throw new Exception("Venta no encontrada");
+            }
+
+            $stmt = $this->db->prepare("
+                SELECT codigo_prenda FROM detalle_venta WHERE venta_id = :id
+            ");
+            $stmt->execute([':id' => $ventaId]);
+            $codigos = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+            if ($codigos) {
+                $upd = $this->db->prepare("
+                    UPDATE prendas SET estado = 'DISPONIBLE' WHERE codigo_prenda = :codigo
+                ");
+                foreach ($codigos as $codigo) {
+                    $upd->execute([':codigo' => $codigo]);
+                }
+            }
+
+            $this->db->prepare("
+                UPDATE ventas 
+                SET estado_venta = :estado_cancelada, 
+                    saldo_pendiente = 0,
+                    fec_actualizacion = NOW()
+                WHERE venta_id = :id
+            ")->execute([
+                ':id' => $ventaId,
+                ':estado_cancelada' => self::ESTADO_CANCELADA
+            ]);
+
+            $this->db->prepare("
+                UPDATE cuentas_cobrar 
+                SET estado = 'vencido'
+                WHERE credito_id IN (
+                    SELECT credito_id FROM credito WHERE venta_id = :id
+                )
+            ")->execute([':id' => $ventaId]);
+
+            $this->db->commit();
+            return true;
+
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            error_log("Sale::cancelSale - " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    // ==================== SECCIÓN 4: MÉTODOS PRIVADOS ====================
+    
+    private function validateSaleData(array $data): void
+    {
+        if (empty($data['cliente_ced'])) {
+            throw new Exception("Cliente es requerido");
         }
 
-        $this->db->commit();
-        return $ventaId;
+        if (empty($data['empleado_ced'])) {
+            throw new Exception("Empleado es requerido");
+        }
 
-    } catch (Exception $e) {
-        $this->db->rollBack();
-        error_log("Sale::addSale - " . $e->getMessage());
-        throw $e;
+        if (empty($data['tipo_venta']) || !in_array($data['tipo_venta'], [self::TIPO_CONTADO, self::TIPO_CREDITO])) {
+            throw new Exception("Tipo de venta inválido");
+        }
+
+        if ($data['tipo_venta'] === self::TIPO_CREDITO && empty($data['fecha_vencimiento'])) {
+            throw new Exception("Fecha de vencimiento requerida para crédito");
+        }
+
+        if (empty($data['productos']) || !is_array($data['productos'])) {
+            throw new Exception("Debe agregar al menos un producto");
+        }
     }
-}
 
-    private function validateProductsAvailability($productos)
+    private function validateProductsAvailability(array $productos): void
     {
         foreach ($productos as $p) {
             $codigo = $p['codigo_prenda'] ?? null;
@@ -167,7 +425,7 @@ public function addSale($data)
         }
     }
 
-    private function addSaleDetails($ventaId, $productos)
+    private function addSaleDetails(int $ventaId, array $productos): void
     {
         $stmtDet = $this->db->prepare("
             INSERT INTO detalle_venta (venta_id, prenda_id, codigo_prenda, precio_unitario)
@@ -191,38 +449,39 @@ public function addSale($data)
         }
     }
 
-private function createCredit($ventaId, $referencia, $fechaVencimiento = null)
-{
-    if (empty($fechaVencimiento)) {
-        error_log("Fecha de vencimiento no proporcionada.");
-    } else {
-        error_log("Fecha de vencimiento: " . $fechaVencimiento);
+    private function createCredit(int $ventaId, string $referencia, ?string $fechaVencimiento): void
+    {
+        if (empty($fechaVencimiento)) {
+            error_log("Fecha de vencimiento no proporcionada.");
+        } else {
+            error_log("Fecha de vencimiento: " . $fechaVencimiento);
+        }
+
+        $stmtCred = $this->db->prepare("
+            INSERT INTO credito (venta_id, referencia_credito)
+            VALUES (:venta_id, :ref)
+        ");
+        
+        $stmtCred->execute([
+            ':venta_id' => $ventaId,
+            ':ref' => self::CREDIT_REFERENCE_PREFIX . $referencia
+        ]);
+
+        $creditoId = $this->db->lastInsertId();
+
+        $stmtCC = $this->db->prepare("
+            INSERT INTO cuentas_cobrar (credito_id, estado, emision, vencimiento)
+            VALUES (:credito_id, :estado, NOW(), :vencimiento)
+        ");
+        
+        $stmtCC->execute([
+            ':credito_id' => $creditoId,
+            ':estado' => self::ESTADO_PENDIENTE,
+            ':vencimiento' => $fechaVencimiento
+        ]);
     }
 
-
-    $stmtCred = $this->db->prepare("
-        INSERT INTO credito (venta_id, referencia_credito)
-        VALUES (:venta_id, :ref)
-    ");
-    $stmtCred->execute([
-        ':venta_id' => $ventaId,
-        ':ref' => 'CRE-' . $referencia
-    ]);
-
-    $creditoId = $this->db->lastInsertId();
-
-    $stmtCC = $this->db->prepare("
-        INSERT INTO cuentas_cobrar (credito_id, estado, emision, vencimiento)
-        VALUES (:credito_id, 'pendiente', NOW(), :vencimiento)
-    ");
-    $stmtCC->execute([
-        ':credito_id' => $creditoId,
-        ':vencimiento' => $fechaVencimiento
-    ]);
-}
-
-
-    private function generateReference()
+    private function generateReference(): string
     {
         $fecha = date('Ymd');
         $stmt = $this->db->prepare("
@@ -233,149 +492,26 @@ private function createCredit($ventaId, $referencia, $fechaVencimiento = null)
         $stmt->execute();
         $count = $stmt->fetch(PDO::FETCH_ASSOC)['total'] + 1;
         
-        return sprintf('VEN-%s-%03d', $fecha, $count);
+        return sprintf('%s%s-%03d', self::REFERENCE_PREFIX, $fecha, $count);
     }
 
-
-
-    public function addPayment($data)
-    {
-        try {
-            $this->db->beginTransaction();
-
-            // Validar monto
-            $venta = $this->getById($data['venta_id']);
-            if (!$venta) {
-                throw new Exception("Venta no encontrada");
-            }
-
-            $monto = floatval($data['monto']);
-            if ($monto <= 0 || $monto > floatval($venta['saldo_pendiente'])) {
-                throw new Exception("Monto de pago inválido");
-            }
-
-            // Insertar pago
-            $stmt = $this->db->prepare("
-                INSERT INTO pagos (venta_id, monto, observaciones)
-                VALUES (:venta_id, :monto, :obs)
-            ");
-            $stmt->execute([
-                ':venta_id' => $data['venta_id'],
-                ':monto' => $monto,
-                ':obs' => $data['observaciones'] ?? null
-            ]);
-
-            // Actualizar saldo
-            $this->db->prepare("
-                UPDATE ventas 
-                SET saldo_pendiente = GREATEST(saldo_pendiente - :monto, 0),
-                    fec_actualizacion = NOW()
-                WHERE venta_id = :id
-            ")->execute([
-                ':monto' => $monto,
-                ':id' => $data['venta_id']
-            ]);
-
-            // Marcar como completada si saldo = 0
-            $this->db->prepare("
-                UPDATE ventas
-                SET estado_venta = 'completada'
-                WHERE venta_id = :id AND saldo_pendiente <= 0
-            ")->execute([':id' => $data['venta_id']]);
-
-            // Actualizar cuenta por cobrar
-            $this->updateCreditStatus($data['venta_id']);
-
-            $this->db->commit();
-            return true;
-
-        } catch (Exception $e) {
-            $this->db->rollBack();
-            error_log("Sale::addPayment - " . $e->getMessage());
-            throw $e;
-        }
-    }
-
-    private function updateCreditStatus($ventaId)
+    private function updateCreditStatus(int $ventaId): void
     {
         $this->db->prepare("
             UPDATE cuentas_cobrar cc
             JOIN credito cr ON cc.credito_id = cr.credito_id
             JOIN ventas v ON cr.venta_id = v.venta_id
-            SET cc.estado = IF(v.saldo_pendiente <= 0, 'pagado', 'pendiente')
+            SET cc.estado = IF(v.saldo_pendiente <= 0, 'pagado', :pendiente)
             WHERE v.venta_id = :id
-        ")->execute([':id' => $ventaId]);
+        ")->execute([
+            ':id' => $ventaId,
+            ':pendiente' => self::ESTADO_PENDIENTE
+        ]);
     }
 
-    public function getPaymentsBySale($ventaId)
-    {
-        $stmt = $this->db->prepare("
-            SELECT * FROM pagos 
-            WHERE venta_id = :id 
-            ORDER BY fecha_pago DESC
-        ");
-        $stmt->execute([':id' => $ventaId]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-
-    public function cancelSale($ventaId)
-    {
-        try {
-            $this->db->beginTransaction();
-
-            // Validar que la venta existe
-            $venta = $this->getById($ventaId);
-            if (!$venta) {
-                throw new Exception("Venta no encontrada");
-            }
-
-            // Obtener códigos de prendas
-            $stmt = $this->db->prepare("
-                SELECT codigo_prenda FROM detalle_venta WHERE venta_id = :id
-            ");
-            $stmt->execute([':id' => $ventaId]);
-            $codigos = $stmt->fetchAll(PDO::FETCH_COLUMN);
-
-            // Liberar prendas
-            if ($codigos) {
-                $upd = $this->db->prepare("
-                    UPDATE prendas SET estado = 'DISPONIBLE' WHERE codigo_prenda = :codigo
-                ");
-                foreach ($codigos as $codigo) {
-                    $upd->execute([':codigo' => $codigo]);
-                }
-            }
-
-            // Cancelar venta
-            $this->db->prepare("
-                UPDATE ventas 
-                SET estado_venta = 'cancelada', 
-                    saldo_pendiente = 0,
-                    fec_actualizacion = NOW()
-                WHERE venta_id = :id
-            ")->execute([':id' => $ventaId]);
-
-            // Marcar crédito como vencido
-            $this->db->prepare("
-                UPDATE cuentas_cobrar 
-                SET estado = 'vencido'
-                WHERE credito_id IN (
-                    SELECT credito_id FROM credito WHERE venta_id = :id
-                )
-            ")->execute([':id' => $ventaId]);
-
-            $this->db->commit();
-            return true;
-
-        } catch (Exception $e) {
-            $this->db->rollBack();
-            error_log("Sale::cancelSale - " . $e->getMessage());
-            throw $e;
-        }
-    }
-
-    public function getClients()
+    // ==================== SECCIÓN 5: MÉTODOS DE COMPATIBILIDAD (LEGACY) ====================
+    
+    public function getClients(): array
     {
         $stmt = $this->db->query("
             SELECT cliente_ced, nombre_cliente, tipo, limite_credito, telefono
@@ -386,7 +522,7 @@ private function createCredit($ventaId, $referencia, $fechaVencimiento = null)
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getEmployees()
+    public function getEmployees(): array
     {
         $stmt = $this->db->query("
             SELECT empleado_ced, nombre, cargo
@@ -397,7 +533,7 @@ private function createCredit($ventaId, $referencia, $fechaVencimiento = null)
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getProducts()
+    public function getProducts(): array
     {
         $stmt = $this->db->query("
             SELECT 
@@ -417,7 +553,7 @@ private function createCredit($ventaId, $referencia, $fechaVencimiento = null)
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getProductByCode($codigo)
+    public function getProductByCode(string $codigo): ?array
     {
         $stmt = $this->db->prepare("
             SELECT 
@@ -433,6 +569,7 @@ private function createCredit($ventaId, $referencia, $fechaVencimiento = null)
             WHERE codigo_prenda = :codigo
         ");
         $stmt->execute([':codigo' => $codigo]);
-        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result ?: null;
     }
 }

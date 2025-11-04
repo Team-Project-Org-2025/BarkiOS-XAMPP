@@ -82,6 +82,19 @@ function handleAjax($model, $action)
             getProductByCode($model);
             break;
 
+        // ===== NUEVAS RUTAS DE BÚSQUEDA =====
+        case 'GET_search_clients':
+            searchClients($model);
+            break;
+
+        case 'GET_search_employees':
+            searchEmployees($model);
+            break;
+
+        case 'GET_search_products':
+            searchProducts($model);
+            break;
+
         case 'POST_add_sale':
             addSale($model);
             break;
@@ -540,4 +553,55 @@ function buildSalePdfHtml($venta) {
     $html .= '</body></html>';
 
     return $html;
+}
+
+function searchClients($model)
+{
+    try {
+        $query = trim($_GET['search'] ?? $_GET['q'] ?? '');
+        
+        if (strlen($query) < 2) {
+            echo json_encode(['success' => true, 'results' => []]);
+            return;
+        }
+
+        $results = $model->searchClients($query);
+        echo json_encode(['success' => true, 'results' => $results]);
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
+}
+
+function searchEmployees($model)
+{
+    try {
+        $query = trim($_GET['search'] ?? $_GET['q'] ?? '');
+        
+        if (strlen($query) < 2) {
+            echo json_encode(['success' => true, 'results' => []]);
+            return;
+        }
+
+        $results = $model->searchEmployees($query);
+        echo json_encode(['success' => true, 'results' => $results]);
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
+}
+
+function searchProducts($model)
+{
+    try {
+        $query = trim($_GET['search'] ?? $_GET['q'] ?? '');
+        
+        if (strlen($query) < 2) {
+            echo json_encode(['success' => true, 'results' => []]);
+            return;
+        }
+
+        $results = $model->searchProducts($query);
+        echo json_encode(['success' => true, 'results' => $results]);
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
 }

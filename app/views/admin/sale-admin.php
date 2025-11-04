@@ -99,108 +99,135 @@
         </div>
 
         <div class="modal-body">
-          <!-- Información básica -->
-          <div class="row g-3 mb-3">
-            <div class="col-12 col-md-6 col-lg-4">
-              <label class="form-label fw-bold">Cliente <span class="text-danger">*</span></label>
-              <select id="add_cliente" name="cliente_ced" class="form-select" required>
-                <option value="">Seleccione...</option>
-              </select>
-              <small class="text-muted"><i class="fas fa-star text-warning"></i> Cliente VIP</small>
-            </div>
-            <div class="col-12 col-md-6 col-lg-4">
-              <label class="form-label fw-bold">Vendedor <span class="text-danger">*</span></label>
-              <select id="add_empleado" name="empleado_ced" class="form-select" required>
-                <option value="">Seleccione...</option>
-              </select>
-            </div>
-            <div class="col-12 col-md-6 col-lg-4">
-              <label class="form-label fw-bold">Tipo de venta <span class="text-danger">*</span></label>
-              <select name="tipo_venta" class="form-select" required>
-                <option value="contado">Contado</option>
-                <option value="credito">Crédito (Solo VIP)</option>
-              </select>
-            </div>
-            <div class="col-12 col-md-6 col-lg-4" id="fechaVencimientoGroup" style="display: none;">
-                <label class="form-label fw-bold">
-                      Fecha de Vencimiento <span class="text-danger">*</span>
-                </label>
-                <input type="date" 
-                        id="add_fecha_vencimiento" 
-                        name="fecha_vencimiento" 
-                        class="form-control"
-                        min="<?= date('Y-m-d', strtotime('+1 day')) ?>">
-                <small class="text-muted">Fecha límite de pago del crédito</small>
-            </div>
-          <div class="col-12 col-md-6 col-lg-4">
-            <label class="form-label fw-bold">Referencia (opcional)</label>
-            <input type="text" id="add_referencia" name="referencia" 
-              class="form-control" maxlength="30" 
-              placeholder="Ej: VEN-001" autocomplete="off">
-          </div>
-          </div>
-
-          <div class="row g-3 mb-3">
-            <div class="col-12 col-md-6">
-              <label class="form-label fw-bold">IVA (%)</label>
-              <input type="number" id="add_iva" class="form-control" name="iva_porcentaje" 
-                     min="0" max="100" step="0.01" value="16.00">
-            </div>
-            <div class="col-12 col-md-6">
-              <label class="form-label fw-bold">Observaciones</label>
-              <textarea name="observaciones" class="form-control" rows="1"></textarea>
-            </div>
-          </div>
-
-          <hr>
-
-          <!-- Sección Productos -->
-          <div class="mb-3">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <h6 class="mb-0 fw-bold"><i class="fas fa-box me-2"></i>Productos</h6>
-              <span class="badge bg-info" id="productsCount">0 disponibles</span>
-            </div>
-
-            <!-- Contenedor de productos agregados -->
-            <div id="productsContainer"></div>
-            <div id="noProductsAlert" class="alert alert-info text-center py-2 mb-2">
-              <i class="fas fa-info-circle me-2"></i>No se han agregado productos
-            </div>
-
-            <!-- Botón agregar de lista -->
-            <button type="button" id="btnAddProduct" class="btn btn-sm btn-outline-primary w-100">
-              <i class="fas fa-plus me-1"></i> Agregar de lista completa
-            </button>
-          </div>
-
-          <hr>
-
-          <!-- Resumen de totales -->
-          <div class="row">
-            <div class="col-12 col-lg-6 offset-lg-6">
-              <div class="card bg-light border-0">
-                <div class="card-body">
-                  <div class="d-flex justify-content-between mb-2">
-                    <span>Subtotal:</span>
-                    <strong id="summary_subtotal">$0.00</strong>
-                  </div>
-                  <div class="d-flex justify-content-between mb-2">
-                    <span>IVA (<span id="iva_percentage">16</span>%):</span>
-                    <strong id="summary_iva">$0.00</strong>
-                  </div>
-                  <hr class="my-2">
-                  <div class="d-flex justify-content-between">
-                    <span class="fs-5 fw-bold">Total:</span>
-                    <strong class="fs-5 text-primary" id="summary_total">$0.00</strong>
-                  </div>
-                  <div class="d-flex justify-content-between mt-1">
-                    <span class="fw-bold text-success">Total en Bs:</span>
-                    <strong class="text-success" id="summary_total_bs">Bs. 0,00</strong>
-                  </div>
+            <!-- Información básica -->
+            <div class="row g-3 mb-3">
+                <!-- CLIENTE CON BUSCADOR -->
+                <div class="col-12 col-md-6 col-lg-4">
+                    <label class="form-label fw-bold">Cliente <span class="text-danger">*</span></label>
+                    <input type="text" 
+                          class="form-control" 
+                          id="searchClient"
+                          placeholder="Buscar por nombre o cédula..." 
+                          autocomplete="off">
+                    <input type="hidden" id="add_cliente" name="cliente_ced" required>
+                    <div id="clientResults" 
+                        class="list-group mt-2 position-absolute" 
+                        style="z-index: 1050; display: none; max-width: 400px;">
+                    </div>
+                    <small class="text-muted" id="clientTypeIndicator"></small>
                 </div>
-              </div>
+
+                <!-- VENDEDOR CON BUSCADOR -->
+                <div class="col-12 col-md-6 col-lg-4">
+                    <label class="form-label fw-bold">Vendedor <span class="text-danger">*</span></label>
+                    <input type="text" 
+                          class="form-control" 
+                          id="searchEmployee"
+                          placeholder="Buscar por nombre..." 
+                          autocomplete="off">
+                    <input type="hidden" id="add_empleado" name="empleado_ced" required>
+                    <div id="employeeResults" 
+                        class="list-group mt-2 position-absolute" 
+                        style="z-index: 1050; display: none; max-width: 400px;">
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-4">
+                    <label class="form-label fw-bold">Tipo de venta <span class="text-danger">*</span></label>
+                    <select name="tipo_venta" class="form-select" required>
+                        <option value="contado">Contado</option>
+                        <option value="credito">Crédito (Solo VIP)</option>
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-4" id="fechaVencimientoGroup" style="display: none;">
+                    <label class="form-label fw-bold">
+                        Fecha de Vencimiento <span class="text-danger">*</span>
+                    </label>
+                    <input type="date" 
+                          id="add_fecha_vencimiento" 
+                          name="fecha_vencimiento" 
+                          class="form-control"
+                          min="<?= date('Y-m-d', strtotime('+1 day')) ?>">
+                    <small class="text-muted">Fecha límite de pago del crédito</small>
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-4">
+                    <label class="form-label fw-bold">Referencia (opcional)</label>
+                    <input type="text" id="add_referencia" name="referencia" 
+                          class="form-control" maxlength="30" 
+                          placeholder="Ej: VEN-001" autocomplete="off">
+                </div>
             </div>
-          </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-12 col-md-6">
+                    <label class="form-label fw-bold">Observaciones</label>
+                    <textarea name="observaciones" class="form-control" rows="1"></textarea>
+                </div>
+            </div>
+
+            <hr>
+
+            <!-- SECCIÓN PRODUCTOS CON BUSCADOR -->
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="mb-0 fw-bold"><i class="fas fa-box me-2"></i>Productos</h6>
+                    <span class="badge bg-info" id="productsCount">0 disponibles</span>
+                </div>
+
+                <!-- BUSCADOR DE PRODUCTOS -->
+                <div class="mb-3">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" 
+                              class="form-control" 
+                              id="searchProduct"
+                              placeholder="Buscar por código o nombre del producto..." 
+                              autocomplete="off">
+                    </div>
+                    <div id="productResults" 
+                        class="list-group mt-2" 
+                        style="display: none; max-height: 300px; overflow-y: auto;">
+                    </div>
+                    <small class="text-muted"><i class="fas fa-info-circle me-1"></i>Mínimo 2 caracteres para buscar</small>
+                </div>
+
+                <!-- Contenedor de productos agregados -->
+                <div id="productsContainer"></div>
+                <div id="noProductsAlert" class="alert alert-info text-center py-2 mb-2">
+                    <i class="fas fa-info-circle me-2"></i>Busca y selecciona productos para agregar a la venta
+                </div>
+            </div>
+
+            <hr>
+
+            <!-- Resumen de totales -->
+            <div class="row">
+                <div class="col-12 col-lg-6 offset-lg-6">
+                    <div class="card bg-light border-0">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Subtotal (Base sin IVA):</span>
+                                <strong id="summary_subtotal">$0.00</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>IVA (16%):</span>
+                                <strong id="summary_iva">$0.00</strong>
+                            </div>
+                            <hr class="my-2">
+                            <div class="d-flex justify-content-between">
+                                <span class="fs-5 fw-bold">Total a Pagar:</span>
+                                <strong class="fs-5 text-primary" id="summary_total">$0.00</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mt-1">
+                                <span class="fw-bold text-success">Total en Bs:</span>
+                                <strong class="text-success" id="summary_total_bs">Bs. 0,00</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="modal-footer">
