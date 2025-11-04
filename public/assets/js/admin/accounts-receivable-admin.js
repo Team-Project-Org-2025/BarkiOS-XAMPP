@@ -58,7 +58,6 @@ $(document).ready(function() {
                             ${viewBtn}
                             <button class="btn btn-sm btn-outline-success btn-pay" data-id="${acc.id}"><i class="fas fa-money-bill-wave"></i></button>
                             <button class="btn btn-sm btn-outline-warning btn-extend" data-id="${acc.id}"><i class="fas fa-calendar-plus"></i></button>
-                            <button class="btn btn-sm btn-outline-danger btn-delete" data-id="${acc.id}"><i class="fas fa-trash"></i></button>
                         `;
                     }
                 }
