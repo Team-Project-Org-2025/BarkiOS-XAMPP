@@ -1,5 +1,6 @@
 <?php
 use Barkios\models\AccountsReceivable;
+use Barkios\helpers\Validation;
 
 require_once __DIR__ . '/LoginController.php';
 checkAuth();
@@ -203,6 +204,7 @@ function getStats($model)
 function registerPayment($model)
 {
     try {
+        // Validar campos requeridos manualmente
         $required = ['cuenta_cobrar_id', 'monto'];
         foreach ($required as $field) {
             if (empty($_POST[$field])) {
@@ -215,13 +217,30 @@ function registerPayment($model)
             throw new Exception("El monto debe ser mayor a cero");
         }
 
+        // Validar referencia bancaria SOLO si existe
+        if (!empty($_POST['referencia_bancaria'])) {
+            $refValidation = Validation::validateField($_POST['referencia_bancaria'], 'referencia');
+            if (!$refValidation['valid']) {
+                throw new Exception('Referencia bancaria inválida (8-10 dígitos)');
+            }
+        }
+        
+        // Validar banco SOLO si existe
+        if (!empty($_POST['banco'])) {
+            $bancoValidation = Validation::validateField($_POST['banco'], 'banco');
+            if (!$bancoValidation['valid']) {
+                throw new Exception('Nombre del banco inválido');
+            }
+        }
+
+        // Construir datos
         $paymentData = [
             'cuenta_cobrar_id' => intval($_POST['cuenta_cobrar_id']),
             'monto' => $monto,
-            'tipo_pago' => $_POST['tipo_pago'] ?? 'EFECTIVO',
-            'referencia_bancaria' => $_POST['referencia_bancaria'] ?? null,
-            'banco' => $_POST['banco'] ?? null,
-            'observaciones' => $_POST['observaciones'] ?? null
+            'tipo_pago' => !empty($_POST['tipo_pago']) ? trim($_POST['tipo_pago']) : 'EFECTIVO',
+            'referencia_bancaria' => !empty($_POST['referencia_bancaria']) ? trim($_POST['referencia_bancaria']) : null,
+            'banco' => !empty($_POST['banco']) ? trim($_POST['banco']) : null,
+            'observaciones' => !empty($_POST['observaciones']) ? trim($_POST['observaciones']) : null
         ];
 
         $result = $model->registerPayment($paymentData);
@@ -235,7 +254,6 @@ function registerPayment($model)
         ]);
     }
 }
-
 function updateDueDate($model)
 {
     try {
