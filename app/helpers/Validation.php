@@ -5,16 +5,17 @@ class Validation {
     
     // Expresiones regulares (equivalentes a validation.js)
     private static $patterns = [
+        'tipo_rif' => '/^[JGC]$/',
         'cedula' => '/^\d{7,10}$/',
         'codigo' => '/^\d{9}$/',
         'factura' => '/^\d{8}$/',
-        'nombre' => '/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,100}$/',
+        'nombre' => '/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{4,100}$/',
         'nombreProducto' => '/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{1,40}$/',
         'nombrePrenda' => '/^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s\-\.]{3,150}$/',
         'email' => '/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/',
         'telefono' => '/^\d{11}$/',
         'precio' => '/^(100(\.00?)?|[1-9]?\d(\.\d{1,2})?)$/',
-        'direccion' => '/^.{5,150}$/',
+        'direccion' => '/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-]{5,150}$/',
         'cargo' => '/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{2,50}$/',
         'referencia' => '/^\d{8,10}$/',
         'referenciaVenta' => '/^[A-Za-z0-9\-]{1,15}$/',
@@ -42,7 +43,8 @@ class Validation {
         'password' => 'Contraseña debe tener 8-30 caracteres, mayúsculas, minúsculas, números y símbolos',
         'required' => 'Este campo es requerido',
         'rif' => 'RIF inválido (9 dígitos)',
-        'tracking' => 'Tracking inválido (8 dígitos)'
+        'tracking' => 'Tracking inválido (8 dígitos)',
+        'tipo_rif' => 'Tipo de RIF inválido (debe ser J, G, V, E, C o P)'
     ];
 
     /**
