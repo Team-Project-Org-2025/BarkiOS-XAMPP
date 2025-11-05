@@ -71,10 +71,6 @@ function handleAjax($model, $action)
             updateDueDate($model);
             break;
 
-        case 'POST_delete':
-            deleteAccount($model);
-            break;
-
         case 'POST_process_expired':
             processExpired($model);
             break;
@@ -268,36 +264,6 @@ function updateDueDate($model)
     }
 }
 
-function deleteAccount($model)
-{
-    try {
-        $cuentaId = intval($_POST['cuenta_id'] ?? 0);
-
-        if ($cuentaId <= 0) {
-            throw new Exception("ID de cuenta inválido");
-        }
-
-        $confirmar = $_POST['confirmar'] ?? 'no';
-        if ($confirmar !== 'si') {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Debe confirmar la eliminación',
-                'require_confirmation' => true
-            ]);
-            return;
-        }
-
-        $result = $model->delete($cuentaId);
-
-        echo json_encode($result);
-
-    } catch (Exception $e) {
-        echo json_encode([
-            'success' => false,
-            'message' => $e->getMessage()
-        ]);
-    }
-}
 
 function processExpired($model)
 {
