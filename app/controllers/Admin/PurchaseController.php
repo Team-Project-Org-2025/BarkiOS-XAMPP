@@ -4,6 +4,7 @@
 use Barkios\models\Purchase;
 use Barkios\models\Supplier;
 use Barkios\helpers\PdfHelper;
+use Barkios\helpers\Validation;
 
 require_once __DIR__ . '/LoginController.php';
 checkAuth();
@@ -83,54 +84,50 @@ function sanitizeInput($data) {
 
 
 function validarCompra($datos) {
-    $errores = [];
+    $rules = [
+        'proveedor_rif' => 'rif',
+        'factura_numero' => 'factura',
+        'fecha_compra' => ['type' => null, 'required' => true],
+        'tracking' => ['type' => 'factura', 'required' => false]
+    ];
+    
+    $validation = Validation::validate($datos, $rules);
 
-    if (empty($datos['proveedor_rif'])) {
-        $errores[] = 'El proveedor es requerido';
+    if (!$validation['valid']) {
+        return array_values($validation['errors']);
     }
 
-    if (empty($datos['factura_numero'])) {
-        $errores[] = 'El número de factura es requerido';
-    } elseif (!preg_match('/^\d{8}$/', $datos['factura_numero'])) {
-        $errores[] = 'El número de factura debe tener 8 dígitos';
+    // Validar formato de fecha (Y-m-d)
+    $dateValidation = Validation::validateDate($datos['fecha_compra']);
+    if (!$dateValidation['valid']) {
+        return [$dateValidation['message']];
     }
 
-    if (empty($datos['fecha_compra'])) {
-        $errores[] = 'La fecha de compra es requerida';
-    } elseif (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $datos['fecha_compra'])) {
-        $errores[] = 'Formato de fecha inválido';
-    }
-
-    if (!empty($datos['tracking']) && !preg_match('/^\d{8}$/', $datos['tracking'])) {
-        $errores[] = 'El tracking debe tener 8 dígitos';
-    }
-
-    return $errores;
+    return [];
 }
 
 function validarPrenda($prenda) {
-    $errores = [];
-
-    if (empty($prenda['codigo_prenda'])) {
-        $errores[] = 'El código de prenda es requerido';
-    } elseif (!preg_match('/^[A-Z0-9\-]+$/i', $prenda['codigo_prenda'])) {
-        $errores[] = "Código '{$prenda['codigo_prenda']}' contiene caracteres inválidos";
+    $rules = [
+        'codigo_prenda' => 'codigo',
+        'nombre' => 'nombrePrenda',
+        'categoria' => 'nombre',
+        'tipo' => 'nombre',
+        'precio_costo' => 'precio'
+    ];
+    
+    $validation = Validation::validate($prenda, $rules);
+    
+    if (!$validation['valid']) {
+        return array_values($validation['errors']);
     }
-
-    if (empty($prenda['nombre'])) {
-        $errores[] = 'El nombre es requerido';
-    } elseif (strlen($prenda['nombre']) < 3 || strlen($prenda['nombre']) > 150) {
-        $errores[] = 'El nombre debe tener entre 3 y 150 caracteres';
+    
+    // Validación adicional de precio
+    $rangeValidation = Validation::validateRange($prenda['precio_costo'], 0.01, 10000);
+    if (!$rangeValidation['valid']) {
+        return ['El precio debe ser mayor a 0'];
     }
-
-    if (empty($prenda['categoria'])) $errores[] = 'La categoría es requerida';
-    if (empty($prenda['tipo'])) $errores[] = 'El tipo es requerido';
-
-    if (!isset($prenda['precio_costo']) || floatval($prenda['precio_costo']) <= 0) {
-        $errores[] = 'El precio de costo debe ser mayor a 0';
-    }
-
-    return $errores;
+    
+    return [];
 }
 
 
