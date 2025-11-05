@@ -374,61 +374,6 @@ class AccountsReceivable extends Database
         }
     }
 
-
-    public function delete($cuentaId)
-    {
-        try {
-            $this->db->beginTransaction();
-
-            $cuenta = $this->getById($cuentaId);
-            if (!$cuenta) {
-                throw new Exception("Cuenta por cobrar no encontrada");
-            }
-
-            if ($cuenta['estado'] === 'pagado') {
-                throw new Exception("No se puede eliminar una cuenta ya pagada");
-            }
-
-            $this->db->prepare("
-                UPDATE cuentas_cobrar 
-                SET estado = 'eliminado',
-                    fec_actualizacion = NOW()
-                WHERE cuenta_cobrar_id = :id
-            ")->execute([':id' => $cuentaId]);
-
-            $this->db->prepare("
-                UPDATE ventas 
-                SET estado_venta = 'cancelada',
-                    saldo_pendiente = 0,
-                    fec_actualizacion = NOW()
-                WHERE venta_id = :venta_id
-            ")->execute([':venta_id' => $cuenta['venta_id']]);
-
-            $this->db->prepare("
-                UPDATE prendas p
-                INNER JOIN detalle_venta dv ON p.codigo_prenda = dv.codigo_prenda
-                SET p.estado = 'DISPONIBLE'
-                WHERE dv.venta_id = :venta_id
-                  AND p.estado = 'VENDIDA'
-            ")->execute([':venta_id' => $cuenta['venta_id']]);
-
-            $this->db->commit();
-            
-            return [
-                'success' => true,
-                'message' => 'Cuenta por cobrar eliminada correctamente'
-            ];
-
-        } catch (Exception $e) {
-            $this->db->rollBack();
-            error_log("Error en delete AccountsReceivable: " . $e->getMessage());
-            return [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
-        }
-    }
-
     public function getStats()
     {
         try {
