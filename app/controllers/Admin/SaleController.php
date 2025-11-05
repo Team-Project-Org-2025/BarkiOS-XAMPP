@@ -1,7 +1,7 @@
 <?php
 use Barkios\models\Sale;
 use Barkios\helpers\PdfHelper;
-
+use Barkios\helpers\Validation;
 require_once __DIR__ . '/LoginController.php';
 checkAuth();
 
@@ -125,36 +125,6 @@ function sanitizeInput($data) {
     }, $data);
 }
 
-function validarVenta($datos) {
-    $errores = [];
-
-    if (empty($datos['cliente_ced'])) {
-        $errores[] = 'El cliente es requerido';
-    }
-
-    if (empty($datos['empleado_ced'])) {
-        $errores[] = 'El empleado es requerido';
-    }
-
-    if (empty($datos['tipo_venta']) || !in_array($datos['tipo_venta'], ['contado', 'credito'])) {
-        $errores[] = 'Tipo de venta inválido';
-    }
-
-    // Validar fecha de vencimiento para crédito
-    if ($datos['tipo_venta'] === 'credito') {
-        if (empty($datos['fecha_vencimiento'])) {
-            $errores[] = 'Fecha de vencimiento requerida para crédito';
-        } else {
-            $fechaHoy = date('Y-m-d');
-            if ($datos['fecha_vencimiento'] <= $fechaHoy) {
-                $errores[] = 'La fecha de vencimiento debe ser posterior a hoy';
-            }
-        }
-    }
-
-    return $errores;
-}
-
 
 function getSales($model)
 {
@@ -252,68 +222,67 @@ function getProductByCode($model)
 function addSale($model)
 {
     try {
-        // Validar campos requeridos
-        $required = ['cliente_ced', 'empleado_ced', 'tipo_venta', 'productos'];
-        foreach ($required as $f) {
-            if (empty($_POST[$f])) {
-                throw new Exception("Campo requerido: $f");
-            }
+        $rules = [
+            'cliente_ced' => 'cedula',
+            'empleado_ced' => 'cedula',
+            'tipo_venta' => ['type' => null, 'required' => true],
+            'productos' => ['type' => null, 'required' => true]
+        ];
+
+        $validation = Validation::validate($_POST, $rules);
+        if (!$validation['valid']) {
+            throw new Exception(implode(', ', $validation['errors']));
         }
 
-        $cliente = trim($_POST['cliente_ced']);
-        $empleado = trim($_POST['empleado_ced']);
+        // Validar tipo de venta
+        $tipoVenta = Validation::validateTipoVenta($_POST['tipo_venta']);
+        if (!$tipoVenta['valid']) {
+            throw new Exception($tipoVenta['message']);
+        }
+
+        // Validar productos
+        $productosVal = Validation::validateProductos($_POST['productos']);
+        if (!$productosVal['valid']) {
+            throw new Exception($productosVal['message']);
+        }
+
         $tipo = strtolower($_POST['tipo_venta']);
-
-        // Decodificar productos
-        $productos = json_decode($_POST['productos'], true);
-        if (!$productos || !is_array($productos) || count($productos) === 0) {
-            throw new Exception("Debe agregar al menos un producto válido");
-        }
-
-        // Validar que cada producto tenga código_prenda
-        foreach ($productos as $p) {
-            if (empty($p['codigo_prenda']) || empty($p['precio_unitario'])) {
-                throw new Exception("Productos inválidos: falta código o precio");
-            }
-        }
-
-        // Si es venta a crédito, obtener la fecha de vencimiento
         $fechaVencimiento = null;
+
         if ($tipo === 'credito') {
-            // Validar que la fecha de vencimiento esté presente
             if (empty($_POST['fecha_vencimiento'])) {
                 throw new Exception("Debe seleccionar una fecha de vencimiento para ventas a crédito");
             }
-            $fechaVencimiento = $_POST['fecha_vencimiento'];
-            
-            // Validar que la fecha de vencimiento sea posterior a la fecha actual
-            $fechaHoy = date('Y-m-d');
-            if ($fechaVencimiento <= $fechaHoy) {
+
+            $fecha = $_POST['fecha_vencimiento'];
+            $valFecha = Validation::validateDate($fecha);
+            if (!$valFecha['valid']) throw new Exception($valFecha['message']);
+
+            if ($fecha <= date('Y-m-d')) {
                 throw new Exception("La fecha de vencimiento debe ser posterior a hoy");
             }
+
+            $fechaVencimiento = $fecha;
         }
 
-        // Preparar datos de venta
         $ventaData = [
-            'cliente_ced' => $cliente,
-            'empleado_ced' => $empleado,
+            'cliente_ced' => trim($_POST['cliente_ced']),
+            'empleado_ced' => trim($_POST['empleado_ced']),
             'tipo_venta' => $tipo,
-            'productos' => $productos,
+            'productos' => json_decode($_POST['productos'], true),
             'observaciones' => $_POST['observaciones'] ?? null,
             'iva_porcentaje' => floatval($_POST['iva_porcentaje'] ?? 16.00),
             'referencia' => $_POST['referencia'] ?? null,
-            'fecha_vencimiento' => $fechaVencimiento // Agregar la fecha de vencimiento
+            'fecha_vencimiento' => $fechaVencimiento
         ];
 
-        // Registrar venta
         $ventaId = $model->addSale($ventaData);
 
         if ($ventaId) {
-            // Obtener referencia generada
             $venta = $model->getById($ventaId);
             echo json_encode([
-                'success' => true, 
-                'message' => 'Venta registrada correctamente', 
+                'success' => true,
+                'message' => 'Venta registrada correctamente',
                 'venta_id' => $ventaId,
                 'referencia' => $venta['referencia'] ?? null
             ]);
@@ -323,11 +292,12 @@ function addSale($model)
 
     } catch (Exception $e) {
         echo json_encode([
-            'success' => false, 
+            'success' => false,
             'message' => $e->getMessage()
         ]);
     }
 }
+
 
 
 function addPayment($model)
@@ -403,7 +373,56 @@ function index()
     throw new Exception("Vista no encontrada");
 }
 
+function searchClients($model)
+{
+    try {
+        $query = trim($_GET['search'] ?? $_GET['q'] ?? '');
+        
+        if (strlen($query) < 2) {
+            echo json_encode(['success' => true, 'results' => []]);
+            return;
+        }
 
+        $results = $model->searchClients($query);
+        echo json_encode(['success' => true, 'results' => $results]);
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
+}
+
+function searchEmployees($model)
+{
+    try {
+        $query = trim($_GET['search'] ?? $_GET['q'] ?? '');
+        
+        if (strlen($query) < 2) {
+            echo json_encode(['success' => true, 'results' => []]);
+            return;
+        }
+
+        $results = $model->searchEmployees($query);
+        echo json_encode(['success' => true, 'results' => $results]);
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
+}
+
+function searchProducts($model)
+{
+    try {
+        $query = trim($_GET['search'] ?? $_GET['q'] ?? '');
+        
+        if (strlen($query) < 2) {
+            echo json_encode(['success' => true, 'results' => []]);
+            return;
+        }
+
+        $results = $model->searchProducts($query);
+        echo json_encode(['success' => true, 'results' => $results]);
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
+}
 
 function generateSalePdf($model) {
     try {
@@ -553,55 +572,4 @@ function buildSalePdfHtml($venta) {
     $html .= '</body></html>';
 
     return $html;
-}
-
-function searchClients($model)
-{
-    try {
-        $query = trim($_GET['search'] ?? $_GET['q'] ?? '');
-        
-        if (strlen($query) < 2) {
-            echo json_encode(['success' => true, 'results' => []]);
-            return;
-        }
-
-        $results = $model->searchClients($query);
-        echo json_encode(['success' => true, 'results' => $results]);
-    } catch (Exception $e) {
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-    }
-}
-
-function searchEmployees($model)
-{
-    try {
-        $query = trim($_GET['search'] ?? $_GET['q'] ?? '');
-        
-        if (strlen($query) < 2) {
-            echo json_encode(['success' => true, 'results' => []]);
-            return;
-        }
-
-        $results = $model->searchEmployees($query);
-        echo json_encode(['success' => true, 'results' => $results]);
-    } catch (Exception $e) {
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-    }
-}
-
-function searchProducts($model)
-{
-    try {
-        $query = trim($_GET['search'] ?? $_GET['q'] ?? '');
-        
-        if (strlen($query) < 2) {
-            echo json_encode(['success' => true, 'results' => []]);
-            return;
-        }
-
-        $results = $model->searchProducts($query);
-        echo json_encode(['success' => true, 'results' => $results]);
-    } catch (Exception $e) {
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-    }
 }

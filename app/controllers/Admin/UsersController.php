@@ -1,7 +1,7 @@
 <?php
 
 use Barkios\models\User;
-
+use Barkios\helpers\Validation;
 
 require_once __DIR__ . '/LoginController.php';
 
@@ -103,17 +103,30 @@ function handleDelete($userModel) {
 }
 
 function handleAddEditAjax($userModel, $mode) {
+    // Definir reglas de validación
+    $rules = [
+        'nombre' => 'nombre',
+        'email' => 'email',
+        'password' => ['type' => 'password', 'required' => ($mode === 'add')],
+        'id' => ['type' => null, 'required' => ($mode === 'edit')]
+    ];
+    
+    // Validar datos
+    $validation = Validation::validate($_POST, $rules);
+    
+    if (!$validation['valid']) {
+        throw new Exception(implode(', ', $validation['errors']));
+    }
+
     $id = (int)($_POST['id'] ?? 0);
-    $nombre = trim($_POST['nombre'] ?? '');
-    $email = trim($_POST['email'] ?? '');
+    $nombre = trim($_POST['nombre']);
+    $email = trim($_POST['email']);
     $password = $_POST['password'] ?? null;
 
-    if (empty($nombre) || empty($email)) throw new Exception("Nombre y email son requeridos");
-    if ($mode === 'add' && empty($password)) throw new Exception("La contraseña es requerida");
-    if ($mode === 'edit' && $id === 0) throw new Exception("ID de usuario inválido");
-
     if ($mode === 'add') {
-        if ($userModel->userExists(null, $email)) throw new Exception("El email ya está registrado");
+        if ($userModel->userExists(null, $email)) {
+            throw new Exception("El email ya está registrado");
+        }
         $userModel->add($nombre, $email, $password);
 
         $user = ['id' => $userModel->getLastInsertId() ?? 0, 'nombre' => $nombre, 'email' => $email];
@@ -129,9 +142,16 @@ function handleAddEditAjax($userModel, $mode) {
 }
 
 function handleDeleteAjax($userModel) {
-    if (empty($_POST['id']) || !is_numeric($_POST['id'])) throw new Exception("ID inválido");
+    $idValidation = Validation::validateField($_POST['id'] ?? '', 'codigo');
+    if (!$idValidation['valid']) {
+        throw new Exception($idValidation['message']);
+    }
+    
     $id = (int)$_POST['id'];
-    if (!$userModel->userExists($id)) throw new Exception("No existe el usuario");
+    if (!$userModel->userExists($id)) {
+        throw new Exception("No existe el usuario");
+    }
+    
     $userModel->delete($id);
     echo json_encode(['success' => true, 'message' => 'Usuario eliminado', 'userId' => $id]);
     exit();

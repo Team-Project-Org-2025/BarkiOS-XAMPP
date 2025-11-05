@@ -1,5 +1,6 @@
 <?php
 use Barkios\models\Supplier;
+use Barkios\helpers\Validation;
 
 require_once __DIR__ . '/LoginController.php';
 
@@ -100,22 +101,36 @@ function getSupplierr($supplierModel) {
  * @return void
  */
 function handleAddSupplier($supplierModel) {
-    $required = ['proveedor_rif', 'nombre_contacto', 'nombre_empresa', 'direccion', 'tipo_rif'];
-    foreach ($required as $field) {
-        if (empty($_POST[$field])) {
-            throw new Exception("El campo $field es requerido");
-        }
+    // Definir reglas de validación
+    $rules = [
+        'proveedor_rif' => 'rif',
+        'nombre_contacto' => 'nombre',
+        'nombre_empresa' => 'nombre',
+        'direccion' => 'direccion',
+        'tipo_rif' => 'tipo_rif'
+    ];
+    
+    // Validar
+    $validation = Validation::validate($_POST, $rules);
+    
+    if (!$validation['valid']) {
+        $errorMsg = implode(', ', $validation['errors']);
+        throw new Exception($errorMsg);
     }
+    
+    // Sanitizar
     $rif = trim($_POST['proveedor_rif']);
-    $nombre_contacto = htmlspecialchars(trim($_POST['nombre_contacto']));
-    $nombre_empresa = htmlspecialchars(trim($_POST['nombre_empresa']));
-    $direccion = htmlspecialchars(trim($_POST['direccion']));
-    $tipo_rif = htmlspecialchars(trim($_POST['tipo_rif']));
+    $nombre_contacto = trim($_POST['nombre_contacto']);
+    $nombre_empresa = trim($_POST['nombre_empresa']);
+    $direccion = trim($_POST['direccion']);
+    $tipo_rif = trim($_POST['tipo_rif']);
+    
     // Verifica duplicados
     if ($supplierModel->supplierExists($rif)) {
         header("Location: supplier-admin.php?error=rif_duplicado&rif=" . urlencode($rif));
         exit();
     }
+    
     // Inserta proveedor
     $success = $supplierModel->add($rif, $nombre_contacto, $nombre_empresa, $direccion, $tipo_rif);
     if ($success) {
@@ -161,37 +176,49 @@ function handleDeleteSupplier($supplierModel) {
  */
 function handleAddSupplierAjax($supplierModel) {
     try {
-        $required = ['proveedor_rif', 'nombre_contacto', 'nombre_empresa', 'direccion', 'tipo_rif'];
-        $data = [];
+        // Definir reglas de validación
+        $rules = [
+            'proveedor_rif' => 'rif',
+            'nombre_contacto' => 'nombre',
+            'nombre_empresa' => 'nombre',
+            'direccion' => 'direccion',
+            'tipo_rif' => 'tipo_rif'  // ← CAMBIAR AQUÍ
+        ];
         
-        // Validar campos requeridos
-        foreach ($required as $field) {
-            if (empty($_POST[$field])) {
-                throw new Exception("El campo $field es requerido");
-            }
-            $data[$field] = trim($_POST[$field]);
+        // Validar
+        $validation = Validation::validate($_POST, $rules);
+        
+        if (!$validation['valid']) {
+            throw new Exception(implode(', ', $validation['errors']));
         }
-        // Validar formato del RIF
-        $rif = $data['proveedor_rif'];
-        if (strlen($rif) !== 9) {
-            throw new Exception("El RIF debe tener exactamente 9 caracteres");
-        }
+        
+        // Sanitizar
+        $data = Validation::sanitize([
+            'proveedor_rif' => $_POST['proveedor_rif'],
+            'nombre_contacto' => $_POST['nombre_contacto'],
+            'nombre_empresa' => $_POST['nombre_empresa'],
+            'direccion' => $_POST['direccion'],
+            'tipo_rif' => $_POST['tipo_rif']
+        ]);
         
         // Verificar duplicado
-        if ($supplierModel->supplierExists($rif)) {
+        if ($supplierModel->supplierExists($data['proveedor_rif'])) {
             throw new Exception('El RIF ingresado ya está registrado.');
         }
+        
         // Agregar proveedor
         $result = $supplierModel->add(
-            $rif,
+            $data['proveedor_rif'],
             $data['nombre_contacto'],
             $data['nombre_empresa'],
             $data['direccion'],
             $data['tipo_rif']
         );
+        
         if ($result === false) {
-            throw new Exception('No se pudo agregar el proveedor. Inténtalo de nuevo.');
+            throw new Exception('No se pudo agregar el proveedor.');
         }
+        
         echo json_encode([
             'success' => true,
             'message' => 'Proveedor agregado correctamente'
@@ -258,18 +285,37 @@ function getSuppliersAjax($supplierModel) {
 function handleEditSupplierAjax($supplierModel) {
     header('Content-Type: application/json; charset=utf-8');
     try {
-        $required = ['proveedor_rif', 'nombre_contacto', 'nombre_empresa', 'direccion', 'tipo_rif'];
-        $data = [];
-        foreach ($required as $field) {
-            if (empty($_POST[$field])) {
-                throw new Exception("El campo $field es requerido");
-            }
-            $data[$field] = trim($_POST[$field]);
+        // Definir reglas de validación
+        $rules = [
+            'proveedor_rif' => 'rif',
+            'nombre_contacto' => 'nombre',
+            'nombre_empresa' => 'nombre',
+            'direccion' => 'direccion',
+            'tipo_rif' => 'tipo_rif'  // ← CAMBIAR AQUÍ
+        ];
+        
+        // Validar
+        $validation = Validation::validate($_POST, $rules);
+        
+        if (!$validation['valid']) {
+            throw new Exception(implode(', ', $validation['errors']));
         }
+        
+        // Sanitizar
+        $data = Validation::sanitize([
+            'proveedor_rif' => $_POST['proveedor_rif'],
+            'nombre_contacto' => $_POST['nombre_contacto'],
+            'nombre_empresa' => $_POST['nombre_empresa'],
+            'direccion' => $_POST['direccion'],
+            'tipo_rif' => $_POST['tipo_rif']
+        ]);
+        
         $rif = $data['proveedor_rif'];
+        
         if (!$supplierModel->supplierExists($rif)) {
             throw new Exception("El proveedor no existe");
         }
+        
         $success = $supplierModel->update(
             $rif,
             $data['nombre_contacto'],

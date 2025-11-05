@@ -2,6 +2,7 @@
 
 use Barkios\models\Product;
 use Barkios\helpers\ImageUploader;
+use Barkios\helpers\Validation;
 
 // Importa el controlador de login (para usar checkAuth)
 require_once __DIR__ . '/LoginController.php';
@@ -79,12 +80,20 @@ function handleRequest($productModel) {
 }
 
 function handleAddEditAjax($productModel, $mode) {
-    // Validar campos requeridos
-    $fields = ['prenda_id','nombre','tipo','categoria','precio'];
-    foreach ($fields as $f) {
-        if (empty($_POST[$f])) {
-            throw new Exception("El campo $f es requerido");
-        }
+    // Definir reglas de validación
+    $rules = [
+        'nombre' => 'nombrePrenda',
+        'tipo' => 'nombre',
+        'categoria' => 'nombre',
+        'precio' => 'precio',
+        'precio_compra' => ['type' => 'precio', 'required' => false]
+    ];
+    
+    // Validar datos
+    $validation = Validation::validate($_POST, $rules);
+    
+    if (!$validation['valid']) {
+        throw new Exception(implode(', ', $validation['errors']));
     }
     
     $id = (int)$_POST['prenda_id'];
@@ -110,7 +119,6 @@ function handleAddEditAjax($productModel, $mode) {
             $imagen = $uploadResult['data']['url'];
             $updateImage = true;
             
-            // Si es edición, eliminar imagen anterior
             if ($mode === 'edit') {
                 $oldProduct = $productModel->getById($id);
                 if ($oldProduct && !empty($oldProduct['imagen'])) {
@@ -151,8 +159,11 @@ function handleAddEditAjax($productModel, $mode) {
 
 
 function handleDeleteAjax($productModel) {
-    if (empty($_POST['prenda_id']) || !is_numeric($_POST['prenda_id'])) {
-        throw new Exception("ID inválido");
+    // Validar ID
+    $idValidation = Validation::validateField($_POST['prenda_id'] ?? '', 'codigo');
+    
+    if (!$idValidation['valid']) {
+        throw new Exception($idValidation['message']);
     }
     
     $id = (int)$_POST['prenda_id'];
@@ -171,7 +182,7 @@ function handleDeleteAjax($productModel) {
         }
     }
     
-    echo json_encode(['success'=>true, 'message'=>'Producto eliminado correctamente', 'productId'=>$id]); 
+    echo json_encode(['success'=>true, 'message'=>'Producto eliminado correctamente', 'productId'=>$id]);
     exit();
 }
 
