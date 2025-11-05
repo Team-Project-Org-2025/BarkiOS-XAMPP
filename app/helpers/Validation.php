@@ -142,4 +142,29 @@ class Validation {
             'message' => $isValid ? null : 'Formato de fecha inválido'
         ];
     }
+        public static function validateTipoVenta($tipo)
+    {
+        $tipo = strtolower(trim($tipo ?? ''));
+        if (!in_array($tipo, ['contado', 'credito'])) {
+            return ['valid' => false, 'message' => 'El tipo de venta debe ser "contado" o "crédito"'];
+        }
+        return ['valid' => true];
+    }
+    
+    public static function validateProductos($productos)
+    {
+        $productos = json_decode($productos, true);
+        if (!$productos || !is_array($productos) || count($productos) === 0) {
+            return ['valid' => false, 'message' => 'Debe agregar al menos un producto válido'];
+        }
+    
+        foreach ($productos as $p) {
+            if (empty($p['codigo_prenda']) || empty($p['precio_unitario'])) {
+                return ['valid' => false, 'message' => 'Cada producto debe tener código y precio'];
+            }
+        }
+    
+        return ['valid' => true];
+    }
 }
+
