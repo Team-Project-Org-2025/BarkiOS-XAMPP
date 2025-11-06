@@ -18,6 +18,10 @@ function index() {
 
 handleRequest($purchaseModel, $supplierModel);
 
+// ============================================
+// CORE REQUEST HANDLER
+// ============================================
+
 function handleRequest($purchaseModel, $supplierModel) {
     $action = $_GET['action'] ?? '';
     $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
@@ -59,10 +63,14 @@ function routeAjax($purchaseModel, $supplierModel, $action) {
     exit();
 }
 
+// ============================================
+// UTILITY FUNCTIONS (DRY)
+// ============================================
 
 function jsonResponse($data, $statusCode = 200) {
     http_response_code($statusCode);
     echo json_encode($data);
+    exit();
 }
 
 function handleError($e, $isAjax) {
@@ -73,17 +81,13 @@ function handleError($e, $isAjax) {
     } else {
         die("Error: " . htmlspecialchars($e->getMessage()));
     }
-    exit();
 }
 
-function sanitizeInput($data) {
-    return array_map(function($value) {
-        return is_string($value) ? trim($value) : $value;
-    }, $data);
-}
+// ============================================
+// VALIDATION FUNCTIONS (REFACTORED)
+// ============================================
 
-
-function validarCompra($datos) {
+function validatePurchaseData($datos) {
     $rules = [
         'proveedor_rif' => 'rif',
         'factura_numero' => 'factura',
@@ -92,21 +96,19 @@ function validarCompra($datos) {
     ];
     
     $validation = Validation::validate($datos, $rules);
-
+    
     if (!$validation['valid']) {
-        return array_values($validation['errors']);
+        throw new Exception(implode(', ', $validation['errors']));
     }
 
-    // Validar formato de fecha (Y-m-d)
+    // Validar formato de fecha
     $dateValidation = Validation::validateDate($datos['fecha_compra']);
     if (!$dateValidation['valid']) {
-        return [$dateValidation['message']];
+        throw new Exception($dateValidation['message']);
     }
-
-    return [];
 }
 
-function validarPrenda($prenda) {
+function validatePrendaData($prenda) {
     $rules = [
         'codigo_prenda' => 'codigo',
         'nombre' => 'nombrePrenda',
@@ -118,71 +120,68 @@ function validarPrenda($prenda) {
     $validation = Validation::validate($prenda, $rules);
     
     if (!$validation['valid']) {
-        return array_values($validation['errors']);
+        throw new Exception(implode(', ', $validation['errors']));
     }
     
-    // Validación adicional de precio
+    // Validación de rango de precio
     $rangeValidation = Validation::validateRange($prenda['precio_costo'], 0.01, 10000);
     if (!$rangeValidation['valid']) {
-        return ['El precio debe ser mayor a 0'];
+        throw new Exception('El precio debe estar entre 0.01 y 10,000');
     }
-    
-    return [];
 }
 
+function sanitizeAndValidatePrendas($rawPrendas) {
+    if (empty($rawPrendas) || !is_array($rawPrendas)) {
+        throw new Exception('Debe agregar al menos una prenda');
+    }
+
+    $prendas = [];
+    $montoTotal = 0;
+
+    foreach ($rawPrendas as $prenda) {
+        $prendaData = [
+            'codigo_prenda' => trim($prenda['codigo_prenda'] ?? ''),
+            'nombre' => trim($prenda['nombre'] ?? ''),
+            'categoria' => trim($prenda['categoria'] ?? ''),
+            'tipo' => trim($prenda['tipo'] ?? ''),
+            'precio_costo' => floatval($prenda['precio_costo'] ?? 0),
+            'descripcion' => trim($prenda['descripcion'] ?? '')
+        ];
+
+        validatePrendaData($prendaData);
+
+        $prendaData['precio_venta'] = isset($prenda['precio_venta']) && $prenda['precio_venta'] > 0
+            ? floatval($prenda['precio_venta'])
+            : 0;
+
+        $prendas[] = $prendaData;
+        $montoTotal += $prendaData['precio_costo'];
+    }
+
+    return ['prendas' => $prendas, 'monto_total' => $montoTotal];
+}
+
+// ============================================
+// AJAX HANDLERS (SIMPLIFIED)
+// ============================================
 
 function handleAdd($purchaseModel) {
     try {
-
-        $datos = sanitizeInput([
+        $datos = [
             'proveedor_rif' => $_POST['proveedor_rif'] ?? '',
             'factura_numero' => $_POST['factura_numero'] ?? '',
             'fecha_compra' => $_POST['fecha_compra'] ?? '',
             'tracking' => $_POST['tracking'] ?? '',
             'observaciones' => $_POST['observaciones'] ?? '',
             'fecha_vencimiento' => $_POST['fecha_vencimiento'] ?? ''
-        ]);
+        ];
 
-        $errores = validarCompra($datos);
-        if (!empty($errores)) {
-            throw new Exception(implode(', ', $errores));
-        }
+        validatePurchaseData($datos);
 
-        $rawPrendas = $_POST['prendas'] ?? [];
-        if (empty($rawPrendas) || !is_array($rawPrendas)) {
-            throw new Exception('Debe agregar al menos una prenda');
-        }
+        $prendasResult = sanitizeAndValidatePrendas($_POST['prendas'] ?? []);
+        $datos['prendas'] = $prendasResult['prendas'];
+        $datos['monto_total'] = $prendasResult['monto_total'];
 
-        $prendas = [];
-        $montoTotal = 0;
-
-        foreach ($rawPrendas as $prenda) {
-            $prendaData = sanitizeInput([
-                'codigo_prenda' => $prenda['codigo_prenda'] ?? '',
-                'nombre' => $prenda['nombre'] ?? '',
-                'categoria' => $prenda['categoria'] ?? '',
-                'tipo' => $prenda['tipo'] ?? '',
-                'precio_costo' => floatval($prenda['precio_costo'] ?? 0),
-                'descripcion' => $prenda['descripcion'] ?? ''
-            ]);
-
-            $erroresPrenda = validarPrenda($prendaData);
-            if (!empty($erroresPrenda)) {
-                throw new Exception(implode(', ', $erroresPrenda));
-            }
-
-            $prendaData['precio_venta'] = isset($prenda['precio_venta']) && $prenda['precio_venta'] > 0
-                ? floatval($prenda['precio_venta'])
-                : 0;
-
-            $prendas[] = $prendaData;
-            $montoTotal += $prendaData['precio_costo'];
-        }
-
-        $datos['prendas'] = $prendas;
-        $datos['monto_total'] = $montoTotal;
-
-        // Guardar en BD
         $compraId = $purchaseModel->add($datos);
 
         jsonResponse([
@@ -197,7 +196,7 @@ function handleAdd($purchaseModel) {
 
 function handleEdit($purchaseModel) {
     try {
-        $id = isset($_POST['compra_id']) ? intval($_POST['compra_id']) : null;
+        $id = intval($_POST['compra_id'] ?? 0);
         if (!$id) {
             throw new Exception('ID de compra inválido');
         }
@@ -206,53 +205,26 @@ function handleEdit($purchaseModel) {
             throw new Exception('No se puede editar: la compra tiene prendas vendidas');
         }
 
-        $datos = sanitizeInput([
+        $datos = [
             'proveedor_rif' => $_POST['proveedor_rif'] ?? '',
             'factura_numero' => $_POST['factura_numero'] ?? '',
             'fecha_compra' => $_POST['fecha_compra'] ?? '',
             'tracking' => $_POST['tracking'] ?? '',
             'observaciones' => $_POST['observaciones'] ?? ''
-        ]);
+        ];
 
-        $errores = validarCompra($datos);
-        if (!empty($errores)) {
-            throw new Exception(implode(', ', $errores));
-        }
+        validatePurchaseData($datos);
 
         $montoActual = $purchaseModel->getMontoTotal($id);
         $datos['monto_total'] = $montoActual;
 
         $purchaseModel->update($id, $datos);
 
-
-        $nuevasPrendas = [];
-        $rawNuevasPrendas = $_POST['nuevas_prendas'] ?? [];
-
-        foreach ($rawNuevasPrendas as $prenda) {
-            $prendaData = sanitizeInput([
-                'codigo_prenda' => $prenda['codigo_prenda'] ?? '',
-                'nombre' => $prenda['nombre'] ?? '',
-                'categoria' => $prenda['categoria'] ?? '',
-                'tipo' => $prenda['tipo'] ?? '',
-                'precio_costo' => floatval($prenda['precio_costo'] ?? 0),
-                'descripcion' => $prenda['descripcion'] ?? ''
-            ]);
-
-            $erroresPrenda = validarPrenda($prendaData);
-            if (!empty($erroresPrenda)) {
-                throw new Exception(implode(', ', $erroresPrenda));
-            }
-
-            $prendaData['precio_venta'] = isset($prenda['precio_venta']) && $prenda['precio_venta'] > 0
-                ? floatval($prenda['precio_venta'])
-                : 0;
-
-            $nuevasPrendas[] = $prendaData;
-        }
-
+        // Procesar nuevas prendas si existen
         $prendasAgregadas = 0;
-        if (!empty($nuevasPrendas)) {
-            $prendasAgregadas = $purchaseModel->addPrendasToCompra($id, $nuevasPrendas);
+        if (!empty($_POST['nuevas_prendas'])) {
+            $prendasResult = sanitizeAndValidatePrendas($_POST['nuevas_prendas']);
+            $prendasAgregadas = $purchaseModel->addPrendasToCompra($id, $prendasResult['prendas']);
         }
 
         $mensaje = $prendasAgregadas > 0
@@ -267,7 +239,7 @@ function handleEdit($purchaseModel) {
 
 function handleDelete($purchaseModel) {
     try {
-        $id = isset($_POST['compra_id']) ? intval($_POST['compra_id']) : null;
+        $id = intval($_POST['compra_id'] ?? 0);
         if (!$id) {
             throw new Exception('ID inválido');
         }
@@ -291,7 +263,7 @@ function getPurchases($purchaseModel) {
 
 function getPurchaseDetail($purchaseModel) {
     try {
-        $id = isset($_GET['compra_id']) ? intval($_GET['compra_id']) : (isset($_GET['id']) ? intval($_GET['id']) : null);
+        $id = intval($_GET['compra_id'] ?? $_GET['id'] ?? 0);
 
         if (!$id) {
             throw new Exception('ID inválido');
@@ -329,17 +301,11 @@ function searchSupplier($supplierModel) {
 
         if ($query === '') {
             jsonResponse(['success' => true, 'results' => []]);
-            return;
         }
 
-        $results = [];
-
-        if (method_exists($supplierModel, 'search')) {
-            $results = $supplierModel->search($query);
-        } elseif (method_exists($supplierModel, 'getById')) {
-            $byId = $supplierModel->getById($query);
-            if ($byId) $results = [$byId];
-        }
+        $results = method_exists($supplierModel, 'search')
+            ? $supplierModel->search($query)
+            : ($supplierModel->getById($query) ? [$supplierModel->getById($query)] : []);
 
         jsonResponse(['success' => true, 'results' => $results]);
     } catch (Exception $e) {
@@ -356,14 +322,16 @@ function getStats($purchaseModel) {
     }
 }
 
+// ============================================
+// PDF GENERATION
+// ============================================
 
 function generatePdf($purchaseModel) {
-    $id = isset($_GET['compra_id']) ? intval($_GET['compra_id']) : (isset($_GET['id']) ? intval($_GET['id']) : null);
+    $id = intval($_GET['compra_id'] ?? $_GET['id'] ?? 0);
     $compra = $purchaseModel->getById($id);
     $prendas = $purchaseModel->getPrendasByCompraId($id);
 
     $html = buildPdfHtml($compra, $prendas);
-
 
     $pdfHelper = new PdfHelper();
     $pdf = $pdfHelper->fromHtml($html);
@@ -421,12 +389,10 @@ function buildPdfHtml($compra, $prendas) {
     }
 
     $html .= '</tbody></table>';
-
     $html .= '<div style="margin-top:10px;">
         <strong>Monto total:</strong> $' . number_format($compra['monto_total'], 2, '.', ',') . '
         <br><strong>Observaciones:</strong> ' . htmlspecialchars($compra['observaciones'] ?? '') . '
     </div>';
-
     $html .= '</body></html>';
 
     return $html;
