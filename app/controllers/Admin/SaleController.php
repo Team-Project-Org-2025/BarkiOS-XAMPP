@@ -10,11 +10,13 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 $saleModel = new Sale();
 handleRequest($saleModel);
 
-function handleRequest($model)
-{
+// ============================================
+// CORE REQUEST HANDLER
+// ============================================
+
+function handleRequest($model) {
     $basePath = '/BarkiOS';
 
-    // Validación de sesión
     if (!isset($_SESSION['user_id']) && !isset($_SESSION['admin_logged_in'])) {
         header("Location: {$basePath}/login");
         exit();
@@ -38,110 +40,110 @@ function handleRequest($model)
             }
         }
     } catch (Exception $e) {
-        error_log("SaleController Error: " . $e->getMessage());
-        if ($isAjax) {
-            http_response_code(500);
-            echo json_encode([
-                'success' => false, 
-                'message' => $e->getMessage()
-            ]);
-        } else {
-            echo "<h1>Error</h1><p>" . htmlspecialchars($e->getMessage()) . "</p>";
-        }
-        exit();
+        handleError($e, $isAjax);
     }
 }
 
-function handleAjax($model, $action)
-{
+function handleAjax($model, $action) {
     $method = $_SERVER['REQUEST_METHOD'];
     
-    switch ("{$method}_{$action}") {
+    $routes = [
+        'GET_get_sales' => fn() => getSales($model),
+        'GET_get_by_id' => fn() => getSaleById($model),
+        'GET_get_clients' => fn() => getResource($model, 'getClients', 'clients'),
+        'GET_get_employees' => fn() => getResource($model, 'getEmployees', 'employees'),
+        'GET_get_products' => fn() => getResourceWithCount($model, 'getProducts', 'products'),
+        'GET_get_product_by_code' => fn() => getProductByCode($model),
+        'GET_search_clients' => fn() => searchResource($model, 'searchClients'),
+        'GET_search_employees' => fn() => searchResource($model, 'searchEmployees'),
+        'GET_search_products' => fn() => searchResource($model, 'searchProducts'),
+        'POST_add_sale' => fn() => addSale($model),
+        'POST_add_payment' => fn() => addPayment($model),
+        'POST_cancel_sale' => fn() => cancelSale($model)
+    ];
 
-        case 'GET_get_sales':
-            getSales($model);
-            break;
-
-        case 'GET_get_by_id':
-            getSaleById($model);
-            break;
-
-        case 'GET_get_clients':
-            getClients($model);
-            break;
-
-        case 'GET_get_employees':
-            getEmployees($model);
-            break;
-
-        case 'GET_get_products':
-            getProducts($model);
-            break;
-
-        case 'GET_get_product_by_code':
-            getProductByCode($model);
-            break;
-
-        // ===== NUEVAS RUTAS DE BÚSQUEDA =====
-        case 'GET_search_clients':
-            searchClients($model);
-            break;
-
-        case 'GET_search_employees':
-            searchEmployees($model);
-            break;
-
-        case 'GET_search_products':
-            searchProducts($model);
-            break;
-
-        case 'POST_add_sale':
-            addSale($model);
-            break;
-
-        case 'POST_add_payment':
-            addPayment($model);
-            break;
-
-        case 'POST_cancel_sale':
-            cancelSale($model);
-            break;
-
-        default:
-            throw new Exception("Petición no válida: {$method} {$action}");
+    $route = "{$method}_{$action}";
+    
+    if (isset($routes[$route])) {
+        $routes[$route]();
+    } else {
+        throw new Exception("Petición no válida: {$method} {$action}");
     }
 
     exit();
 }
 
+// ============================================
+// UTILITY FUNCTIONS (DRY)
+// ============================================
+
 function jsonResponse($data, $statusCode = 200) {
     http_response_code($statusCode);
     echo json_encode($data);
+    exit();
 }
 
-function sanitizeInput($data) {
-    return array_map(function($value) {
-        return is_string($value) ? trim($value) : $value;
-    }, $data);
-}
-
-
-function getSales($model)
-{
-    try {
-        $sales = $model->getAll();
-        echo json_encode([
-            'success' => true, 
-            'sales' => $sales,
-            'count' => count($sales)
-        ]);
-    } catch (Exception $e) {
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+function handleError($e, $isAjax) {
+    error_log("SaleController Error: " . $e->getMessage());
+    
+    if ($isAjax) {
+        jsonResponse(['success' => false, 'message' => $e->getMessage()], 500);
+    } else {
+        echo "<h1>Error</h1><p>" . htmlspecialchars($e->getMessage()) . "</p>";
     }
 }
 
-function getSaleById($model)
-{
+// ============================================
+// GENERIC RESOURCE HANDLERS (DRY)
+// ============================================
+
+function getResource($model, $method, $key) {
+    try {
+        $data = $model->$method();
+        jsonResponse(['success' => true, $key => $data]);
+    } catch (Exception $e) {
+        jsonResponse(['success' => false, 'message' => $e->getMessage()], 500);
+    }
+}
+
+function getResourceWithCount($model, $method, $key) {
+    try {
+        $data = $model->$method();
+        jsonResponse(['success' => true, $key => $data, 'count' => count($data)]);
+    } catch (Exception $e) {
+        jsonResponse(['success' => false, 'message' => $e->getMessage()], 500);
+    }
+}
+
+function searchResource($model, $method) {
+    try {
+        $query = trim($_GET['search'] ?? $_GET['q'] ?? '');
+        
+        if (strlen($query) < 2) {
+            jsonResponse(['success' => true, 'results' => []]);
+        }
+
+        $results = $model->$method($query);
+        jsonResponse(['success' => true, 'results' => $results]);
+    } catch (Exception $e) {
+        jsonResponse(['success' => false, 'message' => $e->getMessage()], 500);
+    }
+}
+
+// ============================================
+// SPECIFIC HANDLERS
+// ============================================
+
+function getSales($model) {
+    try {
+        $sales = $model->getAll();
+        jsonResponse(['success' => true, 'sales' => $sales, 'count' => count($sales)]);
+    } catch (Exception $e) {
+        jsonResponse(['success' => false, 'message' => $e->getMessage()], 500);
+    }
+}
+
+function getSaleById($model) {
     try {
         $id = intval($_GET['id'] ?? 0);
         if ($id <= 0) {
@@ -149,58 +151,17 @@ function getSaleById($model)
         }
 
         $venta = $model->getSaleWithDetails($id);
-        echo json_encode([
+        jsonResponse([
             'success' => !!$venta, 
             'venta' => $venta,
             'message' => $venta ? 'Venta encontrada' : 'Venta no encontrada'
         ]);
     } catch (Exception $e) {
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        jsonResponse(['success' => false, 'message' => $e->getMessage()], 500);
     }
 }
 
-function getClients($model)
-{
-    try {
-        $clients = $model->getClients();
-        echo json_encode([
-            'success' => true, 
-            'clients' => $clients
-        ]);
-    } catch (Exception $e) {
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-    }
-}
-
-function getEmployees($model)
-{
-    try {
-        $employees = $model->getEmployees();
-        echo json_encode([
-            'success' => true, 
-            'employees' => $employees
-        ]);
-    } catch (Exception $e) {
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-    }
-}
-
-function getProducts($model)
-{
-    try {
-        $products = $model->getProducts();
-        echo json_encode([
-            'success' => true, 
-            'products' => $products,
-            'count' => count($products)
-        ]);
-    } catch (Exception $e) {
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-    }
-}
-
-function getProductByCode($model)
-{
+function getProductByCode($model) {
     try {
         $codigo = trim($_GET['codigo'] ?? '');
         if (empty($codigo)) {
@@ -208,62 +169,77 @@ function getProductByCode($model)
         }
 
         $product = $model->getProductByCode($codigo);
-        echo json_encode([
+        jsonResponse([
             'success' => !!$product,
             'product' => $product,
             'message' => $product ? 'Producto encontrado' : 'Producto no encontrado'
         ]);
     } catch (Exception $e) {
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        jsonResponse(['success' => false, 'message' => $e->getMessage()], 500);
     }
 }
 
+// ============================================
+// VALIDATION
+// ============================================
 
-function addSale($model)
-{
+function validateSaleData($data) {
+    $rules = [
+        'cliente_ced' => 'cedula',
+        'empleado_ced' => 'cedula',
+        'tipo_venta' => ['type' => null, 'required' => true],
+        'productos' => ['type' => null, 'required' => true]
+    ];
+
+    $validation = Validation::validate($data, $rules);
+    if (!$validation['valid']) {
+        throw new Exception(implode(', ', $validation['errors']));
+    }
+
+    // Validar tipo de venta
+    $tipoVenta = Validation::validateTipoVenta($data['tipo_venta']);
+    if (!$tipoVenta['valid']) {
+        throw new Exception($tipoVenta['message']);
+    }
+
+    // Validar productos
+    $productosVal = Validation::validateProductos($data['productos']);
+    if (!$productosVal['valid']) {
+        throw new Exception($productosVal['message']);
+    }
+}
+
+function validateCreditoFechaVencimiento($tipo, $fechaVencimiento) {
+    if (strtolower($tipo) !== 'credito') {
+        return null;
+    }
+
+    if (empty($fechaVencimiento)) {
+        throw new Exception("Debe seleccionar una fecha de vencimiento para ventas a crédito");
+    }
+
+    $valFecha = Validation::validateDate($fechaVencimiento);
+    if (!$valFecha['valid']) {
+        throw new Exception($valFecha['message']);
+    }
+
+    if ($fechaVencimiento <= date('Y-m-d')) {
+        throw new Exception("La fecha de vencimiento debe ser posterior a hoy");
+    }
+
+    return $fechaVencimiento;
+}
+
+// ============================================
+// SALE OPERATIONS
+// ============================================
+
+function addSale($model) {
     try {
-        $rules = [
-            'cliente_ced' => 'cedula',
-            'empleado_ced' => 'cedula',
-            'tipo_venta' => ['type' => null, 'required' => true],
-            'productos' => ['type' => null, 'required' => true]
-        ];
-
-        $validation = Validation::validate($_POST, $rules);
-        if (!$validation['valid']) {
-            throw new Exception(implode(', ', $validation['errors']));
-        }
-
-        // Validar tipo de venta
-        $tipoVenta = Validation::validateTipoVenta($_POST['tipo_venta']);
-        if (!$tipoVenta['valid']) {
-            throw new Exception($tipoVenta['message']);
-        }
-
-        // Validar productos
-        $productosVal = Validation::validateProductos($_POST['productos']);
-        if (!$productosVal['valid']) {
-            throw new Exception($productosVal['message']);
-        }
+        validateSaleData($_POST);
 
         $tipo = strtolower($_POST['tipo_venta']);
-        $fechaVencimiento = null;
-
-        if ($tipo === 'credito') {
-            if (empty($_POST['fecha_vencimiento'])) {
-                throw new Exception("Debe seleccionar una fecha de vencimiento para ventas a crédito");
-            }
-
-            $fecha = $_POST['fecha_vencimiento'];
-            $valFecha = Validation::validateDate($fecha);
-            if (!$valFecha['valid']) throw new Exception($valFecha['message']);
-
-            if ($fecha <= date('Y-m-d')) {
-                throw new Exception("La fecha de vencimiento debe ser posterior a hoy");
-            }
-
-            $fechaVencimiento = $fecha;
-        }
+        $fechaVencimiento = validateCreditoFechaVencimiento($tipo, $_POST['fecha_vencimiento'] ?? null);
 
         $ventaData = [
             'cliente_ced' => trim($_POST['cliente_ced']),
@@ -278,30 +254,24 @@ function addSale($model)
 
         $ventaId = $model->addSale($ventaData);
 
-        if ($ventaId) {
-            $venta = $model->getById($ventaId);
-            echo json_encode([
-                'success' => true,
-                'message' => 'Venta registrada correctamente',
-                'venta_id' => $ventaId,
-                'referencia' => $venta['referencia'] ?? null
-            ]);
-        } else {
+        if (!$ventaId) {
             throw new Exception("Error al registrar la venta");
         }
 
-    } catch (Exception $e) {
-        echo json_encode([
-            'success' => false,
-            'message' => $e->getMessage()
+        $venta = $model->getById($ventaId);
+        jsonResponse([
+            'success' => true,
+            'message' => 'Venta registrada correctamente',
+            'venta_id' => $ventaId,
+            'referencia' => $venta['referencia'] ?? null
         ]);
+
+    } catch (Exception $e) {
+        jsonResponse(['success' => false, 'message' => $e->getMessage()], 400);
     }
 }
 
-
-
-function addPayment($model)
-{
+function addPayment($model) {
     try {
         $ventaId = intval($_POST['venta_id'] ?? 0);
         $monto = floatval($_POST['monto'] ?? 0);
@@ -320,21 +290,17 @@ function addPayment($model)
             'observaciones' => $_POST['observaciones'] ?? null
         ]);
 
-        echo json_encode([
+        jsonResponse([
             'success' => $success,
             'message' => $success ? 'Pago registrado correctamente' : 'Error al registrar el pago'
         ]);
 
     } catch (Exception $e) {
-        echo json_encode([
-            'success' => false, 
-            'message' => $e->getMessage()
-        ]);
+        jsonResponse(['success' => false, 'message' => $e->getMessage()], 400);
     }
 }
 
-function cancelSale($model)
-{
+function cancelSale($model) {
     try {
         $id = intval($_POST['venta_id'] ?? 0);
         if ($id <= 0) {
@@ -342,22 +308,21 @@ function cancelSale($model)
         }
 
         $success = $model->cancelSale($id);
-        echo json_encode([
+        jsonResponse([
             'success' => $success,
             'message' => $success ? 'Venta anulada correctamente' : 'Error al anular venta'
         ]);
 
     } catch (Exception $e) {
-        echo json_encode([
-            'success' => false, 
-            'message' => $e->getMessage()
-        ]);
+        jsonResponse(['success' => false, 'message' => $e->getMessage()], 400);
     }
 }
 
+// ============================================
+// PDF GENERATION
+// ============================================
 
-function index()
-{
+function index() {
     $paths = [
         __DIR__ . '/../../views/admin/sale-admin.php',
         dirname(__DIR__, 2) . '/views/admin/sale-admin.php'
@@ -371,57 +336,6 @@ function index()
     }
 
     throw new Exception("Vista no encontrada");
-}
-
-function searchClients($model)
-{
-    try {
-        $query = trim($_GET['search'] ?? $_GET['q'] ?? '');
-        
-        if (strlen($query) < 2) {
-            echo json_encode(['success' => true, 'results' => []]);
-            return;
-        }
-
-        $results = $model->searchClients($query);
-        echo json_encode(['success' => true, 'results' => $results]);
-    } catch (Exception $e) {
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-    }
-}
-
-function searchEmployees($model)
-{
-    try {
-        $query = trim($_GET['search'] ?? $_GET['q'] ?? '');
-        
-        if (strlen($query) < 2) {
-            echo json_encode(['success' => true, 'results' => []]);
-            return;
-        }
-
-        $results = $model->searchEmployees($query);
-        echo json_encode(['success' => true, 'results' => $results]);
-    } catch (Exception $e) {
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-    }
-}
-
-function searchProducts($model)
-{
-    try {
-        $query = trim($_GET['search'] ?? $_GET['q'] ?? '');
-        
-        if (strlen($query) < 2) {
-            echo json_encode(['success' => true, 'results' => []]);
-            return;
-        }
-
-        $results = $model->searchProducts($query);
-        echo json_encode(['success' => true, 'results' => $results]);
-    } catch (Exception $e) {
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-    }
 }
 
 function generateSalePdf($model) {
@@ -438,14 +352,11 @@ function generateSalePdf($model) {
             throw new Exception("Venta no encontrada");
         }
 
-        // Construir HTML del PDF
         $html = buildSalePdfHtml($venta);
 
-        // Generar PDF usando el helper
         $pdfHelper = new PdfHelper();
         $pdf = $pdfHelper->fromHtml($html);
 
-        // Enviar PDF al navegador
         header('Content-Type: application/pdf');
         header('Content-Disposition: inline; filename="venta_' . $id . '.pdf"');
         echo $pdf;
@@ -466,7 +377,6 @@ function buildSalePdfHtml($venta) {
         body { font-family: DejaVu Sans, Helvetica, Arial, sans-serif; font-size: 12px; }
         .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
         .info-section { margin-bottom: 15px; }
-        .info-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
         table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
         th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
         th { background: #f5f5f5; font-weight: bold; }
@@ -524,7 +434,6 @@ function buildSalePdfHtml($venta) {
 
     $html .= '</tbody></table>';
 
-    // Totales
     $subtotal = floatval($venta['monto_subtotal'] ?? $venta['subtotal'] ?? 0);
     $iva = floatval($venta['monto_iva'] ?? $venta['iva'] ?? 0);
     $total = floatval($venta['monto_total'] ?? $venta['total'] ?? 0);
@@ -556,7 +465,6 @@ function buildSalePdfHtml($venta) {
 
     $html .= '</table></div>';
 
-    // Observaciones
     if (!empty($venta['observaciones'])) {
         $html .= '<div style="margin-top: 20px; padding: 10px; background: #f8f9fa; border-left: 4px solid #007bff;">
             <strong>Observaciones:</strong><br>

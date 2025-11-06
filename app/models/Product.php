@@ -17,7 +17,7 @@ class Product extends Database {
         try {
             $stmt = $this->db->query("
                 SELECT * FROM prendas 
-                WHERE activo = 1 AND estado IN ('DISPONIBLE', 'VENDIDA')
+                WHERE activo = 1 AND estado IN ('DISPONIBLE')
                 ORDER BY codigo_prenda ASC
             ");
             return $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
