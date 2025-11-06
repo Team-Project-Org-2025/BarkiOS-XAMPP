@@ -53,16 +53,6 @@
       </div>
     </div>
 
-    <!-- Buscador -->
-    <div class="row mb-3">
-      <div class="col-12 col-md-8 col-lg-6">
-        <div class="input-group">
-          <span class="input-group-text"><i class="fas fa-search"></i></span>
-          <input type="text" id="searchInput" class="form-control" placeholder="Buscar...">
-        </div>
-      </div>
-    </div>
-
     <!-- Tabla -->
     <div class="card shadow-sm border-0">
       <div class="card-body p-3">
