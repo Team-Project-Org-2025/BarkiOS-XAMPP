@@ -54,8 +54,8 @@ $(document).ready(function() {
 
                         if (row.estado === 'vencido' || row.vencida) return '<span class="badge bg-danger">Vencida</span>';
                         if (diasVencer <= 7 && diasVencer > 0) return `<span class="badge bg-warning">Vence en ${diasVencer}d</span>`;
-                        if (row.estado === 'pagado') return '<span class="badge bg-secondary">Pagando</span>';
-                        return '<span class="badge bg-success">Al día</span>';
+                        if (row.estado === 'pagado') return '<span class="badge bg-successs">Pagado</span>';
+                        return '<span class="badge bg-warning">Pagando</span>';
                     }
                 },
                 {

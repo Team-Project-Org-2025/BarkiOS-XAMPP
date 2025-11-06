@@ -44,7 +44,7 @@ $(document).ready(function() {
                 { 
                     data: 'estado_visual',
                     render: estado => {
-                        const badges = { 'Vigente': 'bg-success', 'Por vencer': 'bg-warning', 'Vencido': 'bg-danger', 'Pagado': 'bg-secondary' };
+                        const badges = { 'Vigente': 'bg-warning', 'Por vencer': 'bg-warning', 'Vencido': 'bg-danger', 'Pagado': 'bg-success' };
                         return `<span class="badge ${badges[estado] || 'bg-secondary'}">${Helpers.escapeHtml(estado)}</span>`;
                     }
                 },
