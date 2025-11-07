@@ -89,6 +89,7 @@ $(document).ready(function() {
                         </div>`
                 }
             ],
+            order: [[2, 'desc']],
             pageLength: 10,
             responsive: true,
             autoWidth: false,
