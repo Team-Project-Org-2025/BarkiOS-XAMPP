@@ -1,0 +1,231 @@
+/* ============================================
+   SKELETON SCREENS - Estilos Base
+   ============================================ */
+
+/* Contenedor base del skeleton */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 0%,
+    #f8f8f8 50%,
+    #f0f0f0 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Animación de carga */
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Variante para modo oscuro */
+.skeleton.dark {
+  background: linear-gradient(
+    90deg,
+    #2a2a2a 0%,
+    #3a3a3a 50%,
+    #2a2a2a 100%
+  );
+}
+
+/* ============================================
+   COMPONENTES SKELETON REUTILIZABLES
+   ============================================ */
+
+/* Skeleton de texto */
+.skeleton-text {
+  height: 16px;
+  margin-bottom: 8px;
+  width: 100%;
+}
+
+.skeleton-text.short {
+  width: 60%;
+}
+
+.skeleton-text.medium {
+  width: 80%;
+}
+
+.skeleton-text.title {
+  height: 24px;
+  margin-bottom: 12px;
+}
+
+/* Skeleton de imagen/avatar */
+.skeleton-image {
+  width: 100%;
+  padding-bottom: 60%; /* Aspect ratio 5:3 */
+  position: relative;
+}
+
+.skeleton-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+}
+
+.skeleton-avatar.small {
+  width: 32px;
+  height: 32px;
+}
+
+.skeleton-avatar.large {
+  width: 64px;
+  height: 64px;
+}
+
+/* Skeleton de botón */
+.skeleton-button {
+  height: 40px;
+  width: 120px;
+  border-radius: 4px;
+}
+
+.skeleton-button.full-width {
+  width: 100%;
+}
+
+/* ============================================
+   LAYOUTS DE SKELETON
+   ============================================ */
+
+/* Skeleton Card */
+.skeleton-card {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.skeleton-card-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.skeleton-card-header .skeleton-avatar {
+  margin-right: 12px;
+}
+
+.skeleton-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Skeleton List Item */
+.skeleton-list-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.skeleton-list-item .skeleton-avatar {
+  margin-right: 12px;
+}
+
+.skeleton-list-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Skeleton Table */
+.skeleton-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.skeleton-table-row {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.skeleton-table-cell {
+  padding: 12px;
+}
+
+/* Skeleton Grid */
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+/* ============================================
+   UTILIDADES
+   ============================================ */
+
+/* Ocultar contenido real mientras carga */
+.content-loading {
+  display: none;
+}
+
+/* Mostrar skeleton solo durante carga */
+.skeleton-wrapper.loaded {
+  display: none;
+}
+
+/* Fade in cuando el contenido carga */
+.fade-in {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Contenedor con height mínimo para evitar layout shift */
+.skeleton-container {
+  min-height: 200px;
+  position: relative;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+  .skeleton-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .skeleton-card {
+    padding: 12px;
+  }
+}
+
+/* ============================================
+   ACCESIBILIDAD
+   ============================================ */
+
+.skeleton[aria-busy="true"] {
+  pointer-events: none;
+}
+
+/* Reducir animaciones para usuarios con preferencias de movimiento reducido */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+    background: #f0f0f0;
+  }
+}
