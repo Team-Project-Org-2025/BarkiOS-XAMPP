@@ -1,22 +1,5 @@
-/**
- * Skeleton Helper para BarkiOS
- * Wrapper simplificado para manejar skeleton screens en toda la aplicación
- * Compatible con jQuery, DataTables y tu arquitectura existente
- * 
- * Uso:
- * - SkeletonHelper.showTableSkeleton('miTabla', 5, 8);
- * - SkeletonHelper.showModalSkeleton('contenidoModal');
- * - SkeletonHelper.hideModalSkeleton('contenidoModal', htmlNuevo);
- */
-
 const SkeletonHelper = {
   
-    /**
-     * Generar HTML de skeleton para DataTable
-     * @param {number} rows - Número de filas
-     * @param {number} cols - Número de columnas
-     * @returns {string} HTML del skeleton
-     */
     createTableSkeleton(rows = 5, cols = 6) {
         let html = '';
         for (let i = 0; i < rows; i++) {
@@ -38,12 +21,7 @@ const SkeletonHelper = {
         return html;
     },
 
-    /**
-     * Mostrar skeleton en DataTable
-     * @param {string} tableId - ID de la tabla (sin #)
-     * @param {number} rows - Número de filas skeleton
-     * @param {number} cols - Número de columnas
-     */
+
     showTableSkeleton(tableId, rows = 5, cols = 6) {
         const $tbody = $(`#${tableId} tbody`);
         
@@ -55,11 +33,7 @@ const SkeletonHelper = {
         $tbody.html(this.createTableSkeleton(rows, cols));
     },
 
-    /**
-     * Ocultar skeleton de tabla
-     * (Normalmente DataTables lo hace automáticamente al cargar datos)
-     * @param {string} tableId - ID de la tabla
-     */
+
     hideTableSkeleton(tableId) {
         const $tbody = $(`#${tableId} tbody`);
         
@@ -72,10 +46,7 @@ const SkeletonHelper = {
         $tbody.removeData('skeleton-backup');
     },
 
-    /**
-     * Generar HTML de skeleton para modal de detalles
-     * @returns {string} HTML del skeleton
-     */
+
     createDetailSkeleton() {
         return `
             <div class="skeleton-modal-content" style="padding: 20px;">
@@ -102,20 +73,11 @@ const SkeletonHelper = {
         `;
     },
 
-    /**
-     * Mostrar skeleton en modal
-     * @param {string} contentId - ID del contenedor de contenido (sin #)
-     */
     showModalSkeleton(contentId) {
         const $content = $(`#${contentId}`);
         $content.html(this.createDetailSkeleton());
     },
 
-    /**
-     * Ocultar skeleton de modal con animación y mostrar contenido nuevo
-     * @param {string} contentId - ID del contenedor
-     * @param {string} newContent - Nuevo HTML a mostrar
-     */
     hideModalSkeleton(contentId, newContent) {
         const $content = $(`#${contentId}`);
         
@@ -127,11 +89,6 @@ const SkeletonHelper = {
         });
     },
 
-    /**
-     * Generar skeleton para cards de estadísticas
-     * @param {number} count - Número de cards
-     * @returns {string} HTML del skeleton
-     */
     createStatsSkeleton(count = 4) {
         let html = '';
         for (let i = 0; i < count; i++) {
@@ -150,20 +107,10 @@ const SkeletonHelper = {
         return html;
     },
 
-    /**
-     * Mostrar skeleton para estadísticas/dashboard
-     * @param {string} containerId - ID del contenedor (sin #)
-     * @param {number} count - Número de cards
-     */
     showStatsSkeleton(containerId, count = 4) {
         $(`#${containerId}`).html(this.createStatsSkeleton(count));
     },
 
-    /**
-     * Generar skeleton para lista de items (búsquedas, resultados, etc)
-     * @param {number} items - Número de items
-     * @returns {string} HTML del skeleton
-     */
     createListSkeleton(items = 5) {
         let html = '<div class="list-group">';
         for (let i = 0; i < items; i++) {
@@ -183,21 +130,13 @@ const SkeletonHelper = {
         return html;
     },
 
-    /**
-     * Mostrar skeleton para búsquedas (autocomplete)
-     * @param {string} resultContainerId - ID del contenedor de resultados
-     * @param {number} items - Número de items
-     */
     showSearchSkeleton(resultContainerId, items = 3) {
         $(`#${resultContainerId}`)
             .html(this.createListSkeleton(items))
             .show();
     },
 
-    /**
-     * Generar skeleton para gráficos/charts
-     * @returns {string} HTML del skeleton
-     */
+
     createChartSkeleton() {
         return `
             <div class="d-flex flex-column align-items-center justify-content-center" style="height: 300px;">
@@ -210,19 +149,10 @@ const SkeletonHelper = {
         `;
     },
 
-    /**
-     * Mostrar skeleton para gráficos
-     * @param {string} containerId - ID del contenedor
-     */
     showChartSkeleton(containerId) {
         $(`#${containerId}`).html(this.createChartSkeleton());
     },
 
-    /**
-     * Generar skeleton para formularios
-     * @param {number} fields - Número de campos
-     * @returns {string} HTML del skeleton
-     */
     createFormSkeleton(fields = 4) {
         let html = '<div class="skeleton-form-content" style="padding: 20px;">';
         for (let i = 0; i < fields; i++) {
@@ -237,29 +167,11 @@ const SkeletonHelper = {
         return html;
     },
 
-    /**
-     * Mostrar skeleton para formularios
-     * @param {string} containerId - ID del contenedor
-     * @param {number} fields - Número de campos
-     */
     showFormSkeleton(containerId, fields = 4) {
         $(`#${containerId}`).html(this.createFormSkeleton(fields));
     },
 
-    /**
-     * Wrapper para peticiones AJAX con skeleton automático
-     * Compatible con tu estructura Ajax.get/Ajax.post
-     * 
-     * @param {Promise} ajaxPromise - Promesa de tu petición AJAX
-     * @param {Object} config - Configuración del skeleton
-     * @returns {Promise} - Promesa de la petición original
-     * 
-     * @example
-     * await SkeletonHelper.withSkeleton(
-     *   Ajax.get('/api/data', {id: 123}),
-     *   { type: 'modal', target: 'modalContent' }
-     * );
-     */
+
     async withSkeleton(ajaxPromise, config) {
         const {
             type = 'table',
@@ -313,10 +225,7 @@ const SkeletonHelper = {
         }
     },
 
-    /**
-     * Ocultar todos los skeletons activos
-     * Útil para limpiezas globales
-     */
+
     hideAll() {
         $('.skeleton-table-row').fadeOut(200, function() { $(this).remove(); });
         $('.skeleton-modal-content').fadeOut(200, function() { $(this).remove(); });
@@ -327,5 +236,3 @@ const SkeletonHelper = {
 // Hacer disponible globalmente
 window.SkeletonHelper = SkeletonHelper;
 
-// Log de inicialización (puedes comentar esto en producción)
-console.log('✅ SkeletonHelper cargado correctamente');

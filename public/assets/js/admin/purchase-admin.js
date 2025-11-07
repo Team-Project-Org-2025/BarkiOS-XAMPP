@@ -383,58 +383,43 @@ $(document).ready(function() {
 
     //Ver, editar, eliminar
     $(document).on('click', '.btn-view', function() {
-    const id = $(this).data('id');
-
-    console.log('ID seleccionado:', id);
-SkeletonHelper.showModalSkeleton('purchaseDetailsContent');
-Ajax.get(`${baseUrl}?action=get_purchase_detail`, { compra_id: id })
-  .then(data => {
-      console.log('Respuesta AJAX:', data);
-      if (data.success) {
-          const html = renderPurchaseDetails(data.data);
-          SkeletonHelper.hideModalSkeleton('purchaseDetailsContent', html);
-      } else {
-          console.error('Error en datos:', data);
-      }
-  })
-  .catch(err => console.error('Error AJAX:', err));
-    
-    // ✅ CREAR MODAL SI NO EXISTE
-    if (!$('#viewPurchaseModal').length) {
-        $('body').append(`
-            <div class="modal fade" id="viewPurchaseModal" tabindex="-1">
-                <div class="modal-dialog modal-xl">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Detalles de Compra</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        const id = $(this).data('id');
+        
+        if (!$('#viewPurchaseModal').length) {
+            $('body').append(`
+                <div class="modal fade" id="viewPurchaseModal" tabindex="-1">
+                    <div class="modal-dialog modal-xl">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Detalles de Compra</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body" id="purchaseDetailsContent"></div>
                         </div>
-                        <div class="modal-body" id="purchaseDetailsContent"></div>
                     </div>
                 </div>
-            </div>
-        `);
-    }
-    
-    $('#viewPurchaseModal').modal('show');
-    
-    // ✅ MOSTRAR SKELETON
-    SkeletonHelper.showModalSkeleton('purchaseDetailsContent');
+            `);
+        }
+        
+        $('#viewPurchaseModal').modal('show');
+        
+        // ✅ MOSTRAR SKELETON
+        SkeletonHelper.showModalSkeleton('purchaseDetailsContent');
 
-    Ajax.get(`${baseUrl}?action=get_purchase_detail`, { compra_id: id })
-        .then(data => {
-            if (data.success) {
-                const html = renderPurchaseDetails(data.data);
-                // ✅ OCULTAR SKELETON CON ANIMACIÓN
-                SkeletonHelper.hideModalSkeleton('purchaseDetailsContent', html);
-            } else {
-                $('#purchaseDetailsContent').html('<div class="alert alert-danger">No se pudieron cargar los detalles</div>');
-            }
-        })
-        .catch(err => {
-            $('#purchaseDetailsContent').html(`<div class="alert alert-danger">${Helpers.escapeHtml(err)}</div>`);
-        });
-});
+        Ajax.get(`${baseUrl}?action=get_purchase_detail`, { compra_id: id })
+            .then(data => {
+                if (data.success) {
+                    const html = renderPurchaseDetails(data.data);
+                    // ✅ OCULTAR SKELETON CON ANIMACIÓN
+                    SkeletonHelper.hideModalSkeleton('purchaseDetailsContent', html);
+                } else {
+                    $('#purchaseDetailsContent').html('<div class="alert alert-danger">No se pudieron cargar los detalles</div>');
+                }
+            })
+            .catch(err => {
+                $('#purchaseDetailsContent').html(`<div class="alert alert-danger">${Helpers.escapeHtml(err)}</div>`);
+            });
+    });
 
     $(document).on('click', '.btn-pdf', function() {
         const id = $(this).data('id');
