@@ -17,25 +17,25 @@ $current = str_replace('BarkiOS/', '', $current);
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item">
-                  <a class="nav-link <?= $current == 'inicio' ? 'active' : '' ?>" href="/BarkiOS/inicio">Inicio</a>
+                  <a class="nav-link" href="/BarkiOS/inicio">Inicio</a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link <?= $current == 'novedades' ? 'active' : '' ?>" href="/BarkiOS/novedades">Novedades</a>
+                  <a class="nav-link" href="/BarkiOS/novedades">Novedades</a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link <?= $current == 'productos' ? 'active' : '' ?>" href="/BarkiOS/productos">Productos</a>
+                  <a class="nav-link" href="/BarkiOS/productos">Productos</a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link <?= $current == 'nosotros' ? 'active' : '' ?>" href="/BarkiOS/nosotros">Nosotros</a>
+                  <a class="nav-link" href="/BarkiOS/nosotros">Nosotros</a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link <?= $current == 'ubicanos' ? 'active' : '' ?>" href="/BarkiOS/ubicanos">Ubícanos</a>
+                  <a class="nav-link" href="/BarkiOS/ubicanos">Ubícanos</a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link <?= $current == 'contacto' ? 'active' : '' ?>" href="/BarkiOS/contacto">Contacto</a>
+                  <a class="nav-link" href="/BarkiOS/contacto">Contacto</a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link <?= $current == 'ayuda' ? 'active' : '' ?>" href="/BarkiOS/ayuda">Ayuda</a>
+                  <a class="nav-link" href="/BarkiOS/ayuda">Ayuda</a>
                 </li>
             </ul>
         </div>
