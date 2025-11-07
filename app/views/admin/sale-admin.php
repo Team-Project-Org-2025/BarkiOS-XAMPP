@@ -242,10 +242,6 @@
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body" id="saleDetailsContent">
-        <div class="text-center py-4">
-          <div class="spinner-border text-primary"></div>
-          <p class="mt-2">Cargando...</p>
-        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>

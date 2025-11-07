@@ -11,6 +11,7 @@ $(document).ready(function() {
     // ==================== INICIALIZACIÓN ====================
     
     const initDataTable = () => {
+        SkeletonHelper.showTableSkeleton('salesTable', 5, 8);
         salesTable = $('#salesTable').DataTable({
             ajax: {
                 url: `${baseUrl}?action=get_sales`,
