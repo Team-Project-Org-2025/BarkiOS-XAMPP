@@ -183,6 +183,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.3/dist/sweetalert2.all.min.js"></script>
 <script type="module" src="/BarkiOS/public/assets/js/admin/suppliers-admin.js"></script>
 <script src="/BarkiOS/public/assets/js/admin/logout.js"></script>
+<script src="/BarkiOS/public/assets/js/utils/skeleton.js"></script>
 
 </body>
 </html>
