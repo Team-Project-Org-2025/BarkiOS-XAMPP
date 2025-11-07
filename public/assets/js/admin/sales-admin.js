@@ -37,8 +37,18 @@ $(document).ready(function() {
                     data: 'estado_venta',
                     className: 'text-center d-none d-sm-table-cell',
                     render: estado => {
-                        const color = estado === 'Completada' ? 'success' : estado === 'Pendiente' ? 'warning' : 'secondary';
-                        return `<span class="badge bg-${color}">${Helpers.escapeHtml(estado)}</span>`;
+                        let color = 'secondary';
+                    
+                        switch (estado?.toLowerCase()) {
+                            case 'completada':
+                                color = 'success';
+                                break;
+                            case 'pendiente':
+                                color = 'warning';
+                                break;
+                        }
+                    
+                        return `<span class="badge bg-${color}">${estado || 'Desconocido'}</span>`;
                     }
                 },
                 {
