@@ -46,7 +46,7 @@ $(document).ready(function() {
             Validations.validateField(
                 $(this), 
                 Validations.REGEX.factura, 
-                Validations.MESSAGES.factura
+                Validations.MESSAGES.tracking
             );
         });
         

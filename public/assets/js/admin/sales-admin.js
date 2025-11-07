@@ -441,7 +441,33 @@ $(document).ready(function() {
     });
 
     // ==================== SUBMIT VENTA ====================
-    
+    // 🔹 Validación en tiempo real del campo referencia
+    $('#add_referencia').on('input blur', function() {
+        const inputRef = $(this);
+        const referencia = inputRef.val().trim();
+
+        // Elimina mensajes previos
+        inputRef.siblings('.invalid-feedback').remove();
+
+        // Si está vacío → limpiar estado
+        if (referencia === '') {
+            inputRef.removeClass('is-invalid is-valid');
+            return;
+        }
+
+        // Validar longitud y formato
+        if (referencia.length > 15 || !Validations.REGEX.referenciaVenta.test(referencia)) {
+            inputRef.addClass('is-invalid').removeClass('is-valid');
+            inputRef.after('<div class="invalid-feedback">Referencia inválida (máx 15 caracteres, solo letras, números y guión)</div>');
+            return;
+        }
+
+        // Si es válido
+        inputRef.addClass('is-valid').removeClass('is-invalid');
+    });
+
+
+
     $('#addSaleForm').on('submit', function(e) {
         e.preventDefault();
 
@@ -455,11 +481,23 @@ $(document).ready(function() {
             return;
         }
 
+        const inputRef = $('#add_referencia');
+        inputRef.siblings('.invalid-feedback').remove(); // elimina mensajes anteriores
+
         if (referencia && !Validations.REGEX.referenciaVenta.test(referencia)) {
-            Helpers.toast('error', 'Referencia inválida (máx 15 caracteres, solo letras, números y guión)');
-            $('#add_referencia').addClass('is-invalid').focus();
+            inputRef.addClass('is-invalid').removeClass('is-valid');
+
+            // Inserta el mensaje de error justo debajo del input
+            inputRef.after('<div class="invalid-feedback">Referencia inválida (máx 15 caracteres, solo letras, números y guión)</div>');
+
+            inputRef.focus();
             return;
+        } else {
+            // Si es válido o está vacío, limpia el error
+            inputRef.removeClass('is-invalid').addClass('is-valid');
+            inputRef.siblings('.invalid-feedback').remove();
         }
+
 
         if (cart.length === 0) {
             Helpers.toast('error', 'Agregue al menos un producto');
