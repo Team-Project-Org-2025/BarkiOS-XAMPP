@@ -89,18 +89,14 @@ $(document).ready(function() {
                 text: '<i class="fas fa-sync-alt"></i> Actualizar',
                 className: 'btn btn-outline-secondary btn-sm',
                 action: () => {
-                    // ✅ Mostrar skeleton al refrescar
                     SkeletonHelper.showTableSkeleton('accountsTable', 5, 9);
                     accountsTable.ajax.reload(null, false);
                 }
             }],
-            // ✅ Mostrar skeleton en carga inicial
             initComplete: function() {
                 // El skeleton ya se habrá ocultado por los datos
             }
         });
-
-        // ✅ Mostrar skeleton antes de la primera carga
         SkeletonHelper.showTableSkeleton('accountsTable', 5, 9);
     };
 
@@ -266,7 +262,6 @@ $(document).ready(function() {
                     Helpers.toast('success', res.message || 'Pago registrado');
                     $('#addPaymentModal').modal('hide');
                     
-                    // ✅ Mostrar skeleton al recargar
                     SkeletonHelper.showTableSkeleton('accountsTable', 5, 9);
                     accountsTable.ajax.reload(null, false);
                 } else {
@@ -277,19 +272,17 @@ $(document).ready(function() {
             .finally(() => $btn.prop('disabled', false).html(btnText));
     });
 
-    // ✅ Ver detalle CON SKELETON
     $(document).on('click', '.btn-view', function() {
         const cuentaId = $(this).data('id');
         
         $('#viewAccountModal').modal('show');
         
-        // ✅ Mostrar skeleton mientras carga
         SkeletonHelper.showModalSkeleton('viewAccountContent');
         
         Ajax.get(`${baseUrl}?action=get_account_detail`, { cuenta_pagar_id: cuentaId })
             .then(data => {
                 if (data.success) {
-                    // ✅ Ocultar skeleton con animación
+
                     const html = renderAccountDetails(data.data);
                     SkeletonHelper.hideModalSkeleton('viewAccountContent', html);
                 } else {
