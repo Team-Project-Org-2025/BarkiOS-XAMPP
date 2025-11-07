@@ -7,6 +7,7 @@ $(document).ready(function() {
     let usersTable = null;
     
     const initDataTable = () => {
+        SkeletonHelper.showTableSkeleton('usersTable', 5, 4);
         usersTable = $('#usersTable').DataTable({
             ajax: {
                 url: `${baseUrl}?action=get_users`,
@@ -43,7 +44,16 @@ $(document).ready(function() {
             autoWidth: false,
             language: {
                 url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json"
-            }
+            },
+            dom: '<"d-flex justify-content-between align-items-center mb-2"lfB>tip',
+            buttons: [{
+                text: '<i class="fas fa-sync-alt"></i> Actualizar',
+                className: 'btn btn-outline-secondary btn-sm',
+                action: () => {
+                    SkeletonHelper.showTableSkeleton('usersTable', 5, 4);
+                    usersTable.ajax.reload(null, false);
+                }
+            }]
         });
     };
 

@@ -80,7 +80,9 @@ $(document).ready(function() {
     function loadDashboard() {
         const params = getFilterParams();
         
-        showLoading();
+        SkeletonHelper.showStatsSkeleton('statsContainer', 4);
+        SkeletonHelper.showChartSkeleton('ventasComprasChart');
+        SkeletonHelper.showChartSkeleton('cuentasChart');
         updatePeriodLabel();
 
         ajax('GET', 'get_stats', params, function(response) {
@@ -92,10 +94,8 @@ $(document).ready(function() {
             } else {
                 toast('error', response.message || 'Error al cargar estadísticas');
             }
-            hideLoading();
         }, function(msg) {
             toast('error', msg);
-            hideLoading();
         });
     }
 

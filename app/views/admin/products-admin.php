@@ -34,9 +34,6 @@ require_once __DIR__ . '/../partials/header-admin.php';
                         <tbody id="productsTableBody">
                             <tr>
                                 <td colspan="8" class="text-center">
-                                    <div class="spinner-border text-primary" role="status">
-                                        <span class="visually-hidden">Cargando...</span>
-                                    </div>
                                 </td>
                             </tr>
                         </tbody>

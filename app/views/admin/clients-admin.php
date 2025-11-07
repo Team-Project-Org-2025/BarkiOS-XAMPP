@@ -30,8 +30,6 @@
                         <tbody id="clientesTableBody">
                             <tr>
                                 <td colspan="6" class="text-center">
-                                    <div class="spinner-border text-primary" role="status">
-                                        <span class="visually-hidden">Cargando...</span>
                                     </div>
                                 </td>
                             </tr>
@@ -196,5 +194,6 @@
 <script type="module" src="/BarkiOS/public/assets/js/admin/clients-admin.js"></script>
 <script src="/BarkiOS/public/assets/js/admin/logout.js"></script>
 <script src="/BarkiOS/public/assets/js/utils/skeleton.js"></script>
+
 </body>
 </html>

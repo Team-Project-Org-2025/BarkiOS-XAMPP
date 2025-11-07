@@ -329,25 +329,3 @@ window.SkeletonHelper = SkeletonHelper;
 
 // Log de inicialización (puedes comentar esto en producción)
 console.log('✅ SkeletonHelper cargado correctamente');
-
-// Ejemplo de uso documentado
-console.log(`
-📖 Ejemplos de uso de SkeletonHelper:
-
-1. Tabla:
-   SkeletonHelper.showTableSkeleton('miTabla', 5, 8);
-
-2. Modal:
-   SkeletonHelper.showModalSkeleton('modalContent');
-   // ... después de cargar datos:
-   SkeletonHelper.hideModalSkeleton('modalContent', htmlNuevo);
-
-3. Estadísticas:
-   SkeletonHelper.showStatsSkeleton('statsContainer', 4);
-
-4. Con AJAX automático:
-   await SkeletonHelper.withSkeleton(
-     Ajax.get('/api/data'),
-     { type: 'modal', target: 'modalContent' }
-   );
-`);
