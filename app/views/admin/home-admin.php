@@ -13,7 +13,7 @@ $pageTitle = "Dashboard | Garage Barki";
             <div class="col-lg-4 mb-3 mb-lg-0">
                 <h3 class="mb-2">
                     <i class="fas fa-chart-line me-2 text-primary"></i>
-                    Dashboard
+                    Panel Administrativo
                 </h3>
                 <p class="text-muted mb-0">
                     <i class="fas fa-calendar-alt me-1"></i>
