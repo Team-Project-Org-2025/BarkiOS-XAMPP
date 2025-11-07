@@ -17,6 +17,11 @@
                         Inicio
                     </a>
                 </li>
+                <li class="nav-item mt-3">
+                    <span class="nav-section-title text-muted px-3 small fw-bold">
+                        REGISTRAR
+                    </span>
+                </li>
                 <li class="nav-item">
                     <a class="nav-link <?php echo isActiveRoute('admin/products') ? 'active' : ''; ?>" 
                        href="/BarkiOS/admin/products">
