@@ -79,15 +79,12 @@ $(document).ready(function() {
     $('#addPurchaseForm').on('submit', function(e) {
         e.preventDefault();
         
-        console.log('🔍 Validando formulario...'); // Debug
-        
         // Validar formulario
         if (!Validations.validateForm($(this), addPurchaseRules)) {
             Helpers.toast('warning', 'Por favor corrija los campos resaltados');
             return;
         }
         
-        console.log('✅ Validación principal pasada'); // Debug
         
         // Validaciones adicionales
         const tracking = $('#tracking').val().trim();
@@ -109,8 +106,6 @@ $(document).ready(function() {
         // Aquí irían tus validaciones de prendas
         // const { prendas, error } = recopilarPrendas('.prenda-row');
         // if (error) { return; }
-        
-        console.log('✅ Todas las validaciones pasadas, enviando...'); // Debug
         
         // Enviar
         const formData = new FormData(this);
@@ -205,13 +200,10 @@ $(document).ready(function() {
         $form[0].reset();
         Validations.clearValidation($form);
         $('#searchSupplier').val('').removeClass('is-valid is-invalid');
-        console.log('🟢 Modal abierto y limpiado'); // Debug
     });
 
     // ==================== INVOCAR ====================
-    console.log('🚀 Inicializando validaciones...'); // Debug
     setupPurchaseValidation();
-    console.log('✅ Validaciones configuradas'); // Debug
 
     const reloadPurchases = () => {
         if (purchasesTable) {
