@@ -34,9 +34,6 @@ require_once __DIR__ . '/../partials/header-admin.php';
                         <tbody id="productsTableBody">
                             <tr>
                                 <td colspan="8" class="text-center">
-                                    <div class="spinner-border text-primary" role="status">
-                                        <span class="visually-hidden">Cargando...</span>
-                                    </div>
                                 </td>
                             </tr>
                         </tbody>
@@ -276,6 +273,7 @@ if (!function_exists('getDolarRate')) {
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.3/dist/sweetalert2.all.min.js"></script>
 <script type="module" src="/BarkiOS/public/assets/js/admin/products-admin.js"></script>
 <script src="/BarkiOS/public/assets/js/admin/logout.js"></script>
+<script src="/BarkiOS/public/assets/js/utils/skeleton.js"></script>
 
 </body>
 </html>

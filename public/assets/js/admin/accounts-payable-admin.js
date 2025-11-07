@@ -88,12 +88,18 @@ $(document).ready(function() {
             buttons: [{
                 text: '<i class="fas fa-sync-alt"></i> Actualizar',
                 className: 'btn btn-outline-secondary btn-sm',
-                action: () => accountsTable.ajax.reload(null, false)
-            }]
+                action: () => {
+                    SkeletonHelper.showTableSkeleton('accountsTable', 5, 9);
+                    accountsTable.ajax.reload(null, false);
+                }
+            }],
+            initComplete: function() {
+                // El skeleton ya se habrá ocultado por los datos
+            }
         });
+        SkeletonHelper.showTableSkeleton('accountsTable', 5, 9);
     };
 
-    //Actualizar estadisticas
     const updateStats = (accounts) => {
         let totalCuentas = accounts.length;
         let deudaTotal = 0, porVencer = 0, vencidas = 0;
@@ -119,7 +125,6 @@ $(document).ready(function() {
         $('#statVencidas').text(vencidas);
     };
 
-    //Registrar pago
     $(document).on('click', '.btn-pay', function() {
         const $btn = $(this);
         currentSaldo = parseFloat($btn.data('saldo'));
@@ -138,69 +143,67 @@ $(document).ready(function() {
     });
 
     const cambiarMoneda = (moneda) => {
-    const $tipo = $('#paymentTipo');
-    $tipo.empty().append(`<option value="">Seleccione un método de pago</option>`);
-    (moneda === "USD" ? METODOS_USD : METODOS_BS).forEach(m => $tipo.append(`<option value="${m}">${m}</option>`));
-    $('#referenciaField, #bancoField').hide().find('input').val('').removeClass('is-valid is-invalid');
-    moneda === "BS" ? $('#equivInfo').show() : $('#equivInfo').hide().html('');
-};
+        const $tipo = $('#paymentTipo');
+        $tipo.empty().append(`<option value="">Seleccione un método de pago</option>`);
+        (moneda === "USD" ? METODOS_USD : METODOS_BS).forEach(m => $tipo.append(`<option value="${m}">${m}</option>`));
+        $('#referenciaField, #bancoField').hide().find('input').val('').removeClass('is-valid is-invalid');
+        moneda === "BS" ? $('#equivInfo').show() : $('#equivInfo').hide().html('');
+    };
 
     $('#paymentMoneda').on('change', function() {
         cambiarMoneda($(this).val());
         $('#paymentMontoGeneral').val() && $('#paymentMontoGeneral').trigger('input');
     });
 
-    // Validación de monto con margen
-$('#paymentMontoGeneral').on('input', function() {
-    const moneda = $('#paymentMoneda').val();
-    const valor = parseFloat($(this).val());
-    const $equiv = $('#equivInfo');
+    $('#paymentMontoGeneral').on('input', function() {
+        const moneda = $('#paymentMoneda').val();
+        const valor = parseFloat($(this).val());
+        const $equiv = $('#equivInfo');
 
-    $(this).siblings('.invalid-feedback').remove();
+        $(this).siblings('.invalid-feedback').remove();
 
-    if (!valor || valor <= 0 || isNaN(valor)) {
-        $(this).addClass('is-invalid').removeClass('is-valid').after('<div class="invalid-feedback">Ingrese un monto válido</div>');
-        $('#paymentMonto').val('');
-        $equiv.html('').hide();
-        return;
-    }
-
-    let montoUSD = 0, esValido = false;
-
-    if (moneda === "USD") {
-        montoUSD = valor;
-        if (montoUSD > currentSaldo) {
-            $(this).addClass('is-invalid').removeClass('is-valid').after(`<div class="invalid-feedback">Excede el saldo (${Helpers.formatCurrency(currentSaldo)})</div>`);
-        } else {
-            esValido = true;
-            $equiv.html(`<span class="text-info"><i class="fas fa-dollar-sign me-1"></i>Monto USD válido.<br><small class="text-muted">Tasa BCV: Bs ${DOLAR_BCV_RATE.toLocaleString('es-VE', {minimumFractionDigits: 2})}</small></span>`).show();
+        if (!valor || valor <= 0 || isNaN(valor)) {
+            $(this).addClass('is-invalid').removeClass('is-valid').after('<div class="invalid-feedback">Ingrese un monto válido</div>');
+            $('#paymentMonto').val('');
+            $equiv.html('').hide();
+            return;
         }
-    } else if (moneda === "BS") {
-        montoUSD = valor / DOLAR_BCV_RATE;
-        const difBS = (montoUSD - currentSaldo) * DOLAR_BCV_RATE;
 
-        if (Math.abs(difBS) <= MARGEN_ERROR_BS) {
-            montoUSD = currentSaldo;
-            esValido = true;
-            $equiv.html(`<span class="text-success"><i class="fas fa-check-circle me-1"></i>Equivale a: <strong>${Helpers.formatCurrency(montoUSD)}</strong></span>`).show();
-        } else if (difBS > MARGEN_ERROR_BS) {
-            $(this).addClass('is-invalid').removeClass('is-valid').after('<div class="invalid-feedback">Excede el saldo</div>');
-            $equiv.html(`<span class="text-danger">Equivale a: ${Helpers.formatCurrency(montoUSD)}</span>`).show();
-        } else {
-            esValido = true;
-            $equiv.html(`<span class="text-info">Equivale a: <strong>${Helpers.formatCurrency(montoUSD)}</strong><br><small class="text-muted">Tasa BCV: Bs ${DOLAR_BCV_RATE.toLocaleString('es-VE', {minimumFractionDigits: 2})}</small></span>`).show();
+        let montoUSD = 0, esValido = false;
+
+        if (moneda === "USD") {
+            montoUSD = valor;
+            if (montoUSD > currentSaldo) {
+                $(this).addClass('is-invalid').removeClass('is-valid').after(`<div class="invalid-feedback">Excede el saldo (${Helpers.formatCurrency(currentSaldo)})</div>`);
+            } else {
+                esValido = true;
+                $equiv.html(`<span class="text-info"><i class="fas fa-dollar-sign me-1"></i>Monto USD válido.<br><small class="text-muted">Tasa BCV: Bs ${DOLAR_BCV_RATE.toLocaleString('es-VE', {minimumFractionDigits: 2})}</small></span>`).show();
+            }
+        } else if (moneda === "BS") {
+            montoUSD = valor / DOLAR_BCV_RATE;
+            const difBS = (montoUSD - currentSaldo) * DOLAR_BCV_RATE;
+
+            if (Math.abs(difBS) <= MARGEN_ERROR_BS) {
+                montoUSD = currentSaldo;
+                esValido = true;
+                $equiv.html(`<span class="text-success"><i class="fas fa-check-circle me-1"></i>Equivale a: <strong>${Helpers.formatCurrency(montoUSD)}</strong></span>`).show();
+            } else if (difBS > MARGEN_ERROR_BS) {
+                $(this).addClass('is-invalid').removeClass('is-valid').after('<div class="invalid-feedback">Excede el saldo</div>');
+                $equiv.html(`<span class="text-danger">Equivale a: ${Helpers.formatCurrency(montoUSD)}</span>`).show();
+            } else {
+                esValido = true;
+                $equiv.html(`<span class="text-info">Equivale a: <strong>${Helpers.formatCurrency(montoUSD)}</strong><br><small class="text-muted">Tasa BCV: Bs ${DOLAR_BCV_RATE.toLocaleString('es-VE', {minimumFractionDigits: 2})}</small></span>`).show();
+            }
         }
-    }
 
-    if (esValido) {
-        $(this).addClass('is-valid').removeClass('is-invalid');
-        $('#paymentMonto').val(montoUSD.toFixed(4));
-    } else {
-        $('#paymentMonto').val('');
-    }
-});
+        if (esValido) {
+            $(this).addClass('is-valid').removeClass('is-invalid');
+            $('#paymentMonto').val(montoUSD.toFixed(4));
+        } else {
+            $('#paymentMonto').val('');
+        }
+    });
 
-    // Tipo de pago y campos bancarios
     $('#paymentTipo').on('change', function() {
         const tipo = $(this).val();
         Validations.validateSelect($(this));
@@ -220,7 +223,6 @@ $('#paymentMontoGeneral').on('input', function() {
         $(this).is(':visible') && Validations.validateField($(this), Validations.REGEX.banco, Validations.MESSAGES.banco);
     });
 
-    // Submit pago
     $('#addPaymentForm').on('submit', function(e) {
         e.preventDefault();
         
@@ -259,6 +261,8 @@ $('#paymentMontoGeneral').on('input', function() {
                 if (res.success) {
                     Helpers.toast('success', res.message || 'Pago registrado');
                     $('#addPaymentModal').modal('hide');
+                    
+                    SkeletonHelper.showTableSkeleton('accountsTable', 5, 9);
                     accountsTable.ajax.reload(null, false);
                 } else {
                     Helpers.toast('error', res.message);
@@ -268,19 +272,26 @@ $('#paymentMontoGeneral').on('input', function() {
             .finally(() => $btn.prop('disabled', false).html(btnText));
     });
 
-    //Ver detalle
     $(document).on('click', '.btn-view', function() {
         const cuentaId = $(this).data('id');
         
         $('#viewAccountModal').modal('show');
-        $('#viewAccountContent').html('<div class="text-center py-5"><div class="spinner-border"></div><p class="mt-2">Cargando...</p></div>');
+        
+        SkeletonHelper.showModalSkeleton('viewAccountContent');
         
         Ajax.get(`${baseUrl}?action=get_account_detail`, { cuenta_pagar_id: cuentaId })
             .then(data => {
-                if (data.success) renderAccountDetails(data.data);
-                else $('#viewAccountContent').html('<div class="alert alert-danger">Error al cargar datos</div>');
+                if (data.success) {
+
+                    const html = renderAccountDetails(data.data);
+                    SkeletonHelper.hideModalSkeleton('viewAccountContent', html);
+                } else {
+                    $('#viewAccountContent').html('<div class="alert alert-danger">Error al cargar datos</div>');
+                }
             })
-            .catch(() => $('#viewAccountContent').html('<div class="alert alert-danger">Error de conexión</div>'));
+            .catch(() => {
+                $('#viewAccountContent').html('<div class="alert alert-danger">Error de conexión</div>');
+            });
     });
 
     const renderAccountDetails = (data) => {
@@ -348,7 +359,7 @@ $('#paymentMontoGeneral').on('input', function() {
             `;
         }
         
-        const html = `
+        return `
             <div class="row mb-3">
                 <div class="col-md-6">
                     <h6 class="text-primary mb-3">Información de la Compra</h6>
@@ -392,11 +403,8 @@ $('#paymentMontoGeneral').on('input', function() {
             ${pagosHtml}
             ${prendasHtml}
         `;
-        
-        $('#viewAccountContent').html(html);
     };
 
-    //Busqueda y filtros
     $('#searchInput').on('input', Helpers.debounce(function() {
         accountsTable.search($(this).val()).draw();
     }, 300));

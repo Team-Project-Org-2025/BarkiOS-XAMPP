@@ -390,6 +390,7 @@ $dolarRate = getDolarRate();
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="/BarkiOS/public/assets/js/admin/home-admin.js"></script>
 <script src="/BarkiOS/public/assets/js/admin/logout.js"></script>
+<script src="/BarkiOS/public/assets/js/utils/skeleton.js"></script>
 
 </body>
 </html>

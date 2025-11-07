@@ -8,6 +8,7 @@ $(document).ready(function() {
 
 
     const initDataTable = () => {
+        SkeletonHelper.showTableSkeleton('suppliersTable', 5, 6);
         suppliersTable = $('#suppliersTable').DataTable({
             ajax: {
                 url: `${baseUrl}?action=get_suppliers`,
@@ -53,7 +54,16 @@ $(document).ready(function() {
             ],
             pageLength: 5,
             responsive: true,
-            language: { url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json" }
+            language: { url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json" },
+            dom: '<"d-flex justify-content-between align-items-center mb-2"lfB>tip',
+            buttons: [{
+                text: '<i class="fas fa-sync-alt"></i> Actualizar',
+                className: 'btn btn-outline-secondary btn-sm',
+                action: () => {
+                    SkeletonHelper.showTableSkeleton('suppliersTable', 5, 6);
+                    suppliersTable.ajax.reload(null, false);
+                }
+            }]
         });
     };
 

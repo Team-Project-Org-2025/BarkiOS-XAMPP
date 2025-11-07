@@ -17,8 +17,13 @@
     
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
 
+     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/skeleton-elements@4.0.1/skeleton-elements.css">
+
     <link href="/BarkiOS/public/assets/libs/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
     
     <link rel="stylesheet" href="/BarkiOS/public/assets/css/admin-styles.css">
+    
+    <link rel="stylesheet" href="/BarkiOS/public/assets/css/skeleton.css">
+
 </head>
 <body>

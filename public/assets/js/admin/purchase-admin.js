@@ -20,11 +20,14 @@ $(document).ready(function() {
 
     const reloadPurchases = () => {
         if (purchasesTable) {
+
+            SkeletonHelper.showTableSkeleton('purchaseTable', 5, 6);
             purchasesTable.ajax.reload(() => updateStats(), false);
         }
     };
     
     const initPurchaseTable = () => {
+        SkeletonHelper.showTableSkeleton('purchaseTable', 5, 6);
         purchasesTable = $('#purchaseTable').DataTable({
             ajax: {
                 url: `${baseUrl}?action=get_purchases`,
@@ -86,12 +89,21 @@ $(document).ready(function() {
                         </div>`
                 }
             ],
+            order: [[2, 'desc']],
             pageLength: 10,
             responsive: true,
             autoWidth: false,
             language: {
-                url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json"
+                url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json"},
+            dom: '<"d-flex justify-content-between align-items-center mb-2"lfB>tip',
+            buttons: [{
+            text: '<i class="fas fa-sync-alt"></i> Actualizar',
+            className: 'btn btn-outline-secondary btn-sm',
+            action: () => {
+                SkeletonHelper.showTableSkeleton('purchaseTable', 5, 6);
+                purchasesTable.ajax.reload(() => updateStats(), false);
             }
+        }]
         });
     };
 
@@ -373,23 +385,42 @@ $(document).ready(function() {
     //Ver, editar, eliminar
     $(document).on('click', '.btn-view', function() {
         const id = $(this).data('id');
-        Helpers.showLoading('Cargando detalles...');
+        
+        if (!$('#viewPurchaseModal').length) {
+            $('body').append(`
+                <div class="modal fade" id="viewPurchaseModal" tabindex="-1">
+                    <div class="modal-dialog modal-xl">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Detalles de Compra</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body" id="purchaseDetailsContent"></div>
+                        </div>
+                    </div>
+                </div>
+            `);
+        }
+        
+        $('#viewPurchaseModal').modal('show');
+        
+        // ✅ MOSTRAR SKELETON
+        SkeletonHelper.showModalSkeleton('purchaseDetailsContent');
 
         Ajax.get(`${baseUrl}?action=get_purchase_detail`, { compra_id: id })
             .then(data => {
-                Helpers.closeLoading();
                 if (data.success) {
-                    renderPurchaseDetails(data.data);
+                    const html = renderPurchaseDetails(data.data);
+                    // ✅ OCULTAR SKELETON CON ANIMACIÓN
+                    SkeletonHelper.hideModalSkeleton('purchaseDetailsContent', html);
                 } else {
-                    Helpers.toast('error', 'No se pudieron cargar los detalles');
+                    $('#purchaseDetailsContent').html('<div class="alert alert-danger">No se pudieron cargar los detalles</div>');
                 }
             })
             .catch(err => {
-                Helpers.closeLoading();
-                Helpers.toast('error', err);
+                $('#purchaseDetailsContent').html(`<div class="alert alert-danger">${Helpers.escapeHtml(err)}</div>`);
             });
     });
-
 
     $(document).on('click', '.btn-pdf', function() {
         const id = $(this).data('id');
@@ -400,7 +431,8 @@ $(document).ready(function() {
         e.preventDefault();
 
         const id = $(this).data('id');
-        Helpers.showLoading('Cargando compra para editar...');
+        $('#editPurchaseModal').modal('show');
+        $('#editPrendasContainer').html(SkeletonHelper.createFormSkeleton(4));
 
         Ajax.get(`${baseUrl}?action=get_purchase_detail`, { compra_id: id })
             .then(data => {
@@ -549,50 +581,52 @@ $(document).ready(function() {
         const c = data.compra;
         const p = data.prendas;
         
-        Swal.fire({
-            title: `Compra #${c.factura_numero}`,
-            html: `
-                <div class="text-start">
-                    <div class="row mb-3">
-                        <div class="col-6">
-                            <p><strong>Proveedor:</strong><br>${c.nombre_proveedor}</p>
-                            <p><strong>RIF:</strong> ${c.tipo_rif}-${c.proveedor_rif}</p>
-                        </div>
-                        <div class="col-6">
-                            <p><strong>Fecha:</strong><br>${Helpers.formatDate(c.fecha_compra)}</p>
-                            <p><strong>Tracking:</strong> ${c.tracking || 'N/A'}</p>
-                        </div>
+        return `
+            <div class="text-start">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h5>Compra #${c.factura_numero}</h5>
+                        <p class="mb-1"><strong>Proveedor:</strong> ${c.nombre_proveedor}</p>
+                        <p class="mb-1"><strong>RIF:</strong> ${c.tipo_rif}-${c.proveedor_rif}</p>
                     </div>
-                    <div class="alert alert-success">
-                        <strong>Monto Total:</strong> ${Helpers.formatCurrency(c.monto_total)}
-                    </div>
-                    <hr>
-                    <h6>Prendas (${p.length})</h6>
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead>
-                                <tr><th>Código</th><th>Nombre</th><th>Categoría</th><th>Tipo</th><th>P.Costo</th><th>Estado</th></tr>
-                            </thead>
-                            <tbody>
-                                ${p.map(pr => `
-                                    <tr>
-                                        <td><code>${pr.codigo_prenda}</code></td>
-                                        <td>${pr.nombre}</td>
-                                        <td>${pr.categoria}</td>
-                                        <td>${pr.tipo}</td>
-                                        <td>${Helpers.formatCurrency(pr.precio_costo)}</td>
-                                        <td>${Helpers.getBadge(pr.estado)}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
+                    <div class="col-md-6 text-end">
+                        <p class="mb-1"><strong>Fecha:</strong> ${Helpers.formatDate(c.fecha_compra)}</p>
+                        <p class="mb-1"><strong>Tracking:</strong> ${c.tracking || 'N/A'}</p>
                     </div>
                 </div>
-            `,
-            width: '900px',
-            showConfirmButton: false,
-            showCloseButton: true
-        });
+                <div class="alert alert-success">
+                    <strong>Monto Total:</strong> ${Helpers.formatCurrency(c.monto_total)}
+                </div>
+                <hr>
+                <h6 class="mb-3"><i class="fas fa-box me-2"></i>Prendas (${p.length})</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Código</th>
+                                <th>Nombre</th>
+                                <th>Categoría</th>
+                                <th>Tipo</th>
+                                <th class="text-end">P.Costo</th>
+                                <th class="text-center">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${p.map(pr => `
+                                <tr>
+                                    <td><code>${pr.codigo_prenda}</code></td>
+                                    <td>${pr.nombre}</td>
+                                    <td><span class="badge bg-secondary">${pr.categoria}</span></td>
+                                    <td><span class="badge bg-info">${pr.tipo}</span></td>
+                                    <td class="text-end"><strong>${Helpers.formatCurrency(pr.precio_costo)}</strong></td>
+                                    <td class="text-center">${Helpers.getBadge(pr.estado)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
     };
 
     $('#addPrendaBtn').on('click', () => addPrenda('prendasContainer'));
@@ -612,12 +646,15 @@ $(document).ready(function() {
     }, 300));
 
     $('#addPurchaseModal').on('show.bs.modal', function() {
-        $('#addPurchaseForm')[0].reset();
-        $('#prendasContainer').empty();
-        prendaIndex = 0;
-        setTimeout(() => addPrenda('prendasContainer'), 100);
-    });
+            $('#addPurchaseForm')[0].reset();
+            $('#prendasContainer').empty();
+            prendaIndex = 0;
+            setTimeout(() => addPrenda('prendasContainer'), 100);
+        });
+
+    SkeletonHelper.showTableSkeleton('purchaseTable', 5, 6);
 
     initPurchaseTable();
     setupSupplierSearch('searchSupplier', 'supplierResults', 'proveedorId');
 });
+

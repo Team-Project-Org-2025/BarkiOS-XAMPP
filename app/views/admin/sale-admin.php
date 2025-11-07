@@ -242,10 +242,6 @@
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body" id="saleDetailsContent">
-        <div class="text-center py-4">
-          <div class="spinner-border text-primary"></div>
-          <p class="mt-2">Cargando...</p>
-        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
@@ -273,6 +269,7 @@ if (!function_exists('getDolarRate')) {
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.3/dist/sweetalert2.all.min.js"></script>
 <script type="module" src="/BarkiOS/public/assets/js/admin/sales-admin.js"></script>
 <script src="/BarkiOS/public/assets/js/admin/logout.js"></script>
+<script src="/BarkiOS/public/assets/js/utils/skeleton.js"></script>
 
 </body>
 </html>

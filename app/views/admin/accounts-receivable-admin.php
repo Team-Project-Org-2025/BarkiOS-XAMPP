@@ -8,13 +8,6 @@
         <!-- Header con título y botón -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="display-6 fw-bold text-dark">Cuentas por Cobrar</h1>
-            <div class="d-flex gap-2">
-                <button class="btn btn-warning btn-sm rounded-pill px-4" 
-                        onclick="processExpiredAccounts()" 
-                        title="Procesar vencimientos">
-                    <i class="fas fa-sync-alt me-1"></i> Procesar Vencidos
-                </button>
-            </div>
         </div>
 
         <!-- Tabla de Cuentas por Cobrar -->
@@ -256,6 +249,7 @@ if (!function_exists('getDolarRate')) {
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.3/dist/sweetalert2.all.min.js"></script>
 <script type="module" src="/BarkiOS/public/assets/js/admin/accounts-receivable-admin.js"></script>
 <script src="/BarkiOS/public/assets/js/admin/logout.js"></script>
+<script src="/BarkiOS/public/assets/js/utils/skeleton.js"></script>
 
 </body>
 </html>
