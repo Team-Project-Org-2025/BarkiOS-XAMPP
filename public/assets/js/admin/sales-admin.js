@@ -63,7 +63,10 @@ $(document).ready(function() {
             buttons: [{
                 text: '<i class="fas fa-sync-alt"></i> Actualizar',
                 className: 'btn btn-outline-secondary btn-sm',
-                action: () => salesTable.ajax.reload(null, false)
+                action: () => {
+                    SkeletonHelper.showTableSkeleton('salesTable', 5, 8);
+                    salesTable.ajax.reload(null, false);
+                }
             }]
         });
     };
@@ -507,6 +510,7 @@ $(document).ready(function() {
                     Helpers.toast('success', r.message || 'Venta registrada');
                     resetSaleForm();
                     $('#addSaleModal').modal('hide');
+                    SkeletonHelper.showTableSkeleton('salesTable', 5, 8);
                     salesTable.ajax.reload(null, false);
                 } else {
                     Helpers.toast('error', r?.message || 'Error al guardar venta');
@@ -539,15 +543,23 @@ $(document).ready(function() {
         const id = $(this).data('id');
         if (!id) return;
         
-        $('#saleDetailsContent').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div><p class="mt-2">Cargando...</p></div>');
         $('#viewSaleModal').modal('show');
+        
+        SkeletonHelper.showModalSkeleton('saleDetailsContent');
 
         Ajax.get(`${baseUrl}?action=get_by_id&id=${encodeURIComponent(id)}`)
             .then(r => {
-                if (r?.success && r.venta) renderSaleDetails(r.venta);
-                else $('#saleDetailsContent').html('<p class="text-center text-muted">No se encontraron detalles</p>');
+                if (r?.success && r.venta) {
+                    const html = renderSaleDetails(r.venta);
+
+                    SkeletonHelper.hideModalSkeleton('saleDetailsContent', html);
+                } else {
+                    $('#saleDetailsContent').html('<p class="text-center text-muted">No se encontraron detalles</p>');
+                }
             })
-            .catch(msg => $('#saleDetailsContent').html(`<p class="text-center text-muted">${Helpers.escapeHtml(msg)}</p>`));
+            .catch(msg => {
+                $('#saleDetailsContent').html(`<p class="text-center text-muted">${Helpers.escapeHtml(msg)}</p>`);
+            });
     });
 
     const renderSaleDetails = (s) => {
@@ -622,7 +634,7 @@ $(document).ready(function() {
             </div>
         `;
 
-        $('#saleDetailsContent').html(html);
+        return html;
     };
 
     // ==================== CANCELAR VENTA ====================
@@ -639,6 +651,7 @@ $(document).ready(function() {
                     .then(r => {
                         if (r?.success) {
                             Helpers.toast('success', r.message || 'Venta anulada');
+                            SkeletonHelper.showTableSkeleton('salesTable', 5, 8);
                             salesTable.ajax.reload(null, false);
                         } else {
                             Helpers.toast('error', r?.message || 'Error al anular venta');
@@ -691,7 +704,8 @@ $(document).ready(function() {
     });
 
     // ==================== INICIALIZACIÓN FINAL ====================
-    
+    SkeletonHelper.showTableSkeleton('salesTable', 5, 8);
+
     initDataTable();
     setupClientSearch();
     setupEmployeeSearch();
