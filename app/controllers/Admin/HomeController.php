@@ -273,7 +273,7 @@ function buildReportPdfHtml($stats, $transactions, $dateFrom, $dateTo) {
     <html>
     <head>
       <meta charset="utf-8">
-      <title>Reporte Dashboard</title>
+      <title>Reporte Panel Administrtivo</title>
       <style>
         body { font-family: DejaVu Sans, Helvetica, Arial, sans-serif; font-size: 12px; }
         .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }

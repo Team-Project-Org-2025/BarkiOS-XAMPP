@@ -1,6 +1,6 @@
 <?php 
 require_once __DIR__ . '/../../core/AdminContext.php';
-$pageTitle = "Dashboard | Garage Barki"; 
+$pageTitle = "Inicio | Garage Barki"; 
 ?>
 <?php require_once __DIR__ . '/../partials/header-admin.php'; ?>
 <?= require_once __DIR__ . '/../partials/navbar-admin.php'; ?>
