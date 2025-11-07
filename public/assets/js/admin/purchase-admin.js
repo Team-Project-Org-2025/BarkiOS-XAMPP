@@ -7,6 +7,50 @@ $(document).ready(function() {
     let prendaIndex = 0;
     let allPurchases = [];
     let purchasesTable = null;
+        const addRules = 
+        {
+        nombreCampo: 'tipoValidacion',
+        // Ejemplo:
+        facturaNumero: 'factura',     // valida con REGEX.factura
+        fecha_compra: 'required',      // solo valida que no esté vacío
+        proveedorId: 'select',         // valida que un select tenga valor
+        nombre: 'nombre',              // valida con REGEX.nombre
+        telefono: 'telefono'           // valida con REGEX.telefono
+    };
+    
+    const editRules = 
+    {
+        editFacturaNumero: 'factura',
+        editFechaCompra: 'required',
+        editProveedorId: 'select'
+    };
+
+    const setupValidation = () => {
+    // Validación automática para formulario agregar
+    Validations.setupRealTimeValidation($('#addForm'), addRules);
+    
+    // Validación automática para formulario editar
+    Validations.setupRealTimeValidation($('#editForm'), editRules);
+    
+    // Validaciones personalizadas (opcional)
+    // Para campos que necesitan lógica especial
+    $('#campoEspecial').on('input blur', function() {
+        const valor = $(this).val().trim();
+        
+        // Si está vacío y es opcional
+        if (valor === '') {
+            $(this).removeClass('is-valid is-invalid');
+            return;
+        }
+        
+        // Validar con regex
+        if (Validations.REGEX.factura.test(valor)) {
+            $(this).addClass('is-valid').removeClass('is-invalid');
+        } else {
+            $(this).addClass('is-invalid').removeClass('is-valid');
+        }
+    });
+};
 
     // Tipos por categoría
     const TIPOS_POR_CATEGORIA = {
