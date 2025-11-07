@@ -192,7 +192,7 @@ function handleAddEditAjax($userModel, $mode) {
 
 function handleDeleteAjax($userModel) {
     try {
-        $validation = Validation::validateField($_POST['id'] ?? '', 'codigo');
+        $validation = Validation::validateField($_POST['id'] ?? '', 'id');
         if (!$validation['valid']) {
             throw new Exception($validation['message']);
         }
