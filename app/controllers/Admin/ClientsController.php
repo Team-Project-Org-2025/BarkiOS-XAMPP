@@ -53,8 +53,7 @@ function handleAddEdit($clientModel, $mode) {
         'cedula' => 'cedula',
         'nombre' => 'nombre',
         'direccion' => 'direccion',
-        'telefono' => 'telefono',
-        'membresia' => 'nombre'
+        'telefono' => 'telefono'
     ];
     
     $validation = Validation::validate($_POST, $rules);
@@ -97,8 +96,7 @@ function handleAddEditAjax($clientModel, $mode) {
         'cedula' => 'cedula',
         'nombre' => 'nombre',
         'direccion' => 'direccion',
-        'telefono' => 'telefono',
-        'membresia' => 'nombre'
+        'telefono' => 'telefono'
     ];
     
     // Validar datos

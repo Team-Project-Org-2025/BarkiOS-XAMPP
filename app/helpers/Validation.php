@@ -44,7 +44,7 @@ class Validation {
         'required' => 'Este campo es requerido',
         'rif' => 'RIF inválido (9 dígitos)',
         'tracking' => 'Tracking inválido (8 dígitos)',
-        'tipo_rif' => 'Tipo de RIF inválido (debe ser J, G, V, E, C o P)'
+        'tipo_rif' => 'Tipo de RIF inválido (debe ser J, G, C)'
     ];
 
     /**
