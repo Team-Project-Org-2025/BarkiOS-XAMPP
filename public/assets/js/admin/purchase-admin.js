@@ -8,6 +8,18 @@ $(document).ready(function() {
     let allPurchases = [];
     let purchasesTable = null;
 
+     const addPurchaseRules = {
+        factura_numero: 'factura',      // Coincide con name="factura_numero"
+        fecha_compra: 'required',        // Coincide con name="fecha_compra"
+        proveedor_rif: 'select'          // Coincide con name="proveedor_rif"
+    };
+    
+    const editPurchaseRules = {
+        factura_numero: 'factura',      // Coincide con name="factura_numero" del edit
+        fecha_compra: 'required',        // Coincide con name="fecha_compra" del edit
+        proveedor_rif: 'select'          // Coincide con name="proveedor_rif" del edit
+    };
+
     // Tipos por categoría
     const TIPOS_POR_CATEGORIA = {
         Formal: ["Vestido", "Camisa", "Pantalon", "Chaqueta"],
@@ -17,6 +29,181 @@ $(document).ready(function() {
         Verano: ["Vestido", "Short", "Blusa"],
         Fiesta: ["Vestido", "Falda", "Blusa", "Enterizo"]
     };
+
+    const setupPurchaseValidation = () => {
+        // Validación en tiempo real
+        Validations.setupRealTimeValidation($('#addPurchaseForm'), addPurchaseRules);
+        Validations.setupRealTimeValidation($('#editPurchaseForm'), editPurchaseRules);
+        
+        // Validación para tracking (opcional)
+        $('#tracking, #editTracking').on('input blur', function() {
+            const val = $(this).val().trim();
+            if (val === '') {
+                $(this).removeClass('is-valid is-invalid');
+                $(this).siblings('.invalid-feedback').remove();
+                return;
+            }
+            Validations.validateField(
+                $(this), 
+                Validations.REGEX.factura, 
+                Validations.MESSAGES.tracking
+            );
+        });
+        
+        // Validación para fecha (no puede ser futura)
+        $('#fecha_compra, #editFechaCompra').on('change blur', function() {
+            const fecha = new Date($(this).val());
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
+            
+            if (!$(this).val()) {
+                $(this).addClass('is-invalid').removeClass('is-valid');
+                $(this).siblings('.invalid-feedback').remove();
+                $(this).after('<div class="invalid-feedback">La fecha es requerida</div>');
+                return;
+            }
+            
+            if (fecha > hoy) {
+                $(this).addClass('is-invalid').removeClass('is-valid');
+                $(this).siblings('.invalid-feedback').remove();
+                $(this).after('<div class="invalid-feedback">La fecha no puede ser futura</div>');
+                return;
+            }
+            
+            $(this).addClass('is-valid').removeClass('is-invalid');
+            $(this).siblings('.invalid-feedback').remove();
+        });
+    };
+
+    // ==================== SUBMIT AGREGAR ====================
+    $('#addPurchaseForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Validar formulario
+        if (!Validations.validateForm($(this), addPurchaseRules)) {
+            Helpers.toast('warning', 'Por favor corrija los campos resaltados');
+            return;
+        }
+        
+        
+        // Validaciones adicionales
+        const tracking = $('#tracking').val().trim();
+        if (tracking && !Validations.REGEX.factura.test(tracking)) {
+            Helpers.toast('error', 'Tracking inválido (8 dígitos)');
+            $('#tracking').addClass('is-invalid').focus();
+            return;
+        }
+        
+        const fecha = new Date($('#fecha_compra').val());
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        if (fecha > hoy) {
+            Helpers.toast('error', 'La fecha no puede ser futura');
+            $('#fecha_compra').focus();
+            return;
+        }
+        
+        // Aquí irían tus validaciones de prendas
+        // const { prendas, error } = recopilarPrendas('.prenda-row');
+        // if (error) { return; }
+        
+        // Enviar
+        const formData = new FormData(this);
+        const $btn = $('#btnGuardar');
+        const btnText = $btn.find('.btn-text').html();
+        
+        $btn.prop('disabled', true);
+        $btn.find('.spinner-border').removeClass('d-none');
+        $btn.find('.btn-text').html('Guardando...');
+        
+        Ajax.post(`${baseUrl}?action=add_ajax`, formData)
+            .then(res => {
+                if (res.success) {
+                    Helpers.toast('success', res.message || 'Compra guardada correctamente');
+                    $('#addPurchaseModal').modal('hide');
+                    // Recargar tabla
+                } else {
+                    Helpers.toast('error', res.message || 'Error al guardar');
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                Helpers.toast('error', err || 'Error inesperado');
+            })
+            .finally(() => {
+                $btn.prop('disabled', false);
+                $btn.find('.spinner-border').addClass('d-none');
+                $btn.find('.btn-text').html(btnText);
+            });
+    });
+
+    // ==================== SUBMIT EDITAR ====================
+    $('#editPurchaseForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Validar formulario
+        if (!Validations.validateForm($(this), editPurchaseRules)) {
+            Helpers.toast('warning', 'Por favor corrija los campos resaltados');
+            return;
+        }
+        
+        // Validaciones adicionales
+        const tracking = $('#editTracking').val().trim();
+        if (tracking && !Validations.REGEX.factura.test(tracking)) {
+            Helpers.toast('error', 'Tracking inválido (8 dígitos)');
+            return;
+        }
+        
+        const fecha = new Date($('#editFechaCompra').val());
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        if (fecha > hoy) {
+            Helpers.toast('error', 'La fecha no puede ser futura');
+            return;
+        }
+        
+        // Enviar
+        const formData = new FormData(this);
+        const $btn = $('#btnGuardarEdit');
+        
+        $btn.prop('disabled', true);
+        $btn.find('.spinner-border').removeClass('d-none');
+        
+        Ajax.post(`${baseUrl}?action=edit_ajax`, formData)
+            .then(response => {
+                if (response.success) {
+                    Helpers.toast('success', 'Compra actualizada correctamente');
+                    $('#editPurchaseModal').modal('hide');
+                } else {
+                    Helpers.toast('error', response.message);
+                }
+            })
+            .catch(error => {
+                Helpers.toast('error', 'Error al actualizar');
+            })
+            .finally(() => {
+                $btn.prop('disabled', false);
+                $btn.find('.spinner-border').addClass('d-none');
+            });
+    });
+
+    // ==================== LIMPIAR AL CERRAR ====================
+    $('#addPurchaseModal, #editPurchaseModal').on('hidden.bs.modal', function() {
+        const $form = $(this).find('form');
+        $form[0].reset();
+        Validations.clearValidation($form);
+        $('#searchSupplier, #editSearchSupplier').val('').removeClass('is-valid is-invalid');
+    });
+
+    $('#addPurchaseModal').on('show.bs.modal', function() {
+        const $form = $('#addPurchaseForm');
+        $form[0].reset();
+        Validations.clearValidation($form);
+        $('#searchSupplier').val('').removeClass('is-valid is-invalid');
+    });
+
+    // ==================== INVOCAR ====================
+    setupPurchaseValidation();
 
     const reloadPurchases = () => {
         if (purchasesTable) {

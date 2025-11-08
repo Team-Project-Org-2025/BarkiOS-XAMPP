@@ -131,7 +131,7 @@
                                     <label class="form-label fw-bold">
                                         N° Factura <span class="text-danger">*</span>
                                     </label>
-                                    <input type="text" 
+                                    <input type="number" 
                                            class="form-control" 
                                            id="facturaNumero" 
                                            name="factura_numero"
@@ -159,7 +159,7 @@
                                     <label class="form-label fw-bold">
                                         N° Tracking <small class="text-muted">(opcional)</small>
                                     </label>
-                                    <input type="text" 
+                                    <input type="number" 
                                            class="form-control" 
                                            id="tracking" 
                                            name="tracking"
@@ -319,7 +319,7 @@
                             <div class="row g-3">
                                 <div class="col-md-4">
                                     <label class="form-label fw-bold">N° Factura <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="editFacturaNumero" name="factura_numero" maxlength="8" pattern="\d{8}" required>
+                                    <input type="number" class="form-control" id="editFacturaNumero" name="factura_numero" maxlength="8" pattern="\d{8}" required>
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label fw-bold">Fecha de Compra <span class="text-danger">*</span></label>
@@ -327,7 +327,7 @@
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label fw-bold">N° Tracking</label>
-                                    <input type="text" class="form-control" id="editTracking" name="tracking" maxlength="8" pattern="\d{8}">
+                                    <input type="number" class="form-control" id="editTracking" name="tracking" maxlength="8" pattern="\d{8}">
                                 </div>
                             </div>
                         </div>
