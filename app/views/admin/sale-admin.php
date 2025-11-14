@@ -2,7 +2,39 @@
 <?php require_once __DIR__ . '/../partials/header-admin.php'; ?>
 <?= require_once __DIR__ . '/../partials/navbar-admin.php'; ?> 
 
+<style>
+  /* Centrar contenido de las tarjetas de estadísticas */
+.stat-card .card-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 160px;
+}
 
+.stat-card i {
+    display: block;
+}
+
+.stat-card h4,
+.stat-card h5,
+.stat-card h6 {
+    margin: 0;
+    text-align: center;
+}
+
+.stat-card .text-muted {
+    text-align: center;
+}
+
+/* Para el gráfico circular */
+.progress-circle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto;
+}
+</style>
 <div class="main-content">
   <div class="container-fluid py-3">
     <!-- Header -->

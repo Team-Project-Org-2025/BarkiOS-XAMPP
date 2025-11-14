@@ -2,6 +2,39 @@
 <?php require_once __DIR__ . '/../partials/header-admin.php'; ?>
 <?= require_once __DIR__ . '/../partials/navbar-admin.php'; ?>
 
+<style>
+    /* Centrar contenido de las tarjetas de estadísticas */
+.stat-card .card-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 190px;  /* ← AQUÍ */
+}
+
+.stat-card i {
+    display: block;
+}
+
+.stat-card h4,
+.stat-card h5,
+.stat-card h6 {
+    margin: 0;
+    text-align: center;
+}
+
+.stat-card .text-muted {
+    text-align: center;
+}
+
+/* Para el gráfico circular */
+.progress-circle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto;
+}
+</style>
 <div class="main-content">
     <div class="container-fluid py-4">
         <!-- Header -->
@@ -50,7 +83,7 @@
                 </div>
             </div>
             <!-- Por Pagar -->
-            <div class="col-6 col-lg-2">
+            <div class="col-6 col-lg-3">
                 <div class="card shadow-sm border-0 stat-card warning">
                     <div class="card-body text-center">
                         <i class="fas fa-exclamation-triangle fa-2x text-warning mb-2"></i>
