@@ -8,7 +8,7 @@ $current = str_replace('BarkiOS/', '', $current);
 
 <nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top">
     <div class="container">
-        <a class="navbar-brand" href="../front/inicio.php">
+        <a class="navbar-brand" href="/BarkiOS/inicio">
             <h1 class="m-0">GARAGE<span>BARKI</span></h1>
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
