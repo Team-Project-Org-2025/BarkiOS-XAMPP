@@ -22,7 +22,7 @@
             </div>
             <div class="carousel-inner">
                 <div class="carousel-item active">
-                    <div class="hero-slide d-flex align-items-center" style="background-image: url('https://images.unsplash.com/photo-1490481651871-ab68de25d43d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80');">
+                    <div class="hero-slide d-flex align-items-center" style="background-image: url('/BarkiOS/public/assets/images/tienda6.jpeg');">
                         <div class="container">
                             <div class="carousel-caption text-start">
                                 <h2 class="display-3 fw-bold" data-aos="fade-up">EXCLUSIVIDAD EN CADA PRENDA</h2>
@@ -33,7 +33,7 @@
                     </div>
                 </div>
                 <div class="carousel-item">
-                    <div class="hero-slide d-flex align-items-center" style="background-image: url('https://images.unsplash.com/photo-1469334031218-e382a71b716b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80');">
+                    <div class="hero-slide d-flex align-items-center" style="background-image: url('/BarkiOS/public/assets/images/tienda1.jpeg');">
                         <div class="container">
                             <div class="carousel-caption">
                                 <h2 class="display-3 fw-bold">ELEGANCIA PERSONALIZADA</h2>
@@ -44,7 +44,7 @@
                     </div>
                 </div>
                 <div class="carousel-item">
-                    <div class="hero-slide d-flex align-items-center" style="background-image: url('https://images.unsplash.com/photo-1483985988355-763728e1935b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80');">
+                    <div class="hero-slide d-flex align-items-center" style="background-image: url('/BarkiOS/public/assets/images/tienda2.jpeg');">
                         <div class="container">
                             <div class="carousel-caption text-end">
                                 <h2 class="display-3 fw-bold">PARA TODAS LAS MUJERES</h2>
@@ -162,7 +162,7 @@
             <div class="container">
                 <div class="row align-items-center">
                     <div class="col-lg-6 mb-4 mb-lg-0" data-aos="fade-right">
-                        <img src="https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" class="img-fluid rounded" alt="Sobre Nosotros">
+                        <img src="/BarkiOS/public/assets/images/tienda3.webp" class="img-fluid rounded" alt="Sobre Nosotros">
                     </div>
                     <div class="col-lg-6" data-aos="fade-left">
                         <h2 class="mb-4">GARAGE BARKI</h2>
