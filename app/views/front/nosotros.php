@@ -26,7 +26,7 @@
             <div class="container">
                 <div class="row align-items-center">
                     <div class="col-lg-6 mb-4 mb-lg-0" data-aos="fade-right">
-                        <img src="https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" class="img-fluid rounded" alt="Nuestra Historia">
+                        <img src="/BarkiOS/public/assets/images/tienda3.webp" class="img-fluid rounded" alt="Nuestra Historia">
                     </div>
                     <div class="col-lg-6" data-aos="fade-left">
                         <h2 class="mb-4">NUESTRA HISTORIA</h2>
