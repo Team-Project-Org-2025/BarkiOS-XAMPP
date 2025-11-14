@@ -99,6 +99,19 @@
                         Compras
                     </a>
                 </li>
+                <!-- Sección de Soporte -->
+                <li class="nav-item mt-3">
+                    <span class="nav-section-title text-muted px-3 small fw-bold">
+                        SOPORTE
+                    </span>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?php echo isActiveRoute('admin/help') ? 'active' : ''; ?>" 
+                       href="/BarkiOS/admin/help">
+                        <i class="fas fa-question-circle"></i>
+                        Ayuda
+                    </a>
+                </li>
             </ul>
         </div>
         
