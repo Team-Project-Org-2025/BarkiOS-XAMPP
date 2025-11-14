@@ -29,9 +29,6 @@
                         <tbody id="employeesTableBody">
                             <tr>
                                 <td colspan="6" class="text-center">
-                                    <div class="spinner-border text-primary" role="status">
-                                        <span class="visually-hidden">Cargando...</span>
-                                    </div>
                                 </td>
                             </tr>
                         </tbody>
@@ -153,5 +150,6 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.3/dist/sweetalert2.all.min.js"></script>
 <script type="module" src="/BarkiOS/public/assets/js/admin/employees-admin.js"></script>
 <script src="/BarkiOS/public/assets/js/admin/logout.js"></script>
+<script src="/BarkiOS/public/assets/js/utils/skeleton.js"></script>
 </body>
 </html>

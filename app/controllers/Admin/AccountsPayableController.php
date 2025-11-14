@@ -1,9 +1,8 @@
 <?php
-// filepath: app/controllers/Admin/AccountsPayableController.php
 
 use Barkios\models\AccountsPayable;
 use Barkios\models\Purchase;
-
+use Barkios\helpers\Validation;
 require_once __DIR__ . '/LoginController.php';
 
 checkAuth();
@@ -51,9 +50,6 @@ function handleRequest($accountsModel, $purchaseModel) {
     }
 }
 
-/**
- * Obtiene todas las cuentas por pagar
- */
 function getAccountsAjax($accountsModel) {
     try {
         $accounts = $accountsModel->getAll();
@@ -68,9 +64,6 @@ function getAccountsAjax($accountsModel) {
     exit();
 }
 
-/**
- * Obtiene el detalle de una cuenta por pagar con sus pagos
- */
 function getAccountDetailAjax($accountsModel, $purchaseModel) {
     $id = isset($_GET['cuenta_pagar_id']) ? intval($_GET['cuenta_pagar_id']) : null;
     
@@ -86,10 +79,8 @@ function getAccountDetailAjax($accountsModel, $purchaseModel) {
             exit();
         }
 
-        // Obtener pagos
         $pagos = $accountsModel->getPagosByCuentaId($id);
         
-        // Obtener prendas de la compra
         $prendas = [];
         if ($cuenta['compra_id']) {
             $prendas = $purchaseModel->getPrendasByCompraId($cuenta['compra_id']);
@@ -110,61 +101,84 @@ function getAccountDetailAjax($accountsModel, $purchaseModel) {
     exit();
 }
 
-/**
- * Registra un pago a una cuenta por pagar
- */
 function addPaymentAjax($accountsModel) {
-    $required = ['cuenta_pagar_id', 'monto', 'fecha_pago', 'tipo_pago', 'moneda_pago'];
-    
-    foreach ($required as $field) {
-        if (empty($_POST[$field]) && $_POST[$field] !== '0') {
-            echo json_encode(['success' => false, 'message' => "Campo requerido: $field"]);
+    try {
+        // Validar campos requeridos manualmente (sin helper para este caso específico)
+        $required = ['cuenta_pagar_id', 'monto', 'fecha_pago', 'tipo_pago', 'moneda_pago'];
+        
+        foreach ($required as $field) {
+            if (empty($_POST[$field]) && $_POST[$field] !== '0') {
+                echo json_encode(['success' => false, 'message' => "Campo requerido: $field"]);
+                exit();
+            }
+        }
+
+        // Validar fecha con helper
+        $fechaValidation = Validation::validateDate($_POST['fecha_pago']);
+        if (!$fechaValidation['valid']) {
+            echo json_encode(['success' => false, 'message' => 'Fecha de pago inválida']);
             exit();
         }
-    }
+        
+        $cuentaId = intval($_POST['cuenta_pagar_id']);
+        $monto = floatval($_POST['monto']);
+        
+        // Validar monto
+        if ($monto <= 0) {
+            echo json_encode(['success' => false, 'message' => 'El monto debe ser mayor a 0']);
+            exit();
+        }
 
-    $cuentaId = intval($_POST['cuenta_pagar_id']);
-    $monto = floatval($_POST['monto']);
-    
-    if ($monto <= 0) {
-        echo json_encode(['success' => false, 'message' => 'El monto debe ser mayor a 0']);
-        exit();
-    }
+        // Verificar saldo
+        $cuenta = $accountsModel->getById($cuentaId);
+        if (!$cuenta) {
+            echo json_encode(['success' => false, 'message' => 'Cuenta no encontrada']);
+            exit();
+        }
 
-    // Verificar que no exceda el saldo
-    $cuenta = $accountsModel->getById($cuentaId);
-    if (!$cuenta) {
-        echo json_encode(['success' => false, 'message' => 'Cuenta no encontrada']);
-        exit();
-    }
+        $saldoPendiente = floatval($cuenta['saldo_pendiente']);
+        
+        if ($monto > ($saldoPendiente + 0.50)) {
+            echo json_encode(['success' => false, 'message' => 'El monto excede el saldo pendiente']);
+            exit();
+        }
+        
+        if ($monto >= $saldoPendiente) {
+            $monto = $saldoPendiente;
+        }
 
-    $saldoPendiente = floatval($cuenta['saldo_pendiente']);
-    
-    // Permitir pequeña diferencia por conversión de moneda (±$0.50)
-    if ($monto > ($saldoPendiente + 0.50)) {
-        echo json_encode(['success' => false, 'message' => 'El monto excede el saldo pendiente']);
-        exit();
-    }
-    
-    // Si el pago es mayor o igual al saldo, ajustar al saldo exacto
-    if ($monto >= $saldoPendiente) {
-        $monto = $saldoPendiente;
-    }
+        // Validar referencia bancaria SOLO si existe y no está vacía
+        if (!empty($_POST['referencia_bancaria'])) {
+            $refValidation = Validation::validateField($_POST['referencia_bancaria'], 'referencia');
+            if (!$refValidation['valid']) {
+                echo json_encode(['success' => false, 'message' => 'Referencia bancaria inválida (8-10 dígitos)']);
+                exit();
+            }
+        }
+        
+        // Validar banco SOLO si existe y no está vacío
+        if (!empty($_POST['banco'])) {
+            $bancoValidation = Validation::validateField($_POST['banco'], 'banco');
+            if (!$bancoValidation['valid']) {
+                echo json_encode(['success' => false, 'message' => 'Nombre del banco inválido']);
+                exit();
+            }
+        }
 
-    $datos = [
-        'cuenta_pagar_id' => $cuentaId,
-        'compra_id' => $cuenta['compra_id'],
-        'monto' => $monto,
-        'fecha_pago' => $_POST['fecha_pago'],
-        'tipo_pago' => $_POST['tipo_pago'],
-        'moneda_pago' => $_POST['moneda_pago'],
-        'referencia_bancaria' => $_POST['referencia_bancaria'] ?? null,
-        'banco' => $_POST['banco'] ?? null,
-        'observaciones' => $_POST['observaciones'] ?? null,
-        'estado_pago' => 'CONFIRMADO'
-    ];
+        // Construir datos (sin sanitize para evitar conflictos)
+        $datos = [
+            'cuenta_pagar_id' => $cuentaId,
+            'compra_id' => $cuenta['compra_id'],
+            'monto' => $monto,
+            'fecha_pago' => trim($_POST['fecha_pago']),
+            'tipo_pago' => trim($_POST['tipo_pago']),
+            'moneda_pago' => trim($_POST['moneda_pago']),
+            'referencia_bancaria' => !empty($_POST['referencia_bancaria']) ? trim($_POST['referencia_bancaria']) : null,
+            'banco' => !empty($_POST['banco']) ? trim($_POST['banco']) : null,
+            'observaciones' => !empty($_POST['observaciones']) ? trim($_POST['observaciones']) : null,
+            'estado_pago' => 'CONFIRMADO'
+        ];
 
-    try {
         $pagoId = $accountsModel->addPago($datos);
         echo json_encode([
             'success' => true, 

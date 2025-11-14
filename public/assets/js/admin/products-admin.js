@@ -17,6 +17,8 @@ $(document).ready(function() {
     };
 
     const initDataTable = () => {
+        SkeletonHelper.showTableSkeleton('productsTable', 5, 8);
+        SkeletonHelper.showTableSkeleton('productsTable', 5, 8);
         productsTable = $('#productsTable').DataTable({
             ajax: {
                 url: `${baseUrl}?action=get_products`,
@@ -117,7 +119,16 @@ $(document).ready(function() {
             order: [[1, 'asc']], // Ordenar por código
             language: {
                 url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json"
-            }
+            },
+            dom: '<"d-flex justify-content-between align-items-center mb-2"lfB>tip',
+            buttons: [{
+                text: '<i class="fas fa-sync-alt"></i> Actualizar',
+                className: 'btn btn-outline-secondary btn-sm',
+                action: () => {
+                    SkeletonHelper.showTableSkeleton('productsTable', 5, 8);
+                    productsTable.ajax.reload(null, false);
+                }
+            }]
         });
     };
 

@@ -80,7 +80,7 @@
 
         <!-- Tabla de Cuentas por Pagar -->
         <div class="card shadow-sm border-0">
-            <div class="card-body p-0">
+            <div class="card-body p-3">
                 <div class="table-responsive">
                     <table id="accountsTable" class="table table-hover align-middle mb-0 w-100">
                         <thead class="table-light">
@@ -277,6 +277,7 @@ if (!function_exists('getDolarRate')) {
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.3/dist/sweetalert2.all.min.js"></script>
 <script type="module" src="/BarkiOS/public/assets/js/admin/accounts-payable-admin.js"></script>
 <script src="/BarkiOS/public/assets/js/admin/logout.js"></script>
+<script src="/BarkiOS/public/assets/js/utils/skeleton.js"></script>
 
 </body>
 </html>

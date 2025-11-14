@@ -1,20 +1,14 @@
 <?php
 use Barkios\models\AccountsReceivable;
+use Barkios\helpers\Validation;
 
-// Proteger el módulo
 require_once __DIR__ . '/LoginController.php';
 checkAuth();
-
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
 
 $accountsReceivableModel = new AccountsReceivable();
 handleRequest($accountsReceivableModel);
 
-/**
- * Función principal de enrutamiento
- */
+
 function handleRequest($model)
 {
     $action = $_GET['action'] ?? '';
@@ -27,7 +21,7 @@ function handleRequest($model)
             handleAjax($model, $action);
         } else {
             if (empty($action)) {
-                return null; // Vista principal
+                return null; 
             } else {
                 throw new Exception("Acción no válida");
             }
@@ -47,9 +41,7 @@ function handleRequest($model)
     }
 }
 
-/**
- * Manejador de peticiones AJAX
- */
+
 function handleAjax($model, $action)
 {
     $method = $_SERVER['REQUEST_METHOD'];
@@ -80,10 +72,6 @@ function handleAjax($model, $action)
             updateDueDate($model);
             break;
 
-        case 'POST_delete':
-            deleteAccount($model);
-            break;
-
         case 'POST_process_expired':
             processExpired($model);
             break;
@@ -95,19 +83,13 @@ function handleAjax($model, $action)
     exit();
 }
 
-/* ============================================================
-   ENDPOINTS GET
-============================================================ */
 
-/**
- * Obtiene todas las cuentas por cobrar
- */
+
 function getAccounts($model)
 {
     try {
         $accounts = $model->getAll();
         
-        // Formatear datos para el frontend
         $formattedAccounts = array_map(function($acc) {
             return [
                 'id' => $acc['cuenta_cobrar_id'],
@@ -141,9 +123,7 @@ function getAccounts($model)
     }
 }
 
-/**
- * Obtiene detalles completos de una cuenta por cobrar
- */
+
 function getAccountDetails($model)
 {
     try {
@@ -172,9 +152,6 @@ function getAccountDetails($model)
     }
 }
 
-/**
- * Obtiene cuentas por cobrar de un cliente específico
- */
 function getAccountsByClient($model)
 {
     try {
@@ -200,9 +177,7 @@ function getAccountsByClient($model)
     }
 }
 
-/**
- * Obtiene estadísticas de cuentas por cobrar
- */
+
 function getStats($model)
 {
     try {
@@ -221,17 +196,11 @@ function getStats($model)
     }
 }
 
-/* ============================================================
-   ENDPOINTS POST
-============================================================ */
 
-/**
- * Registra un pago para una cuenta por cobrar
- */
 function registerPayment($model)
 {
     try {
-        // Validar campos requeridos
+        // Validar campos requeridos manualmente
         $required = ['cuenta_cobrar_id', 'monto'];
         foreach ($required as $field) {
             if (empty($_POST[$field])) {
@@ -239,23 +208,37 @@ function registerPayment($model)
             }
         }
 
-        // Validar monto
         $monto = floatval($_POST['monto']);
         if ($monto <= 0) {
             throw new Exception("El monto debe ser mayor a cero");
         }
 
-        // Preparar datos del pago
+        // Validar referencia bancaria SOLO si existe
+        if (!empty($_POST['referencia_bancaria'])) {
+            $refValidation = Validation::validateField($_POST['referencia_bancaria'], 'referencia');
+            if (!$refValidation['valid']) {
+                throw new Exception('Referencia bancaria inválida (8-10 dígitos)');
+            }
+        }
+        
+        // Validar banco SOLO si existe
+        if (!empty($_POST['banco'])) {
+            $bancoValidation = Validation::validateField($_POST['banco'], 'banco');
+            if (!$bancoValidation['valid']) {
+                throw new Exception('Nombre del banco inválido');
+            }
+        }
+
+        // Construir datos
         $paymentData = [
             'cuenta_cobrar_id' => intval($_POST['cuenta_cobrar_id']),
             'monto' => $monto,
-            'tipo_pago' => $_POST['tipo_pago'] ?? 'EFECTIVO',
-            'referencia_bancaria' => $_POST['referencia_bancaria'] ?? null,
-            'banco' => $_POST['banco'] ?? null,
-            'observaciones' => $_POST['observaciones'] ?? null
+            'tipo_pago' => !empty($_POST['tipo_pago']) ? trim($_POST['tipo_pago']) : 'EFECTIVO',
+            'referencia_bancaria' => !empty($_POST['referencia_bancaria']) ? trim($_POST['referencia_bancaria']) : null,
+            'banco' => !empty($_POST['banco']) ? trim($_POST['banco']) : null,
+            'observaciones' => !empty($_POST['observaciones']) ? trim($_POST['observaciones']) : null
         ];
 
-        // Registrar pago
         $result = $model->registerPayment($paymentData);
 
         echo json_encode($result);
@@ -267,10 +250,6 @@ function registerPayment($model)
         ]);
     }
 }
-
-/**
- * Actualiza la fecha de vencimiento de una cuenta
- */
 function updateDueDate($model)
 {
     try {
@@ -303,48 +282,10 @@ function updateDueDate($model)
     }
 }
 
-/**
- * Elimina lógicamente una cuenta por cobrar
- */
-function deleteAccount($model)
-{
-    try {
-        $cuentaId = intval($_POST['cuenta_id'] ?? 0);
 
-        if ($cuentaId <= 0) {
-            throw new Exception("ID de cuenta inválido");
-        }
-
-        // Confirmación adicional (opcional)
-        $confirmar = $_POST['confirmar'] ?? 'no';
-        if ($confirmar !== 'si') {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Debe confirmar la eliminación',
-                'require_confirmation' => true
-            ]);
-            return;
-        }
-
-        $result = $model->delete($cuentaId);
-
-        echo json_encode($result);
-
-    } catch (Exception $e) {
-        echo json_encode([
-            'success' => false,
-            'message' => $e->getMessage()
-        ]);
-    }
-}
-
-/**
- * Procesa cuentas vencidas (cron job o manual)
- */
 function processExpired($model)
 {
     try {
-        // Validar permisos de administrador (opcional)
         if (!isset($_SESSION['admin_logged_in']) || !$_SESSION['admin_logged_in']) {
             throw new Exception("Solo administradores pueden ejecutar esta acción");
         }
@@ -361,9 +302,6 @@ function processExpired($model)
     }
 }
 
-/**
- * Función index para mostrar la vista
- */
 function index()
 {
     $paths = [

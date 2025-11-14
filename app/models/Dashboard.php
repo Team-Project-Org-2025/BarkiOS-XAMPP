@@ -5,10 +5,7 @@ use Barkios\core\Database;
 use PDO;
 use Exception;
 
-/**
- * Modelo Dashboard
- * Gestiona estadísticas y reportes del sistema
- */
+
 class Dashboard extends Database
 {
     /**
@@ -99,7 +96,6 @@ class Dashboard extends Database
         $stmt->execute([':from' => $prevFrom, ':to' => $prevTo]);
         $previous = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        // Tendencia
         $tendencia = 0;
         if ($previous['total'] > 0) {
             $tendencia = (($current['total'] - $previous['total']) / $previous['total']) * 100;

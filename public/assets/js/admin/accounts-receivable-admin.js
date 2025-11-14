@@ -44,7 +44,7 @@ $(document).ready(function() {
                 { 
                     data: 'estado_visual',
                     render: estado => {
-                        const badges = { 'Vigente': 'bg-success', 'Por vencer': 'bg-warning', 'Vencido': 'bg-danger', 'Pagado': 'bg-secondary' };
+                        const badges = { 'Vigente': 'bg-warning', 'Por vencer': 'bg-warning', 'Vencido': 'bg-danger', 'Pagado': 'bg-success' };
                         return `<span class="badge ${badges[estado] || 'bg-secondary'}">${Helpers.escapeHtml(estado)}</span>`;
                     }
                 },
@@ -58,7 +58,6 @@ $(document).ready(function() {
                             ${viewBtn}
                             <button class="btn btn-sm btn-outline-success btn-pay" data-id="${acc.id}"><i class="fas fa-money-bill-wave"></i></button>
                             <button class="btn btn-sm btn-outline-warning btn-extend" data-id="${acc.id}"><i class="fas fa-calendar-plus"></i></button>
-                            <button class="btn btn-sm btn-outline-danger btn-delete" data-id="${acc.id}"><i class="fas fa-trash"></i></button>
                         `;
                     }
                 }
@@ -66,7 +65,17 @@ $(document).ready(function() {
             pageLength: 10,
             responsive: true,
             order: [[0, 'desc']],
-            language: { url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' }
+            language: { url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'},
+            dom: '<"d-flex justify-content-between align-items-center mb-2"lfB>tip',
+            buttons: [{
+            text: '<i class="fas fa-sync-alt"></i> Actualizar',
+            className: 'btn btn-outline-secondary btn-sm',
+            action: () => {
+                SkeletonHelper.showTableSkeleton('accountsTable', 5, 7);
+                accountsTable.ajax.reload(null, false);
+            }
+        }]
+            
         });
     };
 
@@ -76,15 +85,22 @@ $(document).ready(function() {
         const id = $(this).data('id');
         if (!id) return;
 
-        $('#accountDetailsContent').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div><p class="mt-2">Cargando...</p></div>');
         $('#viewAccountModal').modal('show');
+        
+        SkeletonHelper.showModalSkeleton('accountDetailsContent');
 
         Ajax.get(`${baseUrl}?action=get_account_details&id=${id}`)
             .then(r => {
-                if (r?.success && r.account) renderAccountDetails(r.account);
-                else $('#accountDetailsContent').html('<p class="text-center text-muted">No se encontraron detalles</p>');
+                if (r?.success && r.account) {
+                    const html = renderAccountDetails(r.account);
+                    SkeletonHelper.hideModalSkeleton('accountDetailsContent', html);
+                } else {
+                    $('#accountDetailsContent').html('<p class="text-center text-muted">No se encontraron detalles</p>');
+                }
             })
-            .catch(msg => $('#accountDetailsContent').html(`<p class="text-center text-danger">${Helpers.escapeHtml(msg)}</p>`));
+            .catch(msg => {
+                $('#accountDetailsContent').html(`<p class="text-center text-danger">${Helpers.escapeHtml(msg)}</p>`);
+            });
     });
 
     const renderAccountDetails = (acc) => {
@@ -143,7 +159,7 @@ $(document).ready(function() {
             html += `<div class="alert alert-info mt-3"><i class="fas fa-info-circle me-2"></i>No se han registrado pagos aún</div>`;
         }
 
-        $('#accountDetailsContent').html(html);
+        return html;
     };
 
     // Registrar pago
@@ -285,6 +301,7 @@ $(document).ready(function() {
                 if (r?.success) {
                     Helpers.toast('success', r.message || 'Pago registrado');
                     $('#registerPaymentModal').modal('hide');
+                    SkeletonHelper.showTableSkeleton('accountsTable', 5, 7);
                     accountsTable.ajax.reload(null, false);
                 } else {
                     Helpers.toast('error', r?.message || 'Error al registrar');
@@ -341,6 +358,7 @@ $(document).ready(function() {
                 if (r?.success) {
                     Helpers.toast('success', r.message || 'Fecha actualizada');
                     $('#extendDateModal').modal('hide');
+                    SkeletonHelper.showTableSkeleton('accountsTable', 5, 7);
                     accountsTable.ajax.reload(null, false);
                 } else {
                     Helpers.toast('error', r?.message || 'Error al actualizar');
@@ -349,64 +367,14 @@ $(document).ready(function() {
             .catch(msg => Helpers.toast('error', msg))
             .finally(() => $btn.prop('disabled', false).html(btnText));
     });
-
-    //Eliminar cuenta
-    $(document).on('click', '.btn-delete', function() {
-        const id = $(this).data('id');
-        accountsTable.rows().every(function() {
-            const d = this.data();
-            if (d.id === id) {
-                Helpers.confirmDialog(
-                    '¿Eliminar cuenta por cobrar?',
-                    `<p>Se eliminará la cuenta de <strong>${Helpers.escapeHtml(d.cliente)}</strong></p><p class="text-danger"><strong>ADVERTENCIA:</strong> Se anulará la venta asociada.</p>`,
-                    () => {
-                        Ajax.post(`${baseUrl}?action=delete`, { cuenta_id: id, confirmar: 'si' })
-                            .then(r => {
-                                if (r?.success) {
-                                    Helpers.toast('success', r.message || 'Cuenta eliminada');
-                                    accountsTable.ajax.reload(null, false);
-                                } else {
-                                    Helpers.toast('error', r?.message || 'Error al eliminar');
-                                }
-                            })
-                            .catch(msg => Helpers.toast('error', msg));
-                    },
-                    'Sí, eliminar'
-                );
-                return false;
-            }
-        });
-    });
-
-    //Procesar vendidos
-    window.processExpiredAccounts = function() {
-        Helpers.confirmDialog(
-            '¿Procesar cuentas vencidas?',
-            `<p>Esta acción procesará todas las cuentas vencidas:</p><ul class="text-start"><li>Marcará cuentas vencidas</li><li>Anulará ventas asociadas</li><li>Liberará prendas</li></ul>`,
-            () => {
-                Helpers.showLoading('Procesando...');
-                Ajax.post(`${baseUrl}?action=process_expired`, {})
-                    .then(r => {
-                        Helpers.closeLoading();
-                        if (r?.success) {
-                            Swal.fire({ icon: 'success', title: 'Proceso completado', html: `<p>${Helpers.escapeHtml(r.message)}</p>`, confirmButtonText: 'Aceptar' });
-                            accountsTable.ajax.reload(null, false);
-                        } else {
-                            Helpers.toast('error', r?.message || 'Error al procesar');
-                        }
-                    })
-                    .catch(msg => {
-                        Helpers.closeLoading();
-                        Helpers.toast('error', msg);
-                    });
-            },
-            'Sí, procesar'
-        );
-    };
-
+    
     $('.modal').on('hidden.bs.modal', function() {
+    
         Helpers.resetForm($(this).find('form'));
-    });
+    
+        });
+
+    SkeletonHelper.showTableSkeleton('accountsTable', 5, 7);
 
     initDataTable();
     setInterval(() => accountsTable.ajax.reload(null, false), 2 * 60 * 1000);

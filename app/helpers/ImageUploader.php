@@ -1,5 +1,4 @@
 <?php
-// app/helpers/ImageUploader.php
 namespace Barkios\helpers;
 
 class ImageUploader {
@@ -8,14 +7,12 @@ class ImageUploader {
     private $maxFileSize = 5242880; // 5MB en bytes
 
     public function __construct() {
-        // Construir ruta absoluta desde la raíz del proyecto
-        $projectRoot = dirname(dirname(__DIR__)); // Sube 2 niveles desde app/helpers/
+        $projectRoot = dirname(dirname(__DIR__)); 
         $this->uploadDir = $projectRoot . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'products' . DIRECTORY_SEPARATOR;
         
         error_log("ImageUploader - Directorio: " . $this->uploadDir);
         error_log("ImageUploader - Existe: " . (is_dir($this->uploadDir) ? 'SI' : 'NO'));
         
-        // Crear directorio si no existe
         if (!is_dir($this->uploadDir)) {
             error_log("ImageUploader - Creando directorio...");
             if (!mkdir($this->uploadDir, 0777, true)) {
@@ -25,7 +22,6 @@ class ImageUploader {
             error_log("ImageUploader - Directorio creado");
         }
         
-        // Verificar permisos de escritura
         if (!is_writable($this->uploadDir)) {
             error_log("ERROR: No hay permisos de escritura en: " . $this->uploadDir);
             throw new \Exception("No hay permisos de escritura en el directorio de imágenes");
@@ -34,16 +30,12 @@ class ImageUploader {
         error_log("ImageUploader - Inicializado correctamente");
     }
 
-    /**
-     * Sube una imagen y devuelve la ruta relativa
-     */
     public function upload($file, $productId) {
         error_log("=== ImageUploader::upload INICIO ===");
         error_log("Product ID: " . $productId);
         
         $errors = [];
 
-        // Validar que se haya subido un archivo
         if (!isset($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
             error_log("ERROR: No se subió ningún archivo");
             $errors[] = 'No se ha subido ningún archivo';
@@ -51,7 +43,6 @@ class ImageUploader {
         }
         error_log("✓ Archivo temporal existe: " . $file['tmp_name']);
 
-        // Validar tamaño
         if ($file['size'] > $this->maxFileSize) {
             error_log("ERROR: Archivo muy grande: " . $file['size']);
             $errors[] = 'El archivo excede el tamaño máximo permitido (5MB)';
@@ -59,7 +50,6 @@ class ImageUploader {
         }
         error_log("✓ Tamaño válido: " . $file['size'] . " bytes");
 
-        // Validar extensión
         $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
         error_log("Extensión detectada: " . $extension);
         if (!in_array($extension, $this->allowedExtensions)) {
@@ -69,7 +59,6 @@ class ImageUploader {
         }
         error_log("✓ Extensión válida");
 
-        // Validar que sea una imagen real
         $imageInfo = getimagesize($file['tmp_name']);
         if ($imageInfo === false) {
             error_log("ERROR: No es una imagen válida");
@@ -78,7 +67,6 @@ class ImageUploader {
         }
         error_log("✓ Imagen válida: " . $imageInfo['mime']);
 
-        // Generar nombre único
         $filename = 'product_' . $productId . '_' . time() . '.' . $extension;
         $targetPath = $this->uploadDir . $filename;
         
@@ -86,7 +74,7 @@ class ImageUploader {
         error_log("Ruta destino: " . $targetPath);
         error_log("Directorio escribible: " . (is_writable($this->uploadDir) ? 'SI' : 'NO'));
 
-        // Mover archivo
+
         if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
             $lastError = error_get_last();
             error_log("ERROR al mover archivo: " . print_r($lastError, true));
@@ -116,9 +104,6 @@ class ImageUploader {
         ];
     }
 
-    /**
-     * Elimina una imagen del servidor
-     */
     public function delete($imagePath) {
         $fullPath = __DIR__ . '/../../' . ltrim($imagePath, '/');
         

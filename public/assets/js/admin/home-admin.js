@@ -1,13 +1,13 @@
 $(document).ready(function() {
     
-    // --- VARIABLES GLOBALES ---
+    //variables globales
     const baseUrl = '/BarkiOS/admin/home';
     let currentFilter = 'today';
     let ventasComprasChart = null;
     let cuentasChart = null;
     let allTransactions = [];
 
-    // --- FORMATEADORES ---
+    //Formateadores
     const fmt = (n) => {
         return new Intl.NumberFormat('es-VE', {
             style: 'currency',
@@ -40,7 +40,7 @@ $(document).ready(function() {
         });
     };
 
-    // --- NOTIFICACIONES ---
+    //Notificaciones
     const toast = (type, msg) => {
         Swal.fire({
             toast: true,
@@ -53,7 +53,7 @@ $(document).ready(function() {
         });
     };
 
-    // --- AJAX HELPER ---
+    //Ajax-helper
     function ajax(method, action, data, success, error) {
         $.ajax({
             url: `${baseUrl}?action=${action}`,
@@ -76,13 +76,13 @@ $(document).ready(function() {
         });
     }
 
-    // ============================================
-    // CARGAR DATOS DEL DASHBOARD
-    // ============================================
+    //Cargar datos de dashboard
     function loadDashboard() {
         const params = getFilterParams();
         
-        showLoading();
+        SkeletonHelper.showStatsSkeleton('statsContainer', 4);
+        SkeletonHelper.showChartSkeleton('ventasComprasChart');
+        SkeletonHelper.showChartSkeleton('cuentasChart');
         updatePeriodLabel();
 
         ajax('GET', 'get_stats', params, function(response) {
@@ -94,16 +94,12 @@ $(document).ready(function() {
             } else {
                 toast('error', response.message || 'Error al cargar estadísticas');
             }
-            hideLoading();
         }, function(msg) {
             toast('error', msg);
-            hideLoading();
         });
     }
 
-    // ============================================
-    // ACTUALIZAR ESTADÍSTICAS
-    // ============================================
+    //Actualizar estadisticas
     function updateStats(data) {
         // Ventas
         $('#statVentas').text(fmt(data.ventas.total));
@@ -181,7 +177,7 @@ $(document).ready(function() {
         $('#statPrendasVendidas').text(data.inventario.vendidas || 0);
         $('#statInventario').text(data.inventario.disponibles || 0);
 
-        // ✅ NUEVO: Productos totales en el sistema
+        //Productos totales en el sistema
         if (data.productos) {
             const totalProductos = data.productos.total || 0;
             const disponibles = data.productos.disponibles || 0;
@@ -212,9 +208,7 @@ $(document).ready(function() {
         }
     }
 
-    // ============================================
-    // ACTUALIZAR GRÁFICOS
-    // ============================================
+    //Actualizar graficos
     function updateCharts(data) {
         updateVentasComprasChart(data);
         updateCuentasChart(data);
@@ -357,9 +351,6 @@ $(document).ready(function() {
         });
     }
 
-    // ============================================
-    // CARGAR TRANSACCIONES
-    // ============================================
     function loadTransactions() {
         const params = getFilterParams();
         
@@ -446,9 +437,6 @@ $(document).ready(function() {
         $('#transactionsTableBody').html(html || '<tr><td colspan="6" class="text-center py-3 text-muted">Sin resultados</td></tr>');
     }
 
-    // ============================================
-    // ACTUALIZAR ALERTAS
-    // ============================================
     function updateAlerts(data) {
         const alerts = [];
 
@@ -522,9 +510,6 @@ $(document).ready(function() {
         }
     }
 
-    // ============================================
-    // FILTROS
-    // ============================================
     function getFilterParams() {
         const params = { filter: currentFilter };
         
@@ -595,9 +580,6 @@ $(document).ready(function() {
         toast('info', 'Datos actualizados');
     };
 
-    // ============================================
-    // INDICADORES DE CARGA
-    // ============================================
     function showLoading() {
         $('#loadingChart1, #loadingChart2').removeClass('d-none');
     }
@@ -606,10 +588,7 @@ $(document).ready(function() {
         $('#loadingChart1, #loadingChart2').addClass('d-none');
     }
 
-    // ============================================
-    // INICIALIZACIÓN
-    // ============================================
-    
+
     // Establecer fecha de hoy como máximo en los inputs
     const today = new Date().toISOString().split('T')[0];
     $('#dateFrom, #dateTo').attr('max', today);
@@ -623,9 +602,6 @@ $(document).ready(function() {
 
     // Agregar esta función al final de home-admin.js
 
-/**
- * ✅ NUEVA FUNCIÓN: Genera y descarga reporte PDF del dashboard
- */
 window.generateDashboardPdf = function() {
     // Obtener el filtro actual
     const activeFilter = $('.filter-btn-group .btn.active').data('filter');
@@ -668,10 +644,6 @@ window.generateDashboardPdf = function() {
     }, 500);
 };
 
-/**
- * Agregar botón de descarga CSV al documento
- * (Si no existe ya en tu código)
- */
 window.downloadCsvReport = function() {
     const activeFilter = $('.filter-btn-group .btn.active').data('filter');
     

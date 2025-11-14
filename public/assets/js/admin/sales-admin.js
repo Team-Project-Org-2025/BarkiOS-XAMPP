@@ -1,10 +1,3 @@
-/**
- * ============================================
- * MÓDULO DE VENTAS - GARAGE BARKI
- * Versión refactorizada v3.0 (ES6 Module)
- * ============================================
- */
-
 import * as Validations from '/BarkiOS/public/assets/js/utils/validation.js';
 import * as Helpers from '/BarkiOS/public/assets/js/utils/helpers.js';
 import * as Ajax from '/BarkiOS/public/assets/js/utils/ajax-handler.js';
@@ -12,13 +5,13 @@ import * as Ajax from '/BarkiOS/public/assets/js/utils/ajax-handler.js';
 $(document).ready(function() {
     const baseUrl = '/BarkiOS/admin/sale';
     let salesTable = null;
-    let clients = [], employees = [], products = [], cart = [], pid = 0;
+    let cart = [], pid = 0;
     const IVA_DEFAULT = 16.00;
 
-    // ============================================
-    // INICIALIZAR DATATABLE
-    // ============================================
+    // ==================== INICIALIZACIÓN ====================
+    
     const initDataTable = () => {
+        SkeletonHelper.showTableSkeleton('salesTable', 5, 8);
         salesTable = $('#salesTable').DataTable({
             ajax: {
                 url: `${baseUrl}?action=get_sales`,
@@ -44,8 +37,18 @@ $(document).ready(function() {
                     data: 'estado_venta',
                     className: 'text-center d-none d-sm-table-cell',
                     render: estado => {
-                        const color = estado === 'Completada' ? 'success' : estado === 'Pendiente' ? 'warning' : 'secondary';
-                        return `<span class="badge bg-${color}">${Helpers.escapeHtml(estado)}</span>`;
+                        let color = 'secondary';
+                    
+                        switch (estado?.toLowerCase()) {
+                            case 'completada':
+                                color = 'success';
+                                break;
+                            case 'pendiente':
+                                color = 'warning';
+                                break;
+                        }
+                    
+                        return `<span class="badge bg-${color}">${estado || 'Desconocido'}</span>`;
                     }
                 },
                 {
@@ -71,7 +74,10 @@ $(document).ready(function() {
             buttons: [{
                 text: '<i class="fas fa-sync-alt"></i> Actualizar',
                 className: 'btn btn-outline-secondary btn-sm',
-                action: () => salesTable.ajax.reload(null, false)
+                action: () => {
+                    SkeletonHelper.showTableSkeleton('salesTable', 5, 8);
+                    salesTable.ajax.reload(null, false);
+                }
             }]
         });
     };
@@ -88,139 +94,272 @@ $(document).ready(function() {
         $('#completedSales').text(completed);
     };
 
-    // ============================================
-    // CARGAR DATOS INICIALES
-    // ============================================
-    const loadClients = () => {
-        Ajax.get(`${baseUrl}?action=get_clients`)
-            .then(r => {
-                if (r?.success) {
-                    clients = r.clients || [];
-                    const opts = clients.map(c => 
-                        `<option value="${Helpers.escapeHtml(c.cliente_ced)}" data-tipo="${Helpers.escapeHtml(c.tipo)}">
-                            ${Helpers.escapeHtml(c.nombre_cliente)} (${Helpers.escapeHtml(c.cliente_ced)}) ${c.tipo === 'vip' ? '⭐' : ''}
-                        </option>`
-                    ).join('');
-                    $('#add_cliente').html('<option value="">Seleccione...</option>' + opts);
-                }
-            });
+    // ==================== BUSCADORES ====================
+    
+    const setupClientSearch = () => {
+        let timeout;
+        $('#searchClient').on('input', function() {
+            clearTimeout(timeout);
+            const query = $(this).val().trim();
+            
+            if (query.length < 2) {
+                $('#clientResults').hide();
+                $('#add_cliente').val('');
+                $('#clientTypeIndicator').text('');
+                return;
+            }
+            
+            timeout = setTimeout(() => {
+                $('#clientResults').html('<div class="list-group-item"><i class="fas fa-spinner fa-spin"></i> Buscando...</div>').show();
+                
+                Ajax.get(`${baseUrl}?action=search_clients`, { search: query })
+                    .then(data => {
+                        if (data.success && data.results?.length) {
+                            const html = data.results.map(c => `
+                                <button type="button" class="list-group-item list-group-item-action client-item"
+                                        data-id="${c.cliente_ced}" 
+                                        data-nombre="${Helpers.escapeHtml(c.nombre_cliente)}"
+                                        data-tipo="${c.tipo}">
+                                    <strong>${Helpers.escapeHtml(c.nombre_cliente)}</strong> ${c.tipo === 'vip' ? '<i class="fas fa-star text-warning"></i>' : ''}
+                                    <br>
+                                    <small class="text-muted">Cédula: ${c.cliente_ced} ${c.telefono ? '| ' + c.telefono : ''}</small>
+                                </button>
+                            `).join('');
+                            
+                            $('#clientResults').html(html);
+                            
+                            $('.client-item').on('click', function() {
+                                const nombre = $(this).data('nombre');
+                                const id = $(this).data('id');
+                                const tipo = $(this).data('tipo');
+                                
+                                $('#searchClient').val(nombre).addClass('is-valid');
+                                $('#add_cliente').val(id).attr('data-tipo', tipo);
+                                $('#clientResults').hide();
+                                
+                                if (tipo === 'vip') {
+                                    $('#clientTypeIndicator').html('<i class="fas fa-star text-warning"></i> Cliente VIP');
+                                } else {
+                                    $('#clientTypeIndicator').text('Cliente Regular');
+                                }
+                            });
+                        } else {
+                            $('#clientResults').html('<div class="list-group-item text-muted">Sin resultados</div>');
+                        }
+                    })
+                    .catch(() => {
+                        $('#clientResults').html('<div class="list-group-item text-danger">Error al buscar</div>');
+                    });
+            }, 300);
+        });
     };
 
-    const loadEmployees = () => {
-        Ajax.get(`${baseUrl}?action=get_employees`)
-            .then(r => {
-                if (r?.success) {
-                    employees = r.employees || [];
-                    const opts = employees.map(e => 
-                        `<option value="${Helpers.escapeHtml(e.empleado_ced)}">
-                            ${Helpers.escapeHtml(e.nombre)} - ${Helpers.escapeHtml(e.cargo || '')}
-                        </option>`
-                    ).join('');
-                    $('#add_empleado').html('<option value="">Seleccione...</option>' + opts);
-                }
-            });
+    const setupEmployeeSearch = () => {
+        let timeout;
+        $('#searchEmployee').on('input', function() {
+            clearTimeout(timeout);
+            const query = $(this).val().trim();
+            
+            if (query.length < 2) {
+                $('#employeeResults').hide();
+                $('#add_empleado').val('');
+                return;
+            }
+            
+            timeout = setTimeout(() => {
+                $('#employeeResults').html('<div class="list-group-item"><i class="fas fa-spinner fa-spin"></i> Buscando...</div>').show();
+                
+                Ajax.get(`${baseUrl}?action=search_employees`, { search: query })
+                    .then(data => {
+                        if (data.success && data.results?.length) {
+                            const html = data.results.map(e => `
+                                <button type="button" class="list-group-item list-group-item-action employee-item"
+                                        data-id="${e.empleado_ced}" 
+                                        data-nombre="${Helpers.escapeHtml(e.nombre)}">
+                                    <strong>${Helpers.escapeHtml(e.nombre)}</strong>
+                                    <br>
+                                    <small class="text-muted">Cédula: ${e.empleado_ced} | ${e.cargo || 'Vendedor'}</small>
+                                </button>
+                            `).join('');
+                            
+                            $('#employeeResults').html(html);
+                            
+                            $('.employee-item').on('click', function() {
+                                const nombre = $(this).data('nombre');
+                                const id = $(this).data('id');
+                                
+                                $('#searchEmployee').val(nombre).addClass('is-valid');
+                                $('#add_empleado').val(id);
+                                $('#employeeResults').hide();
+                            });
+                        } else {
+                            $('#employeeResults').html('<div class="list-group-item text-muted">Sin resultados</div>');
+                        }
+                    })
+                    .catch(() => {
+                        $('#employeeResults').html('<div class="list-group-item text-danger">Error al buscar</div>');
+                    });
+            }, 300);
+        });
     };
 
-    const loadProducts = () => {
-        Ajax.get(`${baseUrl}?action=get_products`)
-            .then(r => {
-                if (r?.success) {
-                    products = r.products || [];
-                    $('#productsCount').text(`${products.length} disponibles`).toggleClass('text-danger', products.length === 0);
-                }
-            });
+    const setupProductSearch = () => {
+        let timeout;
+        $('#searchProduct').on('input', function() {
+            clearTimeout(timeout);
+            const query = $(this).val().trim();
+            
+            if (query.length < 2) {
+                $('#productResults').hide();
+                return;
+            }
+            
+            timeout = setTimeout(() => {
+                $('#productResults').html('<div class="list-group-item"><i class="fas fa-spinner fa-spin"></i> Buscando...</div>').show();
+                
+                Ajax.get(`${baseUrl}?action=search_products`, { search: query })
+                    .then(data => {
+                        if (data.success && data.results?.length) {
+                            const html = data.results.map(p => {
+                                const priceWithIva = parseFloat(p.precio ?? 0);
+                                const priceBase = priceWithIva / 1.16;
+                                
+                                return `
+                                    <button type="button" class="list-group-item list-group-item-action product-search-item"
+                                            data-codigo="${Helpers.escapeHtml(p.codigo_prenda)}" 
+                                            data-nombre="${Helpers.escapeHtml(p.nombre)}"
+                                            data-categoria="${Helpers.escapeHtml(p.categoria)}"
+                                            data-tipo="${Helpers.escapeHtml(p.tipo)}"
+                                            data-price="${priceWithIva}">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <strong>${Helpers.escapeHtml(p.codigo_prenda)}</strong> - ${Helpers.escapeHtml(p.nombre)}
+                                                <br>
+                                                <small class="text-muted">
+                                                    <span class="badge bg-secondary">${Helpers.escapeHtml(p.categoria)}</span>
+                                                    <span class="badge bg-info">${Helpers.escapeHtml(p.tipo)}</span>
+                                                </small>
+                                            </div>
+                                            <div class="text-end">
+                                                <strong class="text-success">${Helpers.formatCurrency(priceWithIva)}</strong>
+                                                <br>
+                                                <small class="text-muted">${Helpers.formatCurrency(priceBase)} + IVA</small>
+                                            </div>
+                                        </div>
+                                    </button>
+                                `;
+                            }).join('');
+                            
+                            $('#productResults').html(html);
+                            $('#productsCount').text(`${data.results.length} encontrados`);
+                            
+                            $('.product-search-item').on('click', function() {
+                                const codigo = $(this).data('codigo');
+                                const nombre = $(this).data('nombre');
+                                const categoria = $(this).data('categoria');
+                                const tipo = $(this).data('tipo');
+                                const price = parseFloat($(this).data('price'));
+                                
+                                // Verificar si ya está en el carrito
+                                if (cart.some(c => c.codigo_prenda === codigo)) {
+                                    Helpers.toast('warning', `El producto ${codigo} ya está agregado`);
+                                    return;
+                                }
+                                
+                                addProductToCart(codigo, nombre, categoria, tipo, price);
+                                $('#searchProduct').val('');
+                                $('#productResults').hide();
+                            });
+                        } else {
+                            $('#productResults').html('<div class="list-group-item text-muted">Sin resultados</div>');
+                            $('#productsCount').text('0 encontrados');
+                        }
+                    })
+                    .catch(() => {
+                        $('#productResults').html('<div class="list-group-item text-danger">Error al buscar</div>');
+                    });
+            }, 300);
+        });
     };
 
-    // ============================================
-    // GESTIÓN DE CARRITO
-    // ============================================
-    const addProductRow = () => {
-        if (!products || products.length === 0) {
-            Helpers.toast('info', 'No hay productos disponibles');
-            return;
+    // Cerrar resultados al hacer clic fuera
+    $(document).on('click', (e) => {
+        if (!$(e.target).closest('#searchClient, #clientResults').length) {
+            $('#clientResults').hide();
         }
+        if (!$(e.target).closest('#searchEmployee, #employeeResults').length) {
+            $('#employeeResults').hide();
+        }
+        if (!$(e.target).closest('#searchProduct, #productResults').length) {
+            $('#productResults').hide();
+        }
+    });
 
+    // ==================== GESTIÓN DEL CARRITO ====================
+    
+    const addProductToCart = (codigo, nombre, categoria, tipo, priceWithIva) => {
         $('#noProductsAlert').hide();
         pid++;
         const rowId = `prod_${pid}`;
 
-        const productSelect = products.map(p => {
-            const price = parseFloat(p.precio ?? 0);
-            const codigo = p.codigo_prenda ?? '';
-            const name = p.nombre ?? `ID:${p.prenda_id || ''}`;
-            return `<option value="${Helpers.escapeHtml(codigo)}" data-price="${price}" data-name="${Helpers.escapeHtml(name)}">
-                ${Helpers.escapeHtml(codigo)} - ${Helpers.escapeHtml(name)} - ${Helpers.formatCurrency(price)}
-            </option>`;
-        }).join('');
+        const priceBase = priceWithIva / 1.16;
+        const ivaAmount = priceWithIva - priceBase;
+        
+        const item = { 
+            id: rowId, 
+            codigo_prenda: codigo, 
+            name: nombre,
+            categoria: categoria,
+            tipo: tipo,
+            price: priceWithIva,
+            priceBase: priceBase,
+            iva: ivaAmount,
+            subtotal: priceWithIva
+        };
+        
+        cart.push(item);
 
         const html = `
-            <div class="product-row mb-3 border rounded p-3" id="${rowId}">
+            <div class="product-row mb-3 border rounded p-3 bg-light" id="${rowId}">
                 <div class="row g-2 align-items-center">
-                    <div class="col-12 col-md-6">
-                        <label class="form-label small">Producto</label>
-                        <select class="form-select form-select-sm product-select" data-row="${rowId}">
-                            <option value="">Seleccione...</option>
-                            ${productSelect}
-                        </select>
+                    <div class="col-12 col-md-2">
+                        <label class="form-label small fw-bold">Código</label>
+                        <div class="fw-bold"><code>${Helpers.escapeHtml(codigo)}</code></div>
                     </div>
-                    <div class="col-6 col-md-3">
-                        <label class="form-label small">Precio</label>
-                        <input type="number" step="0.01" class="form-control form-control-sm product-price" data-row="${rowId}" readonly>
+                    <div class="col-12 col-md-3">
+                        <label class="form-label small fw-bold">Producto</label>
+                        <div>${Helpers.escapeHtml(nombre)}</div>
                     </div>
-                    <div class="col-4 col-md-2">
-                        <label class="form-label small">Subtotal</label>
-                        <div class="fw-bold text-primary product-subtotal" data-row="${rowId}">${Helpers.formatCurrency(0)}</div>
+                    <div class="col-6 col-md-2">
+                        <label class="form-label small fw-bold">Categoría</label>
+                        <div><span class="badge bg-secondary">${Helpers.escapeHtml(categoria)}</span></div>
                     </div>
-                    <div class="col-2 col-md-1 text-end">
+                    <div class="col-6 col-md-2">
+                        <label class="form-label small fw-bold">Tipo</label>
+                        <div><span class="badge bg-info">${Helpers.escapeHtml(tipo)}</span></div>
+                    </div>
+                    <div class="col-6 col-md-2 text-end">
+                        <label class="form-label small fw-bold">Precio</label>
+                        <div class="fw-bold text-primary">${Helpers.formatCurrency(priceWithIva)}</div>
+                    </div>
+                    <div class="col-6 col-md-1 text-end">
                         <label class="form-label small d-block">&nbsp;</label>
                         <button type="button" class="btn btn-sm btn-danger remove-product" data-row="${rowId}">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
                 </div>
-                <input type="hidden" class="product-code" data-row="${rowId}">
+                <input type="hidden" class="product-code" data-row="${rowId}" value="${codigo}">
+                <input type="hidden" class="product-price-total" data-row="${rowId}" value="${priceWithIva}">
             </div>
         `;
 
         $('#productsContainer').append(html);
 
-        $(`#${rowId} .product-select`).on('change', function() {
-            const r = $(this).data('row');
-            const codigo = $(this).val();
-            const $opt = $(this).find('option:selected');
-            const price = parseFloat($opt.data('price') || 0);
-            const name = $opt.data('name') || '';
-            
-            if (codigo && cart.some(c => c.codigo_prenda === codigo && c.id !== r)) {
-                Helpers.toast('warning', `El producto ${codigo} ya está agregado`);
-                $(this).val('');
-                updateProductRow(r, '', '', 0);
-                return;
-            }
-
-            updateProductRow(r, codigo, name, price);
-        });
-
         $(`#${rowId} .remove-product`).on('click', function() {
             removeProductRow($(this).data('row'));
         });
 
-        calcTotals();
-    };
-
-    const updateProductRow = (rowId, codigo, name, price) => {
-        const item = { id: rowId, codigo_prenda: codigo, name: name, price: price, subtotal: price };
-        const existingIndex = cart.findIndex(c => c.id === rowId);
-        
-        if (existingIndex >= 0) {
-            cart[existingIndex] = item;
-        } else {
-            cart.push(item);
-        }
-
-        $(`#${rowId} .product-code`).val(codigo);
-        $(`#${rowId} .product-price`).val(price ? price.toFixed(2) : '');
-        $(`#${rowId} .product-subtotal`).text(Helpers.formatCurrency(price));
         calcTotals();
     };
 
@@ -232,28 +371,23 @@ $(document).ready(function() {
     };
 
     const calcTotals = () => {
-        const subtotal = cart.reduce((acc, i) => acc + (parseFloat(i.subtotal || 0) || 0), 0);
-        const ivaPct = parseFloat($('#add_iva').val() || IVA_DEFAULT);
-        const ivaAmount = subtotal * (ivaPct / 100);
-        const total = subtotal + ivaAmount;
+        const totalConIva = cart.reduce((acc, i) => acc + (parseFloat(i.price || 0) || 0), 0);
+        const subtotal = totalConIva / 1.16;
+        const ivaAmount = totalConIva - subtotal;
 
         $('#summary_subtotal').text(Helpers.formatCurrency(subtotal));
         $('#summary_iva').text(Helpers.formatCurrency(ivaAmount));
-        $('#summary_total').text(Helpers.formatCurrency(total));
+        $('#summary_total').text(Helpers.formatCurrency(totalConIva));
         
         if (typeof DOLAR_BCV_RATE !== 'undefined') {
-            const totalBs = total * DOLAR_BCV_RATE;
+            const totalBs = totalConIva * DOLAR_BCV_RATE;
             $('#summary_total_bs').text(Helpers.formatCurrencyBs(totalBs));
         }
-        
-        $('#iva_percentage').text(ivaPct.toFixed(2));
     };
 
-    // ============================================
-    // CONTROL DE FECHA VENCIMIENTO (CRÉDITO)
-    // ============================================
+    // ==================== VALIDACIONES ====================
+    
     const $tipoVentaSelect = $('[name="tipo_venta"]');
-    const $clienteSelect = $('#add_cliente');
     const $fechaVencimientoGroup = $('#fechaVencimientoGroup');
     const $fechaVencimientoInput = $('#add_fecha_vencimiento');
 
@@ -265,7 +399,7 @@ $(document).ready(function() {
 
     $tipoVentaSelect.on('change', function() {
         const tipo = $(this).val();
-        const clienteCed = $clienteSelect.val();
+        const clienteCed = $('#add_cliente').val();
         
         if (tipo === 'credito') {
             if (!clienteCed) {
@@ -274,8 +408,7 @@ $(document).ready(function() {
                 return;
             }
 
-            const $selectedOption = $clienteSelect.find('option:selected');
-            const tipoCliente = $selectedOption.data('tipo');
+            const tipoCliente = $('#add_cliente').attr('data-tipo');
             
             if (tipoCliente === 'vip') {
                 $fechaVencimientoGroup.show();
@@ -294,13 +427,6 @@ $(document).ready(function() {
         }
     });
 
-    $clienteSelect.on('change', function() {
-        const tipo = $tipoVentaSelect.val();
-        if (tipo === 'credito') {
-            $tipoVentaSelect.trigger('change');
-        }
-    });
-
     $fechaVencimientoInput.on('change', function() {
         const selectedDate = new Date($(this).val());
         const today = new Date();
@@ -314,13 +440,38 @@ $(document).ready(function() {
         }
     });
 
-    // ============================================
-    // GUARDAR VENTA
-    // ============================================
+    // ==================== SUBMIT VENTA ====================
+    // 🔹 Validación en tiempo real del campo referencia
+    $('#add_referencia').on('input blur', function() {
+        const inputRef = $(this);
+        const referencia = inputRef.val().trim();
+
+        // Elimina mensajes previos
+        inputRef.siblings('.invalid-feedback').remove();
+
+        // Si está vacío → limpiar estado
+        if (referencia === '') {
+            inputRef.removeClass('is-invalid is-valid');
+            return;
+        }
+
+        // Validar longitud y formato
+        if (referencia.length > 15 || !Validations.REGEX.referenciaVenta.test(referencia)) {
+            inputRef.addClass('is-invalid').removeClass('is-valid');
+            inputRef.after('<div class="invalid-feedback">Referencia inválida (máx 15 caracteres, solo letras, números y guión)</div>');
+            return;
+        }
+
+        // Si es válido
+        inputRef.addClass('is-valid').removeClass('is-invalid');
+    });
+
+
+
     $('#addSaleForm').on('submit', function(e) {
         e.preventDefault();
 
-        const cliente = $clienteSelect.val();
+        const cliente = $('#add_cliente').val();
         const empleado = $('#add_empleado').val();
         const tipo = $tipoVentaSelect.val();
         const referencia = $('#add_referencia').val().trim();
@@ -330,12 +481,23 @@ $(document).ready(function() {
             return;
         }
 
-        // ✅ VALIDAR REFERENCIA
+        const inputRef = $('#add_referencia');
+        inputRef.siblings('.invalid-feedback').remove(); // elimina mensajes anteriores
+
         if (referencia && !Validations.REGEX.referenciaVenta.test(referencia)) {
-            Helpers.toast('error', 'Referencia inválida (máx 15 caracteres, solo letras, números y guión)');
-            $('#add_referencia').addClass('is-invalid').focus();
+            inputRef.addClass('is-invalid').removeClass('is-valid');
+
+            // Inserta el mensaje de error justo debajo del input
+            inputRef.after('<div class="invalid-feedback">Referencia inválida (máx 15 caracteres, solo letras, números y guión)</div>');
+
+            inputRef.focus();
             return;
+        } else {
+            // Si es válido o está vacío, limpia el error
+            inputRef.removeClass('is-invalid').addClass('is-valid');
+            inputRef.siblings('.invalid-feedback').remove();
         }
+
 
         if (cart.length === 0) {
             Helpers.toast('error', 'Agregue al menos un producto');
@@ -343,8 +505,7 @@ $(document).ready(function() {
         }
 
         if (tipo === 'credito') {
-            const $opt = $clienteSelect.find('option:selected');
-            const tipoCliente = $opt.data('tipo');
+            const tipoCliente = $('#add_cliente').attr('data-tipo');
             
             if (tipoCliente !== 'vip') {
                 Helpers.toast('error', 'Solo clientes VIP pueden comprar a crédito');
@@ -379,7 +540,7 @@ $(document).ready(function() {
             empleado_ced: empleado,
             tipo_venta: tipo,
             referencia: referencia,
-            iva_porcentaje: $('#add_iva').val() || IVA_DEFAULT,
+            iva_porcentaje: 16.00,
             observaciones: $('[name="observaciones"]').val() || '',
             productos: JSON.stringify(productosPayload)
         };
@@ -398,8 +559,8 @@ $(document).ready(function() {
                     Helpers.toast('success', r.message || 'Venta registrada');
                     resetSaleForm();
                     $('#addSaleModal').modal('hide');
+                    SkeletonHelper.showTableSkeleton('salesTable', 5, 8);
                     salesTable.ajax.reload(null, false);
-                    loadProducts();
                 } else {
                     Helpers.toast('error', r?.message || 'Error al guardar venta');
                 }
@@ -411,6 +572,12 @@ $(document).ready(function() {
     const resetSaleForm = () => {
         $('#addSaleForm')[0].reset();
         $('#productsContainer').empty();
+        $('#searchClient').val('').removeClass('is-valid');
+        $('#searchEmployee').val('').removeClass('is-valid');
+        $('#searchProduct').val('');
+        $('#add_cliente').val('').removeAttr('data-tipo');
+        $('#add_empleado').val('');
+        $('#clientTypeIndicator').text('');
         cart = [];
         pid = 0;
         $('#noProductsAlert').show();
@@ -419,22 +586,29 @@ $(document).ready(function() {
         calcTotals();
     };
 
-    // ============================================
-    // VER DETALLES
-    // ============================================
+    // ==================== VER DETALLE ====================
+    
     $(document).on('click', '.btn-view', function() {
         const id = $(this).data('id');
         if (!id) return;
         
-        $('#saleDetailsContent').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div><p class="mt-2">Cargando...</p></div>');
         $('#viewSaleModal').modal('show');
+        
+        SkeletonHelper.showModalSkeleton('saleDetailsContent');
 
         Ajax.get(`${baseUrl}?action=get_by_id&id=${encodeURIComponent(id)}`)
             .then(r => {
-                if (r?.success && r.venta) renderSaleDetails(r.venta);
-                else $('#saleDetailsContent').html('<p class="text-center text-muted">No se encontraron detalles</p>');
+                if (r?.success && r.venta) {
+                    const html = renderSaleDetails(r.venta);
+
+                    SkeletonHelper.hideModalSkeleton('saleDetailsContent', html);
+                } else {
+                    $('#saleDetailsContent').html('<p class="text-center text-muted">No se encontraron detalles</p>');
+                }
             })
-            .catch(msg => $('#saleDetailsContent').html(`<p class="text-center text-muted">${Helpers.escapeHtml(msg)}</p>`));
+            .catch(msg => {
+                $('#saleDetailsContent').html(`<p class="text-center text-muted">${Helpers.escapeHtml(msg)}</p>`);
+            });
     });
 
     const renderSaleDetails = (s) => {
@@ -464,30 +638,38 @@ $(document).ready(function() {
                 </div>
             </div>
             <h6 class="border-bottom pb-2">Productos</h6>
-            <table class="table table-sm">
-                <thead>
-                    <tr><th>Código</th><th>Producto</th><th>Tipo</th><th>Categoría</th><th class="text-end">Precio</th></tr>
-                </thead>
-                <tbody>
-                    ${(s.prendas ?? s.items ?? []).map(it => {
-                        const codigo = it.codigo_prenda ?? it.codigo ?? 'N/A';
-                        const name = it.nombre_prenda ?? it.nombre ?? '';
-                        const tipo = it.tipo ?? it.tipo_prenda ?? 'N/A';
-                        const categoria = it.categoria ?? it.categoria_prenda ?? '';
-                        const precio = parseFloat(it.precio_unitario ?? it.subtotal ?? it.precio ?? 0);
-
-                        return `
-                            <tr>
-                                <td><code>${Helpers.escapeHtml(codigo)}</code></td>
-                                <td>${Helpers.escapeHtml(name)}</td>
-                                <td>${Helpers.escapeHtml(tipo)}</td>
-                                <td><small class="text-muted">${Helpers.escapeHtml(categoria)}</small></td>
-                                <td class="text-end">${Helpers.formatCurrency(precio)}</td>
-                            </tr>
-                        `;
-                    }).join('')}
-                </tbody>
-            </table>
+            <div class="table-responsive">
+                <table class="table table-sm table-striped">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Producto</th>
+                            <th>Categoría</th>
+                            <th>Tipo</th>
+                            <th class="text-end">Precio</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${(s.prendas ?? s.items ?? []).map(it => {
+                            const codigo = it.codigo_prenda ?? it.codigo ?? 'N/A';
+                            const name = it.nombre_prenda ?? it.nombre ?? '';
+                            const categoria = it.categoria ?? it.categoria_prenda ?? '';
+                            const tipo = it.tipo ?? it.tipo_prenda ?? 'N/A';
+                            const precioConIva = parseFloat(it.precio_con_iva ?? it.precio_unitario ?? 0);
+                            
+                            return `
+                                <tr>
+                                    <td><code>${Helpers.escapeHtml(codigo)}</code></td>
+                                    <td>${Helpers.escapeHtml(name)}</td>
+                                    <td><span class="badge bg-secondary">${Helpers.escapeHtml(categoria)}</span></td>
+                                    <td><span class="badge bg-info">${Helpers.escapeHtml(tipo)}</span></td>
+                                    <td class="text-end"><strong>${Helpers.formatCurrency(precioConIva)}</strong></td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
             <div class="row">
                 <div class="col-md-6 offset-md-6">
                     <table class="table table-sm table-borderless">
@@ -501,12 +683,11 @@ $(document).ready(function() {
             </div>
         `;
 
-        $('#saleDetailsContent').html(html);
+        return html;
     };
 
-    // ============================================
-    // ANULAR VENTA
-    // ============================================
+    // ==================== CANCELAR VENTA ====================
+    
     $(document).on('click', '.btn-cancel', function() {
         const ventaId = $(this).data('id');
         if (!ventaId) return;
@@ -519,8 +700,8 @@ $(document).ready(function() {
                     .then(r => {
                         if (r?.success) {
                             Helpers.toast('success', r.message || 'Venta anulada');
+                            SkeletonHelper.showTableSkeleton('salesTable', 5, 8);
                             salesTable.ajax.reload(null, false);
-                            loadProducts();
                         } else {
                             Helpers.toast('error', r?.message || 'Error al anular venta');
                         }
@@ -531,28 +712,22 @@ $(document).ready(function() {
         );
     });
 
-    // ============================================
-    // GENERAR PDF
-    // ============================================
+    // ==================== GENERAR PDF ====================
+    
     $(document).on('click', '.btn-pdf', function() {
         const ventaId = $(this).data('id');
         if (!ventaId) return;
         window.open(`${baseUrl}?action=generate_pdf&venta_id=${ventaId}`, '_blank');
     });
 
-    // ============================================
-    // BÚSQUEDA
-    // ============================================
+    // ==================== BÚSQUEDA EN TABLA ====================
+    
     $('#searchInput').on('keyup', Helpers.debounce(function() {
         salesTable.search($(this).val()).draw();
     }, 300));
 
-    // ============================================
-    // EVENTOS
-    // ============================================
-    $('#btnAddProduct').on('click', addProductRow);
+    // ==================== VALIDACIÓN DE REFERENCIA ====================
     
-    // ✅ VALIDACIÓN EN TIEMPO REAL DE REFERENCIA
     $('#add_referencia').on('input blur', function() {
         const val = $(this).val().trim();
         if (val === '') {
@@ -566,27 +741,24 @@ $(document).ready(function() {
             $(this).addClass('is-invalid').removeClass('is-valid');
         }
     });
+
+    // ==================== RESET AL CERRAR MODAL ====================
     
-    $('#add_iva').on('input', function() {
-        const val = parseFloat($(this).val());
-        $(this).toggleClass('is-invalid', isNaN(val) || val < 0 || val > 100);
-        $(this).toggleClass('is-valid', !isNaN(val) && val >= 0 && val <= 100);
-        calcTotals();
+    $('#addSaleModal').on('hidden.bs.modal', function() {
+        resetSaleForm();
     });
 
-    $('#addSaleModal, #viewSaleModal').on('hidden.bs.modal', function() {
-        if ($(this).attr('id') === 'addSaleModal') {
-            resetSaleForm();
-        }
+    $('#viewSaleModal').on('hidden.bs.modal', function() {
+        $('#saleDetailsContent').html('');
     });
 
-    // ============================================
-    // INICIALIZAR
-    // ============================================
+    // ==================== INICIALIZACIÓN FINAL ====================
+    SkeletonHelper.showTableSkeleton('salesTable', 5, 8);
+
     initDataTable();
-    loadClients();
-    loadEmployees();
-    loadProducts();
+    setupClientSearch();
+    setupEmployeeSearch();
+    setupProductSearch();
     setMinDate();
     $fechaVencimientoGroup.hide();
     $fechaVencimientoInput.prop('required', false);

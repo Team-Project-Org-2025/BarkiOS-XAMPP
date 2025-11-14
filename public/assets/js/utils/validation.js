@@ -36,7 +36,8 @@ export const MESSAGES = {
     banco: 'Nombre del banco inválido (3-30 caracteres)',
     password: 'Contraseña debe tener 8-30 caracteres, mayúsculas, minúsculas, números y símbolos',
     required: 'Este campo es requerido',
-    select: 'Seleccione una opción'
+    select: 'Seleccione una opción',
+    tracking: 'Tracking inválida (8 dígitos)'
 };
 
 //Valida un campo individual

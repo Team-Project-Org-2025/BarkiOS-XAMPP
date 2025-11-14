@@ -1,12 +1,9 @@
 <?php
-// filepath: c:\xampp\htdocs\BarkiOS\app\controllers\Admin\ProductsController.php
 use Barkios\models\Clients;
+use Barkios\helpers\Validation;
 
-// ✅ Importa el controlador de login (para usar checkAuth)
 require_once __DIR__ . '/LoginController.php';
 
-
-// ✅ Protege todo el módulo
 checkAuth();
 
 $clienttModel = new Clients();
@@ -52,25 +49,38 @@ function handleRequest($clientModel) {
 }
 
 function handleAddEdit($clientModel, $mode) {
-    $fields = ['cedula','nombre','direccion','telefono','membresia'];
-    foreach ($fields as $f) {
-        if (empty($_POST[$f])) throw new Exception("El campo $f es requerido");
+    $rules = [
+        'cedula' => 'cedula',
+        'nombre' => 'nombre',
+        'direccion' => 'direccion',
+        'telefono' => 'telefono'
+    ];
+    
+    $validation = Validation::validate($_POST, $rules);
+    
+    if (!$validation['valid']) {
+        $errorMsg = implode(', ', $validation['errors']);
+        throw new Exception($errorMsg);
     }
+    
     $cedula = trim($_POST['cedula']);
     $nombre = trim($_POST['nombre']);
     $direccion = trim($_POST['direccion']);
     $telefono = trim($_POST['telefono']);
-    $membresia = trim($_POST['membresia']); // <-- CORREGIDO
+    $membresia = trim($_POST['membresia']);
 
     if ($mode === 'add') {
         if ($clientModel->clientExists($cedula)) {
-            header("Location: clients-admin.php?error=cedula_duplicada&cedula=$cedula"); exit();
+            header("Location: clients-admin.php?error=cedula_duplicada&cedula=$cedula");
+            exit();
         }
         $clientModel->add($cedula, $nombre, $direccion, $telefono, $membresia);
-        header("Location: clients-admin.php?success=add"); exit();
+        header("Location: clients-admin.php?success=add");
+        exit();
     } else {
         $clientModel->update($cedula, $nombre, $direccion, $telefono, $membresia);
-        header("Location: clients-admin.php?success=edit"); exit();
+        header("Location: clients-admin.php?success=edit");
+        exit();
     }
 }
 
@@ -80,33 +90,64 @@ function handleDelete($productModel) {
     header("Location: clients-admin.php?success=delete"); exit();
 }
 
-
 function handleAddEditAjax($clientModel, $mode) {
-    $fields = ['cedula','nombre','direccion','telefono','membresia'];
-    $data = [];
-    foreach ($fields as $f) {
-        if (empty($_POST[$f])) throw new Exception("El campo $f es requerido");
-        $data[$f] = trim($_POST[$f]); // <-- Solo texto
+    // Definir reglas de validación
+    $rules = [
+        'cedula' => 'cedula',
+        'nombre' => 'nombre',
+        'direccion' => 'direccion',
+        'telefono' => 'telefono'
+    ];
+    
+    // Validar datos
+    $validation = Validation::validate($_POST, $rules);
+    
+    if (!$validation['valid']) {
+        $errorMsg = implode(', ', $validation['errors']);
+        throw new Exception($errorMsg);
     }
+    
+    // Sanitizar datos
+    $data = Validation::sanitize([
+        'cedula' => $_POST['cedula'],
+        'nombre' => $_POST['nombre'],
+        'direccion' => $_POST['direccion'],
+        'telefono' => $_POST['telefono'],
+        'membresia' => $_POST['membresia']
+    ]);
+    
     if ($mode === 'add') {
-        if ($clientModel->clientExists($data['cedula'])) throw new Exception("cedula duplicada");
+        if ($clientModel->clientExists($data['cedula'])) {
+            throw new Exception("Cédula duplicada");
+        }
         $clientModel->add(...array_values($data));
         $msg = 'Cliente agregado';
     } else {
-        if (!$clientModel->clientExists($data['cedula'])) throw new Exception("No existe la cedula");
+        if (!$clientModel->clientExists($data['cedula'])) {
+            throw new Exception("No existe la cédula");
+        }
         $clientModel->update(...array_values($data));
-        $msg = 'Cedula actualizada';
+        $msg = 'Cliente actualizado';
     }
+    
     $client = $clientModel->getById($data['cedula']);
-    echo json_encode(['success'=>true, 'message'=>$msg, 'client'=>$client]); exit();
+    echo json_encode(['success'=>true, 'message'=>$msg, 'client'=>$client]);
+    exit();
 }
 
 function handleDeleteAjax($clientModel) {
-    if (empty($_POST['cedula']) || !is_numeric($_POST['cedula'])) throw new Exception("Cedula inválida");
+    $cedulaValidation = Validation::validateField($_POST['cedula'] ?? '', 'cedula');
+    if (!$cedulaValidation['valid']) {
+        throw new Exception($cedulaValidation['message']);
+    }
     $cedula = trim($_POST['cedula']);
-    if (!$clientModel->clientExists($cedula)) throw new Exception("No existe el producto");
+    if (!$clientModel->clientExists($cedula)) {
+        throw new Exception("No existe el cliente");
+    }
+    
     $clientModel->delete($cedula);
-    echo json_encode(['success'=>true, 'message'=>'Cliente eliminado', 'clientId'=>$cedula]); exit();
+    echo json_encode(['success'=>true, 'message'=>'Cliente eliminado', 'clientId'=>$cedula]);
+    exit();
 }
 
 function getClientsAjax($clientModel) {

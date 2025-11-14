@@ -1,11 +1,10 @@
 <?php
-// filepath: c:\xampp\htdocs\BarkiOS\app\controllers\Admin\EmployeesController.php
-use Barkios\models\Employees;
 
-// ✅ Importa el controlador de login (para usar checkAuth)
+use Barkios\models\Employees;
+use Barkios\helpers\Validation;
+
 require_once __DIR__ . '/LoginController.php';
 
-// ✅ Protege todo el módulo
 checkAuth();
 
 $employeeModel = new Employees();
@@ -51,9 +50,20 @@ function handleRequest($employeeModel) {
 }
 
 function handleAddEdit($employeeModel, $mode) {
-    $fields = ['cedula','nombre','telefono'];
-    foreach ($fields as $f) {
-        if (empty($_POST[$f])) throw new Exception("El campo $f es requerido");
+    // Definir reglas de validación
+    $rules = [
+        'cedula' => 'cedula',
+        'nombre' => 'nombre',
+        'telefono' => 'telefono',
+        'cargo' => ['type' => 'cargo', 'required' => false]
+    ];
+    
+    // Validar datos
+    $validation = Validation::validate($_POST, $rules);
+    
+    if (!$validation['valid']) {
+        $errorMsg = implode(', ', $validation['errors']);
+        throw new Exception($errorMsg);
     }
     
     $cedula = trim($_POST['cedula']);
@@ -63,13 +73,16 @@ function handleAddEdit($employeeModel, $mode) {
 
     if ($mode === 'add') {
         if ($employeeModel->employeeExists($cedula)) {
-            header("Location: employees-admin.php?error=cedula_duplicada&cedula=$cedula"); exit();
+            header("Location: employees-admin.php?error=cedula_duplicada&cedula=$cedula");
+            exit();
         }
         $employeeModel->add($cedula, $nombre, $telefono, $cargo);
-        header("Location: employees-admin.php?success=add"); exit();
+        header("Location: employees-admin.php?success=add");
+        exit();
     } else {
         $employeeModel->update($cedula, $nombre, $telefono, $cargo);
-        header("Location: employees-admin.php?success=edit"); exit();
+        header("Location: employees-admin.php?success=edit");
+        exit();
     }
 }
 
@@ -80,37 +93,66 @@ function handleDelete($employeeModel) {
 }
 
 function handleAddEditAjax($employeeModel, $mode) {
-    $fields = ['cedula','nombre','telefono'];
-    $data = [];
+    // Definir reglas de validación
+    $rules = [
+        'cedula' => 'cedula',
+        'nombre' => 'nombre',
+        'telefono' => 'telefono',
+        'cargo' => ['type' => 'cargo', 'required' => false]
+    ];
     
-    foreach ($fields as $f) {
-        if (empty($_POST[$f])) throw new Exception("El campo $f es requerido");
-        $data[$f] = trim($_POST[$f]);
+    // Validar datos
+    $validation = Validation::validate($_POST, $rules);
+    
+    if (!$validation['valid']) {
+        $errorMsg = implode(', ', $validation['errors']);
+        throw new Exception($errorMsg);
     }
     
-    // Cargo es opcional, por defecto 'Empleado'
-    $data['cargo'] = trim($_POST['cargo'] ?? 'Empleado');
+    // Sanitizar datos
+    $data = Validation::sanitize([
+        'cedula' => $_POST['cedula'],
+        'nombre' => $_POST['nombre'],
+        'telefono' => $_POST['telefono'],
+        'cargo' => $_POST['cargo'] ?? 'Empleado'
+    ]);
     
     if ($mode === 'add') {
-        if ($employeeModel->employeeExists($data['cedula'])) throw new Exception("Cédula duplicada");
+        if ($employeeModel->employeeExists($data['cedula'])) {
+            throw new Exception("Cédula duplicada");
+        }
         $employeeModel->add($data['cedula'], $data['nombre'], $data['telefono'], $data['cargo']);
         $msg = 'Empleado agregado';
     } else {
-        if (!$employeeModel->employeeExists($data['cedula'])) throw new Exception("No existe la cédula");
+        if (!$employeeModel->employeeExists($data['cedula'])) {
+            throw new Exception("No existe la cédula");
+        }
         $employeeModel->update($data['cedula'], $data['nombre'], $data['telefono'], $data['cargo']);
         $msg = 'Empleado actualizado';
     }
     
     $employee = $employeeModel->getById($data['cedula']);
-    echo json_encode(['success'=>true, 'message'=>$msg, 'employee'=>$employee]); exit();
+    echo json_encode(['success'=>true, 'message'=>$msg, 'employee'=>$employee]);
+    exit();
 }
 
 function handleDeleteAjax($employeeModel) {
-    if (empty($_POST['cedula']) || !is_numeric($_POST['cedula'])) throw new Exception("Cédula inválida");
+    // Validar cédula
+    $cedulaValidation = Validation::validateField($_POST['cedula'] ?? '', 'cedula');
+    
+    if (!$cedulaValidation['valid']) {
+        throw new Exception($cedulaValidation['message']);
+    }
+    
     $cedula = trim($_POST['cedula']);
-    if (!$employeeModel->employeeExists($cedula)) throw new Exception("No existe el empleado");
+    
+    if (!$employeeModel->employeeExists($cedula)) {
+        throw new Exception("No existe el empleado");
+    }
+    
     $employeeModel->delete($cedula);
-    echo json_encode(['success'=>true, 'message'=>'Empleado eliminado', 'employeeId'=>$cedula]); exit();
+    echo json_encode(['success'=>true, 'message'=>'Empleado eliminado', 'employeeId'=>$cedula]);
+    exit();
 }
 
 function getEmployeesAjax($employeeModel) {

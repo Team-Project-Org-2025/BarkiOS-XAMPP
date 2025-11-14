@@ -6,6 +6,19 @@ $(document).ready(function() {
     const baseUrl = window.location.pathname;
     let prendaIndex = 0;
     let allPurchases = [];
+    let purchasesTable = null;
+
+     const addPurchaseRules = {
+        factura_numero: 'factura',      // Coincide con name="factura_numero"
+        fecha_compra: 'required',        // Coincide con name="fecha_compra"
+        proveedor_rif: 'select'          // Coincide con name="proveedor_rif"
+    };
+    
+    const editPurchaseRules = {
+        factura_numero: 'factura',      // Coincide con name="factura_numero" del edit
+        fecha_compra: 'required',        // Coincide con name="fecha_compra" del edit
+        proveedor_rif: 'select'          // Coincide con name="proveedor_rif" del edit
+    };
 
     // Tipos por categoría
     const TIPOS_POR_CATEGORIA = {
@@ -17,92 +30,291 @@ $(document).ready(function() {
         Fiesta: ["Vestido", "Falda", "Blusa", "Enterizo"]
     };
 
-    // ============================================
-    // CARGAR COMPRAS
-    // ============================================
-// ============================================
-// INICIALIZAR TABLA DE COMPRAS (DataTable)
-// ============================================
-let purchasesTable = null;
-
-const initPurchaseTable = () => {
-    purchasesTable = $('#purchaseTable').DataTable({
-        ajax: {
-            url: `${baseUrl}?action=get_purchases`,
-            method: 'GET',
-            headers: { 'X-Requested-With': 'XMLHttpRequest' },
-            dataSrc: data => data.success ? data.data : []
-        },
-        columns: [
-            { 
-                data: 'factura_numero',
-                render: (data, type, row) => `
-                    <strong>#${data}</strong>
-                    ${row.pdf_generado == 1 
-                        ? '<i class="fas fa-check-circle text-success ms-2" title="PDF generado"></i>' 
-                        : ''}`
-            },
-            { 
-                data: 'nombre_proveedor',
-                render: (data, type, row) => `
-                    <div><strong>${data}</strong></div>
-                    <small class="text-muted">${row.total_prendas} prenda(s)</small>`
-            },
-            { 
-                data: 'fecha_compra',
-                render: data => Helpers.formatDate(data)
-            },
-            { 
-                data: 'monto_total',
-                className: 'text-end',
-                render: data => `<strong class="text-success">${Helpers.formatCurrency(data)}</strong>`
-            },
-            { 
-                data: null,
-                className: 'text-center',
-                render: row => `
-                    <span class="badge bg-success">${row.prendas_disponibles || 0}</span>
-                    <span class="badge bg-secondary">${row.prendas_vendidas || 0}</span>`
-            },
-            {
-                data: null,
-                className: 'text-center',
-                orderable: false,
-                render: row => `
-                    <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-primary btn-view" data-id="${row.compra_id}" title="Ver"><i class="fas fa-eye"></i></button>
-                        <button class="btn btn-outline-success btn-pdf" data-id="${row.compra_id}" title="PDF"><i class="fas fa-file-pdf"></i></button>
-                        <button class="btn btn-outline-warning btn-edit" data-id="${row.compra_id}" title="Editar"><i class="fas fa-edit"></i></button>
-                        <button class="btn btn-outline-danger btn-delete" data-id="${row.compra_id}" title="Eliminar"><i class="fas fa-trash"></i></button>
-                    </div>`
+    const setupPurchaseValidation = () => {
+        // Validación en tiempo real
+        Validations.setupRealTimeValidation($('#addPurchaseForm'), addPurchaseRules);
+        Validations.setupRealTimeValidation($('#editPurchaseForm'), editPurchaseRules);
+        
+        // Validación para tracking (opcional)
+        $('#tracking, #editTracking').on('input blur', function() {
+            const val = $(this).val().trim();
+            if (val === '') {
+                $(this).removeClass('is-valid is-invalid');
+                $(this).siblings('.invalid-feedback').remove();
+                return;
             }
-        ],
-        pageLength: 10,
-        responsive: true,
-        autoWidth: false,
-        language: {
-            url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json"
+            Validations.validateField(
+                $(this), 
+                Validations.REGEX.factura, 
+                Validations.MESSAGES.tracking
+            );
+        });
+        
+        // Validación para fecha (no puede ser futura)
+        $('#fecha_compra, #editFechaCompra').on('change blur', function() {
+            const fecha = new Date($(this).val());
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
+            
+            if (!$(this).val()) {
+                $(this).addClass('is-invalid').removeClass('is-valid');
+                $(this).siblings('.invalid-feedback').remove();
+                $(this).after('<div class="invalid-feedback">La fecha es requerida</div>');
+                return;
+            }
+            
+            if (fecha > hoy) {
+                $(this).addClass('is-invalid').removeClass('is-valid');
+                $(this).siblings('.invalid-feedback').remove();
+                $(this).after('<div class="invalid-feedback">La fecha no puede ser futura</div>');
+                return;
+            }
+            
+            $(this).addClass('is-valid').removeClass('is-invalid');
+            $(this).siblings('.invalid-feedback').remove();
+        });
+    };
+
+    // ==================== SUBMIT AGREGAR ====================
+    $('#addPurchaseForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Validar formulario
+        if (!Validations.validateForm($(this), addPurchaseRules)) {
+            Helpers.toast('warning', 'Por favor corrija los campos resaltados');
+            return;
         }
+        
+        
+        // Validaciones adicionales
+        const tracking = $('#tracking').val().trim();
+        if (tracking && !Validations.REGEX.factura.test(tracking)) {
+            Helpers.toast('error', 'Tracking inválido (8 dígitos)');
+            $('#tracking').addClass('is-invalid').focus();
+            return;
+        }
+        
+        const fecha = new Date($('#fecha_compra').val());
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        if (fecha > hoy) {
+            Helpers.toast('error', 'La fecha no puede ser futura');
+            $('#fecha_compra').focus();
+            return;
+        }
+        
+        // Aquí irían tus validaciones de prendas
+        // const { prendas, error } = recopilarPrendas('.prenda-row');
+        // if (error) { return; }
+        
+        // Enviar
+        const formData = new FormData(this);
+        const $btn = $('#btnGuardar');
+        const btnText = $btn.find('.btn-text').html();
+        
+        $btn.prop('disabled', true);
+        $btn.find('.spinner-border').removeClass('d-none');
+        $btn.find('.btn-text').html('Guardando...');
+        
+        Ajax.post(`${baseUrl}?action=add_ajax`, formData)
+            .then(res => {
+                if (res.success) {
+                    Helpers.toast('success', res.message || 'Compra guardada correctamente');
+                    $('#addPurchaseModal').modal('hide');
+                    // Recargar tabla
+                } else {
+                    Helpers.toast('error', res.message || 'Error al guardar');
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                Helpers.toast('error', err || 'Error inesperado');
+            })
+            .finally(() => {
+                $btn.prop('disabled', false);
+                $btn.find('.spinner-border').addClass('d-none');
+                $btn.find('.btn-text').html(btnText);
+            });
     });
-};
 
-// ✅ Para recargar la tabla sin perder paginación
-const reloadPurchases = () => {
-    if (purchasesTable) purchasesTable.ajax.reload(null, false);
-};
+    // ==================== SUBMIT EDITAR ====================
+    $('#editPurchaseForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Validar formulario
+        if (!Validations.validateForm($(this), editPurchaseRules)) {
+            Helpers.toast('warning', 'Por favor corrija los campos resaltados');
+            return;
+        }
+        
+        // Validaciones adicionales
+        const tracking = $('#editTracking').val().trim();
+        if (tracking && !Validations.REGEX.factura.test(tracking)) {
+            Helpers.toast('error', 'Tracking inválido (8 dígitos)');
+            return;
+        }
+        
+        const fecha = new Date($('#editFechaCompra').val());
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        if (fecha > hoy) {
+            Helpers.toast('error', 'La fecha no puede ser futura');
+            return;
+        }
+        
+        // Enviar
+        const formData = new FormData(this);
+        const $btn = $('#btnGuardarEdit');
+        
+        $btn.prop('disabled', true);
+        $btn.find('.spinner-border').removeClass('d-none');
+        
+        Ajax.post(`${baseUrl}?action=edit_ajax`, formData)
+            .then(response => {
+                if (response.success) {
+                    Helpers.toast('success', 'Compra actualizada correctamente');
+                    $('#editPurchaseModal').modal('hide');
+                } else {
+                    Helpers.toast('error', response.message);
+                }
+            })
+            .catch(error => {
+                Helpers.toast('error', 'Error al actualizar');
+            })
+            .finally(() => {
+                $btn.prop('disabled', false);
+                $btn.find('.spinner-border').addClass('d-none');
+            });
+    });
 
+    // ==================== LIMPIAR AL CERRAR ====================
+    $('#addPurchaseModal, #editPurchaseModal').on('hidden.bs.modal', function() {
+        const $form = $(this).find('form');
+        $form[0].reset();
+        Validations.clearValidation($form);
+        $('#searchSupplier, #editSearchSupplier').val('').removeClass('is-valid is-invalid');
+    });
 
-    // ============================================
-    // ACTUALIZAR ESTADÍSTICAS
-    // ============================================
+    $('#addPurchaseModal').on('show.bs.modal', function() {
+        const $form = $('#addPurchaseForm');
+        $form[0].reset();
+        Validations.clearValidation($form);
+        $('#searchSupplier').val('').removeClass('is-valid is-invalid');
+    });
+
+    // ==================== INVOCAR ====================
+    setupPurchaseValidation();
+
+    const reloadPurchases = () => {
+        if (purchasesTable) {
+
+            SkeletonHelper.showTableSkeleton('purchaseTable', 5, 6);
+            purchasesTable.ajax.reload(() => updateStats(), false);
+        }
+    };
+    
+    const initPurchaseTable = () => {
+        SkeletonHelper.showTableSkeleton('purchaseTable', 5, 6);
+        purchasesTable = $('#purchaseTable').DataTable({
+            ajax: {
+                url: `${baseUrl}?action=get_purchases`,
+                method: 'GET',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                dataSrc: data => {
+                    if (data.success) {
+                        allPurchases = data.data;
+                        updateStats();
+                        return data.data;
+                    } else {
+                        allPurchases = [];
+                        updateStats();
+                        return [];
+                    }
+                }
+            },
+            columns: [
+                { 
+                    data: 'factura_numero',
+                    render: (data, type, row) => `
+                        <strong>#${data}</strong>
+                        ${row.pdf_generado == 1 
+                            ? '<i class="fas fa-check-circle text-success ms-2" title="PDF generado"></i>' 
+                            : ''}`
+                },
+                { 
+                    data: 'nombre_proveedor',
+                    render: (data, type, row) => `
+                        <div><strong>${data}</strong></div>
+                        <small class="text-muted">${row.total_prendas} prenda(s)</small>`
+                },
+                { 
+                    data: 'fecha_compra',
+                    render: data => Helpers.formatDate(data)
+                },
+                { 
+                    data: 'monto_total',
+                    className: 'text-end',
+                    render: data => `<strong class="text-success">${Helpers.formatCurrency(data)}</strong>`
+                },
+                { 
+                    data: null,
+                    className: 'text-center',
+                    render: row => `
+                        <span class="badge bg-success">${row.prendas_disponibles || 0}</span>
+                        <span class="badge bg-secondary">${row.prendas_vendidas || 0}</span>`
+                },
+                {
+                    data: null,
+                    className: 'text-center',
+                    orderable: false,
+                    render: row => `
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary btn-view" data-id="${row.compra_id}" title="Ver"><i class="fas fa-eye"></i></button>
+                            <button class="btn btn-outline-success btn-pdf" data-id="${row.compra_id}" title="PDF"><i class="fas fa-file-pdf"></i></button>
+                            <button class="btn btn-outline-warning btn-edit" data-id="${row.compra_id}" title="Editar"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-outline-danger btn-delete" data-id="${row.compra_id}" title="Eliminar"><i class="fas fa-trash"></i></button>
+                        </div>`
+                }
+            ],
+            order: [[2, 'desc']],
+            pageLength: 10,
+            responsive: true,
+            autoWidth: false,
+            language: {
+                url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json"},
+            dom: '<"d-flex justify-content-between align-items-center mb-2"lfB>tip',
+            buttons: [{
+            text: '<i class="fas fa-sync-alt"></i> Actualizar',
+            className: 'btn btn-outline-secondary btn-sm',
+            action: () => {
+                SkeletonHelper.showTableSkeleton('purchaseTable', 5, 6);
+                purchasesTable.ajax.reload(() => updateStats(), false);
+            }
+        }]
+        });
+    };
+
+    //Actualizar estadisticas
     const updateStats = () => {
         let totalPagado = 0, totalPendiente = 0, montoTotal = 0;
+        let totalCompras = allPurchases.length;
+        let valorInventario = 0;
 
         allPurchases.forEach(p => {
             totalPagado += parseFloat(p.total_pagado || 0);
             totalPendiente += parseFloat(p.saldo_pendiente || 0);
             montoTotal += parseFloat(p.monto_total || 0);
+
+            if (p.valor_inventario) {
+                valorInventario += parseFloat(p.valor_inventario);
+            } else if (p.monto_total && p.prendas_disponibles) {
+                valorInventario += (parseFloat(p.monto_total) / (p.total_prendas || 1)) * (p.prendas_disponibles || 0);
+            }
         });
+
+        // Actualizar las estadísticas visuales
+        $('#statTotalCompras').text(totalCompras);
+        $('#statValorInventario').text(Helpers.formatCurrency(valorInventario));
 
         $('#statMontoPagado').text(`Pagado: ${Helpers.formatCurrency(totalPagado)}`);
         $('#statSaldoPendiente').text(Helpers.formatCurrency(totalPendiente));
@@ -110,14 +322,11 @@ const reloadPurchases = () => {
 
         const porcentaje = montoTotal > 0 ? (totalPagado / montoTotal) * 100 : 0;
         const offset = 220 - (220 * porcentaje / 100);
-
         $('#progressBar').css('stroke-dashoffset', offset);
         $('#progressPercent').text(Math.round(porcentaje) + '%');
     };
 
-    // ============================================
-    // GESTIÓN DE PRENDAS
-    // ============================================
+    //Gestion de prendas
     const actualizarTipos = ($cat, $tipo) => {
         const categoria = $cat.val();
         $tipo.html('<option value="">Seleccione un tipo</option>');
@@ -253,9 +462,7 @@ const reloadPurchases = () => {
         return { prendas, error };
     };
 
-    // ============================================
-    // BÚSQUEDA DE PROVEEDORES
-    // ============================================
+    //Busqueda de proveedor
     const setupSupplierSearch = (inputId, resultsId, hiddenId) => {
         let timeout;
         const $input = $(`#${inputId}`);
@@ -305,9 +512,7 @@ const reloadPurchases = () => {
         });
     };
 
-    // ============================================
-    // AGREGAR COMPRA
-    // ============================================
+    //Agregar compra
     $('#addPurchaseForm').on('submit', function(e) {
         e.preventDefault();
         
@@ -364,193 +569,198 @@ const reloadPurchases = () => {
             .finally(() => $btn.prop('disabled', false).html(btnText));
     });
 
-    // ============================================
-    // VER / EDITAR / ELIMINAR
-    // ============================================
+    //Ver, editar, eliminar
     $(document).on('click', '.btn-view', function() {
         const id = $(this).data('id');
-        Helpers.showLoading('Cargando detalles...');
+        
+        if (!$('#viewPurchaseModal').length) {
+            $('body').append(`
+                <div class="modal fade" id="viewPurchaseModal" tabindex="-1">
+                    <div class="modal-dialog modal-xl">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Detalles de Compra</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body" id="purchaseDetailsContent"></div>
+                        </div>
+                    </div>
+                </div>
+            `);
+        }
+        
+        $('#viewPurchaseModal').modal('show');
+        
+        // ✅ MOSTRAR SKELETON
+        SkeletonHelper.showModalSkeleton('purchaseDetailsContent');
 
         Ajax.get(`${baseUrl}?action=get_purchase_detail`, { compra_id: id })
             .then(data => {
-                Helpers.closeLoading(); // ✅ cerrar solo cuando ya tenemos los datos
                 if (data.success) {
-                    renderPurchaseDetails(data.data);
+                    const html = renderPurchaseDetails(data.data);
+                    // ✅ OCULTAR SKELETON CON ANIMACIÓN
+                    SkeletonHelper.hideModalSkeleton('purchaseDetailsContent', html);
                 } else {
-                    Helpers.toast('error', 'No se pudieron cargar los detalles');
+                    $('#purchaseDetailsContent').html('<div class="alert alert-danger">No se pudieron cargar los detalles</div>');
                 }
             })
             .catch(err => {
-                Helpers.closeLoading();
-                Helpers.toast('error', err);
+                $('#purchaseDetailsContent').html(`<div class="alert alert-danger">${Helpers.escapeHtml(err)}</div>`);
             });
     });
-
 
     $(document).on('click', '.btn-pdf', function() {
         const id = $(this).data('id');
         window.location.href = `${baseUrl}?action=generate_pdf&compra_id=${id}`;
     });
 
-    // ============================================
-// EDITAR COMPRA
-// ============================================
-$(document).on('click', '.btn-edit', function(e) {
-    e.preventDefault();
+    $(document).on('click', '.btn-edit', function(e) {
+        e.preventDefault();
 
-    const id = $(this).data('id');
-    Helpers.showLoading('Cargando compra para editar...');
+        const id = $(this).data('id');
+        $('#editPurchaseModal').modal('show');
+        $('#editPrendasContainer').html(SkeletonHelper.createFormSkeleton(4));
 
-    Ajax.get(`${baseUrl}?action=get_purchase_detail`, { compra_id: id })
-        .then(data => {
-            Helpers.closeLoading();
+        Ajax.get(`${baseUrl}?action=get_purchase_detail`, { compra_id: id })
+            .then(data => {
+                Helpers.closeLoading();
 
-            if (!data.success) {
-                Helpers.toast('error', data.message || 'No se pudieron cargar los datos');
-                return;
-            }
+                if (!data.success) {
+                    Helpers.toast('error', data.message || 'No se pudieron cargar los datos');
+                    return;
+                }
 
-            const compra = data.data.compra || {};
-            const prendas = Array.isArray(data.data.prendas) ? data.data.prendas : [];
+                const compra = data.data.compra || {};
+                const prendas = Array.isArray(data.data.prendas) ? data.data.prendas : [];
 
-            // Cargar datos en el formulario de edición
-            $('#editCompraId').val(compra.compra_id ?? '');
-            $('#editFacturaNumero').val(compra.factura_numero ?? '');
-            // CARGAR LA FECHA (input type="date" espera YYYY-MM-DD)
-            if (compra.fecha_compra) {
-                // Si el backend devuelve fecha en formato 'YYYY-MM-DD' esto sirve directamente.
-                $('#editFechaCompra').val(compra.fecha_compra ? compra.fecha_compra.split(' ')[0] : '');
-            } else {
-                $('#editFechaCompra').val('');
-            }
-            $('#editTracking').val(compra.tracking || '');
-            // Campo visible de búsqueda dentro del modal
-            $('#editSearchSupplier').val(compra.nombre_proveedor || '');
-            // Hidden que guarda el RIF/id real
-            $('#editProveedorId').val(compra.proveedor_rif || '');
+                // Cargar datos en el formulario de edición
+                $('#editCompraId').val(compra.compra_id ?? '');
+                $('#editFacturaNumero').val(compra.factura_numero ?? '');
 
-            // Limpiar prendas anteriores
-            $('#editPrendasContainer').empty();
-            prendaIndex = 0;
+                if (compra.fecha_compra) {
+  
+                    $('#editFechaCompra').val(compra.fecha_compra ? compra.fecha_compra.split(' ')[0] : '');
+                } else {
+                    $('#editFechaCompra').val('');
+                }
+                $('#editTracking').val(compra.tracking || '');
 
-            // Agregar prendas existentes (NO editables) -> pasa false para que queden bloqueadas
-            prendas.forEach(pr => addPrenda('editPrendasContainer', pr, false));
+                $('#editSearchSupplier').val(compra.nombre_proveedor || '');
 
-            // Garantizar prendaIndex correcto (por si addPrenda no actualizó como esperas)
-            prendaIndex = $('#editPrendasContainer .prenda-row').length;
+                $('#editProveedorId').val(compra.proveedor_rif || '');
 
-            // Actualizar resumen visual
-            updateSummary();
+                $('#editPrendasContainer').empty();
+                prendaIndex = 0;
 
-            // Mostrar modal
-            $('#editPurchaseModal').modal('show');
+                prendas.forEach(pr => addPrenda('editPrendasContainer', pr, false));
 
-            // Enfocar el input de proveedor para que la UX sea clara (opcional)
-            // $('#editSearchSupplier').focus();
-        })
-        .catch(err => {
-            Helpers.closeLoading();
-            console.error('Error al cargar compra:', err);
-            Helpers.toast('error', 'Error al cargar datos de la compra');
+                prendaIndex = $('#editPrendasContainer .prenda-row').length;
+
+                updateSummary();
+
+                $('#editPurchaseModal').modal('show');
+
+            })
+            .catch(err => {
+                Helpers.closeLoading();
+                console.error('Error al cargar compra:', err);
+                Helpers.toast('error', 'Error al cargar datos de la compra');
+            });
+    });
+
+
+    $(document).on('click', '.btn-delete', function(e) {
+        e.preventDefault();
+        const id = $(this).data('id');
+        
+        Helpers.confirmDialog(
+            '¿Eliminar compra?',
+            'Las prendas también se eliminarán.',
+            () => {
+                Ajax.post(`${baseUrl}?action=delete_ajax`, { compra_id: id })
+                    .then(res => {
+                        if (res.success) {
+                            Helpers.toast('success', 'Eliminado correctamente');
+                            reloadPurchases();
+                        } else {
+                            Helpers.toast('error', res.message);
+                        }
+                    })
+                    .catch(err => Helpers.toast('error', err));
+            },
+            'Sí, eliminar'
+        );
+    });
+
+    $('#editPurchaseForm').on('submit', function(e) {
+        e.preventDefault();
+
+        const { prendas, error } = recopilarPrendas('#editPrendasContainer .prenda-row:not(.prenda-existente)');
+        if (error) {
+            $('#editPurchaseErrors').removeClass('d-none').text(error);
+            return;
+        }
+
+        const formData = new FormData(this);
+        formData.delete('prendas');
+
+        // Añadir nuevas prendas
+        prendas.forEach((p, i) => {
+            Object.keys(p).forEach(k => formData.append(`nuevas_prendas[${i}][${k}]`, p[k]));
         });
-});
 
 
-$(document).on('click', '.btn-delete', function(e) {
-    e.preventDefault();
-    const id = $(this).data('id');
-    
-    Helpers.confirmDialog(
-        '¿Eliminar compra?',
-        'Las prendas también se eliminarán.',
-        () => {
-            Ajax.post(`${baseUrl}?action=delete_ajax`, { compra_id: id })
-                .then(res => {
-                    if (res.success) {
-                        Helpers.toast('success', 'Eliminado correctamente');
-                        reloadPurchases();
-                    } else {
-                        Helpers.toast('error', res.message);
+        const fechaCompra = $('#editFechaCompra').val();
+        if (!fechaCompra) {
+            $('#editPurchaseErrors').removeClass('d-none').text('Debe ingresar la fecha de compra.');
+            return;
+        }
+        formData.set('fecha_compra', fechaCompra);
+
+        const $btn = $('#btnGuardarEdit');
+        $btn.prop('disabled', true);
+        $btn.find('.spinner-border').removeClass('d-none');
+        $btn.find('.btn-text').text('Guardando...');
+
+        Ajax.post(`${baseUrl}?action=edit_ajax`, formData)
+            .then(response => {
+                $btn.prop('disabled', false);
+                $btn.find('.spinner-border').addClass('d-none');
+                $btn.find('.btn-text').text('Guardar Cambios');
+
+                if (response.success) {
+                    Helpers.toast('success', 'Compra actualizada correctamente');
+                    $('#editPurchaseModal').modal('hide');
+                    reloadPurchases();
+                } else {
+                    $('#editPurchaseErrors')
+                        .removeClass('d-none')
+                        .text(response.message || 'Error al actualizar la compra.');
+                }
+            })
+            .catch(error => {
+                $btn.prop('disabled', false);
+                $btn.find('.spinner-border').addClass('d-none');
+                $btn.find('.btn-text').text('Guardar Cambios');
+
+                let msg = 'Error inesperado al guardar la compra.';
+
+                if (error && error.responseText) {
+                    try {
+                        const json = JSON.parse(error.responseText);
+                        msg = json.message || msg;
+                    } catch (e) {
+                        console.error('Respuesta no JSON:', error.responseText);
                     }
-                })
-                .catch(err => Helpers.toast('error', err));
-        },
-        'Sí, eliminar'
-    );
-});
+                }
 
-$('#editPurchaseForm').on('submit', function(e) {
-    e.preventDefault();
+                $('#editPurchaseErrors')
+                    .removeClass('d-none')
+                    .text(msg);
 
-    const { prendas, error } = recopilarPrendas('#editPrendasContainer .prenda-row:not(.prenda-existente)');
-    if (error) {
-        $('#editPurchaseErrors').removeClass('d-none').text(error);
-        return;
-    }
-
-    const formData = new FormData(this);
-    formData.delete('prendas');
-
-    // ✅ Añadir nuevas prendas
-    prendas.forEach((p, i) => {
-        Object.keys(p).forEach(k => formData.append(`nuevas_prendas[${i}][${k}]`, p[k]));
-    });
-
-    // ✅ Asegurar que se envía la fecha de compra
-    const fechaCompra = $('#editFechaCompra').val();
-    if (!fechaCompra) {
-        $('#editPurchaseErrors').removeClass('d-none').text('Debe ingresar la fecha de compra.');
-        return;
-    }
-    formData.set('fecha_compra', fechaCompra);
-
-    // --- Feedback visual (spinner + bloqueo) ---
-    const $btn = $('#btnGuardarEdit');
-    $btn.prop('disabled', true);
-    $btn.find('.spinner-border').removeClass('d-none');
-    $btn.find('.btn-text').text('Guardando...');
-
-Ajax.post(`${baseUrl}?action=edit_ajax`, formData)
-    .then(response => {
-        $btn.prop('disabled', false);
-        $btn.find('.spinner-border').addClass('d-none');
-        $btn.find('.btn-text').text('Guardar Cambios');
-
-        if (response.success) {
-            Helpers.toast('success', 'Compra actualizada correctamente');
-            $('#editPurchaseModal').modal('hide');
-            reloadPurchases();
-        } else {
-            $('#editPurchaseErrors')
-                .removeClass('d-none')
-                .text(response.message || 'Error al actualizar la compra.');
-        }
-    })
-    .catch(error => {
-        $btn.prop('disabled', false);
-        $btn.find('.spinner-border').addClass('d-none');
-        $btn.find('.btn-text').text('Guardar Cambios');
-
-        let msg = 'Error inesperado al guardar la compra.';
-
-        // ✅ Captura mensaje del servidor si viene en formato JSON
-        if (error && error.responseText) {
-            try {
-                const json = JSON.parse(error.responseText);
-                msg = json.message || msg;
-            } catch (e) {
-                console.error('Respuesta no JSON:', error.responseText);
-            }
-        }
-
-        // Mostrar mensaje en el contenedor de errores
-        $('#editPurchaseErrors')
-            .removeClass('d-none')
-            .text(msg);
-
-        console.error('Error al guardar compra:', msg);
-    });
-});
+                console.error('Error al guardar compra:', msg);
+            });
+        });
 
 
 
@@ -558,55 +768,54 @@ Ajax.post(`${baseUrl}?action=edit_ajax`, formData)
         const c = data.compra;
         const p = data.prendas;
         
-        Swal.fire({
-            title: `Compra #${c.factura_numero}`,
-            html: `
-                <div class="text-start">
-                    <div class="row mb-3">
-                        <div class="col-6">
-                            <p><strong>Proveedor:</strong><br>${c.nombre_proveedor}</p>
-                            <p><strong>RIF:</strong> ${c.tipo_rif}-${c.proveedor_rif}</p>
-                        </div>
-                        <div class="col-6">
-                            <p><strong>Fecha:</strong><br>${Helpers.formatDate(c.fecha_compra)}</p>
-                            <p><strong>Tracking:</strong> ${c.tracking || 'N/A'}</p>
-                        </div>
+        return `
+            <div class="text-start">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h5>Compra #${c.factura_numero}</h5>
+                        <p class="mb-1"><strong>Proveedor:</strong> ${c.nombre_proveedor}</p>
+                        <p class="mb-1"><strong>RIF:</strong> ${c.tipo_rif}-${c.proveedor_rif}</p>
                     </div>
-                    <div class="alert alert-success">
-                        <strong>Monto Total:</strong> ${Helpers.formatCurrency(c.monto_total)}
-                    </div>
-                    <hr>
-                    <h6>Prendas (${p.length})</h6>
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead>
-                                <tr><th>Código</th><th>Nombre</th><th>Categoría</th><th>Tipo</th><th>P.Costo</th><th>Estado</th></tr>
-                            </thead>
-                            <tbody>
-                                ${p.map(pr => `
-                                    <tr>
-                                        <td><code>${pr.codigo_prenda}</code></td>
-                                        <td>${pr.nombre}</td>
-                                        <td>${pr.categoria}</td>
-                                        <td>${pr.tipo}</td>
-                                        <td>${Helpers.formatCurrency(pr.precio_costo)}</td>
-                                        <td>${Helpers.getBadge(pr.estado)}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
+                    <div class="col-md-6 text-end">
+                        <p class="mb-1"><strong>Fecha:</strong> ${Helpers.formatDate(c.fecha_compra)}</p>
+                        <p class="mb-1"><strong>Tracking:</strong> ${c.tracking || 'N/A'}</p>
                     </div>
                 </div>
-            `,
-            width: '900px',
-            showConfirmButton: false,
-            showCloseButton: true
-        });
+                <div class="alert alert-success">
+                    <strong>Monto Total:</strong> ${Helpers.formatCurrency(c.monto_total)}
+                </div>
+                <hr>
+                <h6 class="mb-3"><i class="fas fa-box me-2"></i>Prendas (${p.length})</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Código</th>
+                                <th>Nombre</th>
+                                <th>Categoría</th>
+                                <th>Tipo</th>
+                                <th class="text-end">P.Costo</th>
+                                <th class="text-center">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${p.map(pr => `
+                                <tr>
+                                    <td><code>${pr.codigo_prenda}</code></td>
+                                    <td>${pr.nombre}</td>
+                                    <td><span class="badge bg-secondary">${pr.categoria}</span></td>
+                                    <td><span class="badge bg-info">${pr.tipo}</span></td>
+                                    <td class="text-end"><strong>${Helpers.formatCurrency(pr.precio_costo)}</strong></td>
+                                    <td class="text-center">${Helpers.getBadge(pr.estado)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
     };
 
-    // ============================================
-    // EVENTOS
-    // ============================================
     $('#addPrendaBtn').on('click', () => addPrenda('prendasContainer'));
     $('#addEditPrendaBtn').off('click').on('click', function() {
     addPrenda('editPrendasContainer', null, true);
@@ -624,16 +833,15 @@ Ajax.post(`${baseUrl}?action=edit_ajax`, formData)
     }, 300));
 
     $('#addPurchaseModal').on('show.bs.modal', function() {
-        $('#addPurchaseForm')[0].reset();
-        $('#prendasContainer').empty();
-        prendaIndex = 0;
-        setTimeout(() => addPrenda('prendasContainer'), 100);
-    });
+            $('#addPurchaseForm')[0].reset();
+            $('#prendasContainer').empty();
+            prendaIndex = 0;
+            setTimeout(() => addPrenda('prendasContainer'), 100);
+        });
 
+    SkeletonHelper.showTableSkeleton('purchaseTable', 5, 6);
 
-    // ============================================
-    // INICIALIZAR
-    // ============================================
-    initPurchaseTable(); // 🚀 crea y carga la tabla con AJAX
+    initPurchaseTable();
     setupSupplierSearch('searchSupplier', 'supplierResults', 'proveedorId');
 });
+

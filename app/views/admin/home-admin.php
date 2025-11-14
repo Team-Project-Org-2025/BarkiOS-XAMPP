@@ -1,6 +1,6 @@
 <?php 
 require_once __DIR__ . '/../../core/AdminContext.php';
-$pageTitle = "Dashboard | Garage Barki"; 
+$pageTitle = "Inicio | Garage Barki"; 
 ?>
 <?php require_once __DIR__ . '/../partials/header-admin.php'; ?>
 <?= require_once __DIR__ . '/../partials/navbar-admin.php'; ?>
@@ -13,7 +13,7 @@ $pageTitle = "Dashboard | Garage Barki";
             <div class="col-lg-4 mb-3 mb-lg-0">
                 <h3 class="mb-2">
                     <i class="fas fa-chart-line me-2 text-primary"></i>
-                    Dashboard
+                    Panel Administrativo
                 </h3>
                 <p class="text-muted mb-0">
                     <i class="fas fa-calendar-alt me-1"></i>
@@ -390,6 +390,7 @@ $dolarRate = getDolarRate();
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="/BarkiOS/public/assets/js/admin/home-admin.js"></script>
 <script src="/BarkiOS/public/assets/js/admin/logout.js"></script>
+<script src="/BarkiOS/public/assets/js/utils/skeleton.js"></script>
 
 </body>
 </html>

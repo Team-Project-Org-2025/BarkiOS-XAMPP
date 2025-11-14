@@ -84,7 +84,7 @@
         
         <!-- Tabla de Compras -->
         <div class="card shadow-sm border-0">
-            <div class="card-body p-0">
+            <div class="card-body p-3">
                 <div class="table-responsive">
                     <table id="purchaseTable" class="table table-hover align-middle mb-0 table-striped">
                         <thead class="table-light">
@@ -131,7 +131,7 @@
                                     <label class="form-label fw-bold">
                                         N° Factura <span class="text-danger">*</span>
                                     </label>
-                                    <input type="text" 
+                                    <input type="number" 
                                            class="form-control" 
                                            id="facturaNumero" 
                                            name="factura_numero"
@@ -159,7 +159,7 @@
                                     <label class="form-label fw-bold">
                                         N° Tracking <small class="text-muted">(opcional)</small>
                                     </label>
-                                    <input type="text" 
+                                    <input type="number" 
                                            class="form-control" 
                                            id="tracking" 
                                            name="tracking"
@@ -319,7 +319,7 @@
                             <div class="row g-3">
                                 <div class="col-md-4">
                                     <label class="form-label fw-bold">N° Factura <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="editFacturaNumero" name="factura_numero" maxlength="8" pattern="\d{8}" required>
+                                    <input type="number" class="form-control" id="editFacturaNumero" name="factura_numero" maxlength="8" pattern="\d{8}" required>
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label fw-bold">Fecha de Compra <span class="text-danger">*</span></label>
@@ -327,7 +327,7 @@
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label fw-bold">N° Tracking</label>
-                                    <input type="text" class="form-control" id="editTracking" name="tracking" maxlength="8" pattern="\d{8}">
+                                    <input type="number" class="form-control" id="editTracking" name="tracking" maxlength="8" pattern="\d{8}">
                                 </div>
                             </div>
                         </div>
@@ -409,11 +409,7 @@
                 <h5 class="modal-title"><i class="fas fa-eye me-2"></i>Detalle de Compra</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" id="viewPurchaseContent">
-                <div class="text-center py-5">
-                    <div class="spinner-border text-primary"></div>
-                    <p class="mt-2">Cargando...</p>
-                </div>
+            <div class="modal-body" id="purchaseDetailsContent">
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
@@ -435,7 +431,7 @@
         <div class="row g-2">
             <div class="col-md-4">
                 <label class="form-label small fw-bold">Código <span class="text-danger">*</span></label>
-                <input type="text" class="form-control prenda-codigo" placeholder="PRD001" maxlength="20" required>
+                <input type="text" class="form-control prenda-codigo" placeholder="001" pattern="\d{9}" maxlength="9" required>
             </div>
             <div class="col-md-8">
                 <label class="form-label small fw-bold">Nombre <span class="text-danger">*</span></label>
@@ -489,6 +485,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.3/dist/sweetalert2.all.min.js"></script>
 <script type="module" src="/BarkiOS/public/assets/js/admin/purchase-admin.js"></script>
 <script src="/BarkiOS/public/assets/js/admin/logout.js"></script>
+<script src="/BarkiOS/public/assets/js/utils/skeleton.js"></script>
 
 </body>
 </html>
