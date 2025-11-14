@@ -29,19 +29,7 @@
                             </h2>
                             <div id="pedido1" class="accordion-collapse collapse show" data-bs-parent="#accordionPedidos">
                                 <div class="accordion-body">
-                                    Para realizar un pedido, navega por nuestro catálogo, selecciona los productos que desees, elige tu talla y agrégalos al carrito. Luego, procede al checkout donde podrás ingresar tus datos de envío y pago. Recuerda que cada prenda es única, así que si te gusta algo, ¡no lo dejes pasar!
-                                </div>
-                            </div>
-                        </div>
-                        <div class="accordion-item">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#pedido2">
-                                    ¿Puedo modificar o cancelar mi pedido?
-                                </button>
-                            </h2>
-                            <div id="pedido2" class="accordion-collapse collapse" data-bs-parent="#accordionPedidos">
-                                <div class="accordion-body">
-                                    Puedes modificar o cancelar tu pedido dentro de las primeras 2 horas después de haberlo realizado. Contáctanos inmediatamente por WhatsApp o teléfono. Una vez que el pedido ha sido procesado y enviado, no podrá ser modificado.
+                                    En Garage Barki, tu comodidad es nuestra prioridad. Queremos que ames lo que compras, por eso te invitamos a nuestro espacio para que te pruebes tus prendas favoritas y te asegures de hacer la elección perfecta.
                                 </div>
                             </div>
                         </div>
@@ -54,80 +42,13 @@
                     <div class="accordion faq-accordion" id="accordionEnvios">
                         <div class="accordion-item">
                             <h2 class="accordion-header">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#envio1">
-                                    ¿Cuánto tiempo tarda el envío?
-                                </button>
-                            </h2>
-                            <div id="envio1" class="accordion-collapse collapse" data-bs-parent="#accordionEnvios">
-                                <div class="accordion-body">
-                                    Los envíos dentro de Lima metropolitana tardan de 24 a 48 horas. Para provincias, el tiempo de entrega es de 3 a 7 días hábiles dependiendo de la ubicación. Los pedidos se procesan de lunes a viernes.
-                                </div>
-                            </div>
-                        </div>
-                        <div class="accordion-item">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#envio2">
-                                    ¿Cuál es el costo de envío?
-                                </button>
-                            </h2>
-                            <div id="envio2" class="accordion-collapse collapse" data-bs-parent="#accordionEnvios">
-                                <div class="accordion-body">
-                                    El envío dentro de Lima tiene un costo de S/. 10. Para provincias, el costo varía entre S/. 15 y S/. 25 según la ubicación. ¡Envío gratis en compras mayores a S/. 200!
-                                </div>
-                            </div>
-                        </div>
-                        <div class="accordion-item">
-                            <h2 class="accordion-header">
                                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#envio3">
-                                    ¿Hacen envíos internacionales?
+                                    ¿Hacen envíos a nivel nacional?
                                 </button>
                             </h2>
                             <div id="envio3" class="accordion-collapse collapse" data-bs-parent="#accordionEnvios">
                                 <div class="accordion-body">
-                                    Actualmente solo realizamos envíos dentro del Perú. Estamos trabajando para expandir nuestros servicios internacionalmente pronto.
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Cambios y Devoluciones -->
-                <div class="mb-5" id="cambios" data-aos="fade-up">
-                    <h3 class="mb-4"><i class="fas fa-exchange-alt me-2"></i> Cambios y Devoluciones</h3>
-                    <div class="accordion faq-accordion" id="accordionCambios">
-                        <div class="accordion-item">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#cambio1">
-                                    ¿Cuál es la política de cambios?
-                                </button>
-                            </h2>
-                            <div id="cambio1" class="accordion-collapse collapse" data-bs-parent="#accordionCambios">
-                                <div class="accordion-body">
-                                    Aceptamos cambios dentro de los 7 días posteriores a la recepción del producto. La prenda debe estar sin usar, con etiquetas originales y en perfecto estado. Los cambios solo aplican por talla diferente o defecto de fábrica.
-                                </div>
-                            </div>
-                        </div>
-                        <div class="accordion-item">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#cambio2">
-                                    ¿Cómo solicito un cambio o devolución?
-                                </button>
-                            </h2>
-                            <div id="cambio2" class="accordion-collapse collapse" data-bs-parent="#accordionCambios">
-                                <div class="accordion-body">
-                                    Contáctanos por WhatsApp, email o teléfono con tu número de pedido y el motivo del cambio. Te proporcionaremos las instrucciones para el envío de retorno. Una vez recibido y verificado el producto, procesaremos tu cambio o reembolso.
-                                </div>
-                            </div>
-                        </div>
-                        <div class="accordion-item">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#cambio3">
-                                    ¿Quién paga el envío de devolución?
-                                </button>
-                            </h2>
-                            <div id="cambio3" class="accordion-collapse collapse" data-bs-parent="#accordionCambios">
-                                <div class="accordion-body">
-                                    Si el cambio es por defecto de fábrica o error en el envío, nosotros cubrimos el costo del envío de retorno. Si es por cambio de talla o preferencia personal, el cliente asume el costo del envío.
+                                    Actualmente solo realizamos envíos dentro del Barquisimeto. Estamos trabajando para expandir nuestros servicios a todo el país.
                                 </div>
                             </div>
                         </div>
