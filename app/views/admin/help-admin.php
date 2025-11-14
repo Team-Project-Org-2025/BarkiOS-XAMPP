@@ -78,14 +78,21 @@
                             </div>
                         </div>
 
-                        <!-- Botón de descarga -->
+                        <!-- Botones de acción -->
                         <div class="text-center">
-                            <a href="/BarkiOS/public/assets/pdf/Manual de Usuario - Garage Barki.pdf" 
-                               class="btn btn-primary btn-lg px-5" 
-                               download>
-                                <i class="fas fa-download me-2"></i>Descargar Manual Completo (PDF)
-                            </a>
-                            <p class="text-muted small mt-2">Tamaño: 3.9 MB</p>
+                            <div class="d-grid gap-3 d-md-flex justify-content-md-center mb-3">
+                                <a href="https://manual-de-usuario-barki-os.vercel.app/" 
+                                   class="btn btn-primary btn-lg px-5" 
+                                   target="_blank">
+                                    <i class="fas fa-globe me-2"></i>Ver Manual Online
+                                </a>
+                                <a href="/BarkiOS/public/assets/pdf/Manual de Usuario - Garage Barki.pdf" 
+                                   class="btn btn-outline-primary btn-lg px-5" 
+                                   download>
+                                    <i class="fas fa-download me-2"></i>Descargar PDF
+                                </a>
+                            </div>
+                            <p class="text-muted small">Tamaño: 3.9 MB</p>
                         </div>
                     </div>
                 </div>
