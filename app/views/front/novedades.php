@@ -30,7 +30,7 @@ require_once __DIR__ . '/../partials/navbar.php';
                     </div>
                 </div>
                 <div class="col-lg-6" data-aos="fade-left">
-                    <img src="/BarkiOS/public/assets/images/tienda1.jpeg" class="img-fluid rounded shadow" alt="Nueva Colección">
+                    <img src="/BarkiOS/public/assets/images/tienda5.jpeg" class="img-fluid rounded shadow" alt="Nueva Colección">
                 </div>
             </div>
         </div>

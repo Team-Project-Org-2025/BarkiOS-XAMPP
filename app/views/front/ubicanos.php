@@ -5,7 +5,7 @@
     <!-- Main Content -->
     <main>
         <!-- Hero Banner elegante -->
-        <section class="hero-banner" style="background-image: url('/BarkiOS/public/assets/images/fachada5.webp');">
+        <section class="hero-banner" style="background-image: url('/BarkiOS/public/assets/images/fachada10.jpeg');">
             <div class="hero-banner-content">
                 <h1 data-aos="fade-up">UBÍCANOS</h1>
                 <p data-aos="fade-up" data-aos-delay="200">Visita nuestra tienda y descubre la experiencia Garage Barki</p>
@@ -90,7 +90,7 @@
 
                     <!-- Store Image & Features -->
                     <div class="col-lg-6" data-aos="fade-left">
-                        <img src="/BarkiOS/public/assets/images/tienda5.webp" class="img-fluid rounded shadow mb-4" alt="Tienda Garage Barki">
+                        <img src="/BarkiOS/public/assets/images/fachada9.webp" class="img-fluid rounded shadow mb-4" alt="Tienda Garage Barki">
                         
                         <h3 class="mb-4">¿Por qué visitarnos?</h3>
                         <div class="row g-3">
