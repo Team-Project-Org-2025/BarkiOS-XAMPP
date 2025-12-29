@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Servidor web Apache + PHP
   barkios-app:
@@ -21,6 +19,7 @@ services:
       - APP_DEBUG=${APP_DEBUG}
     networks:
       - barkios_network
+    restart: unless-stopped
 
   # MySQL 8.0
   barkios-db:
@@ -38,13 +37,15 @@ services:
       - ./barkios_db.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - barkios_network
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u${DB_USER}", "-p${DB_PASSWORD}"]
       interval: 5s
       timeout: 10s
       retries: 5
+      start_period: 30s
 
-  # phpMyAdmin
+  # phpMyAdmin - VERSIÓN MEJORADA
   barkios-admin:
     image: phpmyadmin:latest
     container_name: barkios_phpmyadmin
@@ -52,13 +53,26 @@ services:
       - "${PMA_PORT:-9000}:80"
     environment:
       PMA_HOST: barkios-db
+      PMA_PORT: 3306
       PMA_USER: ${DB_USER}
       PMA_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      UPLOAD_LIMIT: 300M
+      MEMORY_LIMIT: 512M
+      MAX_EXECUTION_TIME: 600
+      PMA_ABSOLUTE_URI: http://localhost:9000/
     depends_on:
       barkios-db:
         condition: service_healthy
     networks:
       - barkios_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
 
 networks:
   barkios_network:
