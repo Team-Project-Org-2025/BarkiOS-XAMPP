@@ -1,10 +1,9 @@
-# .htaccess (CORREGIDO)
+# .htaccess para Docker (sin subdirectorio)
 
 RewriteEngine On
 
-# 🚨 AGREGAR ESTA LÍNEA 🚨
-# Define la base de la URL. Si tu proyecto está en http://localhost/BarkiOS/, úsala.
-RewriteBase /BarkiOS/ 
+# Define la base de la URL (en Docker, el proyecto está en la raíz)
+RewriteBase /
 
 # Si la petición NO es un archivo existente
 RewriteCond %{REQUEST_FILENAME} !-f
@@ -14,3 +13,21 @@ RewriteCond %{REQUEST_FILENAME} !-d
 
 # Entonces redirige toda la solicitud a index.php
 RewriteRule ^(.+)$ index.php [QSA,L]
+
+# Configuración de seguridad
+<IfModule mod_headers.c>
+    # Prevenir clickjacking
+    Header set X-Frame-Options "SAMEORIGIN"
+    
+    # Prevenir XSS
+    Header set X-XSS-Protection "1; mode=block"
+    
+    # Prevenir MIME sniffing
+    Header set X-Content-Type-Options "nosniff"
+</IfModule>
+
+# Denegar acceso a archivos sensibles
+<FilesMatch "\.(env|git|htaccess|htpasswd|ini|log|sh|sql|bak)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
