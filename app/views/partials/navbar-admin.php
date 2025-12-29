@@ -12,7 +12,7 @@
             <ul class="nav flex-column">
                 <li class="nav-item">
                     <a class="nav-link <?php echo isActiveRoute('admin/login/dashboard') ? 'active' : ''; ?>" 
-                       href="/BarkiOS/admin/login/dashboard">
+                       href="/admin/login/dashboard">
                         <i class="fas fa-tachometer-alt"></i>
                         Inicio
                     </a>
@@ -24,35 +24,35 @@
                 </li>
                 <li class="nav-item">
                     <a class="nav-link <?php echo isActiveRoute('admin/products') ? 'active' : ''; ?>" 
-                       href="/BarkiOS/admin/products">
+                       href="/admin/products">
                         <i class="fas fa-tshirt"></i>
                         Productos
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link <?php echo isActiveRoute('admin/supplier') ? 'active' : ''; ?>" 
-                       href="/BarkiOS/admin/supplier">
+                       href="/admin/supplier">
                         <i class="fas fa-truck"></i>
                         Proveedores
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link <?php echo isActiveRoute('admin/clients') ? 'active' : ''; ?>" 
-                       href="/BarkiOS/admin/clients">
+                       href="/admin/clients">
                         <i class="fas fa-users"></i>
                         Clientes
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link <?php echo isActiveRoute('admin/employees') ? 'active' : ''; ?>" 
-                       href="/BarkiOS/admin/employees">
+                       href="/admin/employees">
                         <i class="fas fa-user-tie"></i>
                         Empleados
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link <?php echo isActiveRoute('admin/users') ? 'active' : ''; ?>" 
-                       href="/BarkiOS/admin/users">
+                       href="/admin/users">
                         <i class="fas fa-user-shield"></i>
                         Usuarios
                     </a>
@@ -66,14 +66,14 @@
                 </li>
                 <li class="nav-item">
                     <a class="nav-link <?php echo isActiveRoute('admin/accounts-receivable') ? 'active' : ''; ?>" 
-                       href="/BarkiOS/admin/accounts-receivable">
+                       href="/admin/accounts-receivable">
                         <i class="fas fa-file-invoice-dollar"></i>
                         Cuentas por Cobrar
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link <?php echo isActiveRoute('admin/accounts-payable') ? 'active' : ''; ?>" 
-                       href="/BarkiOS/admin/accounts-payable">
+                       href="/admin/accounts-payable">
                         <i class="fas fa-file-invoice"></i>
                         Cuentas por Pagar
                     </a>
@@ -87,14 +87,14 @@
                 </li>
                 <li class="nav-item">
                     <a class="nav-link <?php echo isActiveRoute('admin/sale') ? 'active' : ''; ?>" 
-                       href="/BarkiOS/admin/sale">
+                       href="/admin/sale">
                         <i class="fas fa-receipt"></i>
                         Ventas
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link <?php echo isActiveRoute('admin/purchase') ? 'active' : ''; ?>" 
-                       href="/BarkiOS/admin/purchase">
+                       href="/admin/purchase">
                         <i class="fas fa-shopping-bag"></i>
                         Compras
                     </a>
@@ -107,7 +107,7 @@
                 </li>
                 <li class="nav-item">
                     <a class="nav-link <?php echo isActiveRoute('admin/help') ? 'active' : ''; ?>" 
-                       href="/BarkiOS/admin/help">
+                       href="/admin/help">
                         <i class="fas fa-question-circle"></i>
                         Ayuda
                     </a>
@@ -125,7 +125,7 @@
             <?php endif; ?>
             
             <a class="nav-link mx-3 mb-2 mt-2 rounded logout-link" 
-               href="/BarkiOS/admin/login/logout" 
+               href="/admin/login/logout" 
                id="logoutBtn">
                 <i class="fas fa-sign-out-alt me-2"></i>
                 Cerrar Sesión
@@ -148,32 +148,32 @@
   <div class="bg-white border-bottom">
     <ul class="nav flex-column">
       <li class="nav-item">
-        <a class="nav-link <?php echo isActiveRoute('admin/login/dashboard') ? 'active' : ''; ?>" href="/BarkiOS/admin/login/dashboard">
+        <a class="nav-link <?php echo isActiveRoute('admin/login/dashboard') ? 'active' : ''; ?>" href="/admin/login/dashboard">
           <i class="fas fa-tachometer-alt"></i> Inicio
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link <?php echo isActiveRoute('admin/products') ? 'active' : ''; ?>" href="/BarkiOS/admin/products">
+        <a class="nav-link <?php echo isActiveRoute('admin/products') ? 'active' : ''; ?>" href="/admin/products">
           <i class="fas fa-tshirt"></i> Productos
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link <?php echo isActiveRoute('admin/supplier') ? 'active' : ''; ?>" href="/BarkiOS/admin/supplier">
+        <a class="nav-link <?php echo isActiveRoute('admin/supplier') ? 'active' : ''; ?>" href="/admin/supplier">
           <i class="fas fa-truck"></i> Proveedores
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link <?php echo isActiveRoute('admin/clients') ? 'active' : ''; ?>" href="/BarkiOS/admin/clients">
+        <a class="nav-link <?php echo isActiveRoute('admin/clients') ? 'active' : ''; ?>" href="/admin/clients">
           <i class="fas fa-users"></i> Clientes
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link <?php echo isActiveRoute('admin/employees') ? 'active' : ''; ?>" href="/BarkiOS/admin/employees">
+        <a class="nav-link <?php echo isActiveRoute('admin/employees') ? 'active' : ''; ?>" href="/admin/employees">
           <i class="fas fa-user-tie"></i> Empleados
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link <?php echo isActiveRoute('admin/users') ? 'active' : ''; ?>" href="/BarkiOS/admin/users">
+        <a class="nav-link <?php echo isActiveRoute('admin/users') ? 'active' : ''; ?>" href="/admin/users">
           <i class="fas fa-user-shield"></i> Usuarios
         </a>
       </li>
@@ -181,12 +181,12 @@
       <!-- FINANZAS -->
       <li class="nav-item mt-2 px-3 text-muted small fw-bold">FINANZAS</li>
       <li class="nav-item">
-        <a class="nav-link <?php echo isActiveRoute('admin/accounts-receivable') ? 'active' : ''; ?>" href="/BarkiOS/admin/accounts-receivable">
+        <a class="nav-link <?php echo isActiveRoute('admin/accounts-receivable') ? 'active' : ''; ?>" href="/admin/accounts-receivable">
           <i class="fas fa-file-invoice-dollar"></i> Cuentas por Cobrar
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link <?php echo isActiveRoute('admin/accounts-payable') ? 'active' : ''; ?>" href="/BarkiOS/admin/accounts-payable">
+        <a class="nav-link <?php echo isActiveRoute('admin/accounts-payable') ? 'active' : ''; ?>" href="/admin/accounts-payable">
           <i class="fas fa-file-invoice"></i> Cuentas por Pagar
         </a>
       </li>
@@ -194,19 +194,19 @@
       <!-- OPERACIONES -->
       <li class="nav-item mt-2 px-3 text-muted small fw-bold">OPERACIONES</li>
       <li class="nav-item">
-        <a class="nav-link <?php echo isActiveRoute('admin/sale') ? 'active' : ''; ?>" href="/BarkiOS/admin/sale">
+        <a class="nav-link <?php echo isActiveRoute('admin/sale') ? 'active' : ''; ?>" href="/admin/sale">
           <i class="fas fa-receipt"></i> Ventas
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link <?php echo isActiveRoute('admin/purchase') ? 'active' : ''; ?>" href="/BarkiOS/admin/purchase">
+        <a class="nav-link <?php echo isActiveRoute('admin/purchase') ? 'active' : ''; ?>" href="/admin/purchase">
           <i class="fas fa-shopping-bag"></i> Compras
         </a>
       </li>
 
       <!-- FOOTER -->
       <li class="nav-item border-top mt-2">
-        <a class="nav-link" href="/BarkiOS/admin/login/logout">
+        <a class="nav-link" href="/admin/login/logout">
           <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
         </a>
       </li>
@@ -221,9 +221,8 @@
 function isActiveRoute($route) {
     $currentUri = $_SERVER['REQUEST_URI'] ?? '';
     $currentUri = parse_url($currentUri, PHP_URL_PATH);
-    $currentUri = str_replace('/BarkiOS/', '', $currentUri);
-    $currentUri = rtrim($currentUri, '/');
-    $route = rtrim($route, '/');
+    $currentUri = trim($currentUri, '/');
+    $route = trim($route, '/');
     
     // Comparación exacta o coincidencia de inicio
     return $currentUri === $route || strpos($currentUri, $route) === 0;

@@ -26,7 +26,7 @@
             <div class="container">
                 <div class="row align-items-center">
                     <div class="col-lg-6 mb-4 mb-lg-0" data-aos="fade-right">
-                        <img src="/BarkiOS/public/assets/images/tienda3.webp" class="img-fluid rounded" alt="Nuestra Historia">
+                        <img src="/public/assets/images/tienda3.webp" class="img-fluid rounded" alt="Nuestra Historia">
                     </div>
                     <div class="col-lg-6" data-aos="fade-left">
                         <h2 class="mb-4">NUESTRA HISTORIA</h2>
@@ -106,9 +106,6 @@
             </div>
         </section>
 
-        <!-- Milestones -->
-
-
     <!-- Footer-->
 <?php require_once __DIR__ . '/../partials/footer.php';?>
 
@@ -120,6 +117,6 @@
     <!-- AOS Animation Library -->
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <!-- Controller Scripts -->
-    <script src="/BarkiOS/public/assets/js/front/about.js"></script>
+    <script src="/public/assets/js/front/about.js"></script>
 </body>
 </html>

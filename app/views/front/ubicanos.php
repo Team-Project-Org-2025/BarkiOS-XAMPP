@@ -5,7 +5,7 @@
     <!-- Main Content -->
     <main>
         <!-- Hero Banner elegante -->
-        <section class="hero-banner" style="background-image: url('/BarkiOS/public/assets/images/fachada10.jpeg');">
+        <section class="hero-banner" style="background-image: url('/public/assets/images/fachada10.jpeg');">
             <div class="hero-banner-content">
                 <h1 data-aos="fade-up">UBÍCANOS</h1>
                 <p data-aos="fade-up" data-aos-delay="200">Visita nuestra tienda y descubre la experiencia Garage Barki</p>
@@ -87,10 +87,9 @@
                             </div>
                         </div>
                     </div>
-
                     <!-- Store Image & Features -->
                     <div class="col-lg-6" data-aos="fade-left">
-                        <img src="/BarkiOS/public/assets/images/fachada9.webp" class="img-fluid rounded shadow mb-4" alt="Tienda Garage Barki">
+                        <img src="/public/assets/images/fachada9.webp" class="img-fluid rounded shadow mb-4" alt="Tienda Garage Barki">
                         
                         <h3 class="mb-4">¿Por qué visitarnos?</h3>
                         <div class="row g-3">
@@ -174,6 +173,6 @@
     <!-- AOS Animation Library -->
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <!-- Controller Scripts -->
-    <script src="/BarkiOS/public/assets/js/front/about.js"></script>
+    <script src="/public/assets/js/front/about.js"></script>
 </body>
 </html>

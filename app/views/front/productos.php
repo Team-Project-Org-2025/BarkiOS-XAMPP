@@ -163,7 +163,7 @@
         </div>
     </div>
 
-    <!-- Back to Top Button -->
+<!-- Back to Top Button -->
     <a href="#" class="back-to-top" id="backToTop"><i class="fas fa-chevron-up"></i></a>
 
     <!-- Bootstrap JS -->
@@ -171,6 +171,6 @@
     <!-- AOS Animation Library -->
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <!-- Controller Scripts -->
-    <script src="/BarkiOS/public/assets/js/front/products.js"></script>
+    <script src="/public/assets/js/front/products.js"></script>
 </body>
 </html>

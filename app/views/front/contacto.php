@@ -148,17 +148,17 @@
                             <a href="#" class="btn btn-outline-dark">Enviar Mensaje</a>
                         </div>
                     </div>
-                    <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
-                        <div class="quick-contact-card">
-                            <i class="fas fa-store"></i>
-                            <h4>Visítanos</h4>
-                            <p>Ven a nuestra tienda física</p>
-                            <a href="/BarkiOS/ubicanos" class="btn btn-outline-dark">Ver Ubicación</a>
+        <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+                                <div class="quick-contact-card">
+                                    <i class="fas fa-store"></i>
+                                    <h4>Visítanos</h4>
+                                    <p>Ven a nuestra tienda física</p>
+                                    <a href="/ubicanos" class="btn btn-outline-dark">Ver Ubicación</a>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </section>
+                </section>
     <!-- Footer -->
 <?php require_once __DIR__ . '/../partials/footer.php';?>
 
@@ -170,6 +170,6 @@
     <!-- AOS Animation Library -->
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <!-- Contact Form Script -->
-    <script src="/BarkiOS/public/assets/js/front/contact.js"></script>
+    <script src="/public/assets/js/front/contact.js"></script>
 </body>
 </html>

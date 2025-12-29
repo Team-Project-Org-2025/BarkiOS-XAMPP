@@ -26,11 +26,11 @@ require_once __DIR__ . '/../partials/navbar.php';
                         <h2 class="mb-4">NUEVA COLECCIÓN NOVIEMBRE 2025</h2>
                         <p class="lead mb-4">Descubre las últimas tendencias en moda femenina.</p>
                         <p>Cada semana agregamos nuevas prendas exclusivas a nuestra colección. Recuerda que cada pieza es única y no se repite, así que si algo te encanta, ¡no lo dejes pasar!</p>
-                        <a href="/BarkiOS/productos" class="btn btn-dark mt-3">Ver Toda la Colección</a>
+                        <a href="/productos" class="btn btn-dark mt-3">Ver Toda la Colección</a>
                     </div>
                 </div>
                 <div class="col-lg-6" data-aos="fade-left">
-                    <img src="/BarkiOS/public/assets/images/tienda5.jpeg" class="img-fluid rounded shadow" alt="Nueva Colección">
+                    <img src="/public/assets/images/tienda5.jpeg" class="img-fluid rounded shadow" alt="Nueva Colección">
                 </div>
             </div>
         </div>
@@ -145,6 +145,8 @@ require_once __DIR__ . '/../partials/navbar.php';
     </div>
 </div>
 
+
+
 <!-- Footer -->
 <?php require_once __DIR__ . '/../partials/footer.php'; ?>
 
@@ -153,8 +155,7 @@ require_once __DIR__ . '/../partials/navbar.php';
 <!-- AOS Animation Library -->
 <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 <!-- Main JS con funcionalidad de productos -->
-
-<script src="/BarkiOS/public/assets/js/front/novedades.js"></script>
+<script src="/public/assets/js/front/novedades.js"></script>
 
 </body>
 </html>
